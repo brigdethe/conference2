@@ -1,22 +1,14 @@
 {
-  "name": "snowhouse-studio-yir24",
+  "name": "quinn-services-ejs",
   "version": "1.0.0",
-  "description": "Snowhouse Studio Year in Review 2024 - EJS Conversion",
-  "main": "server.js",
+  "private": true,
+  "description": "Standalone EJS version of services page",
+  "main": "app.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node app.js"
   },
-  "keywords": [
-    "ejs",
-    "express",
-    "snowhouse",
-    "year-in-review"
-  ],
-  "author": "Snowhouse Studio",
-  "license": "ISC",
   "dependencies": {
-    "ejs": "^3.1.9",
-    "express": "^4.18.2"
+    "ejs": "^3.1.10",
+    "express": "^4.21.2"
   }
 }

@@ -1,0 +1,18 @@
+
+                    /* Initial hidden state */
+
+                    [data-fade-in] {
+                        opacity: 0;
+                        transform: translateY(var(--fade-y, 0px));
+                        /* Default is 0px unless set */
+                    }
+
+                    /* Disable fade on tablet & smaller when flagged */
+
+                    @media (max-width: 991px) {
+                        [data-fade-in][data-no-fade-tablet] {
+                            opacity: 1 !important;
+                            transform: none !important;
+                        }
+                    }
+                

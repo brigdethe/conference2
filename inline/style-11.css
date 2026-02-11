@@ -1,0 +1,6 @@
+
+  /* Initial hidden state */
+  [data-stagger-in] {
+    opacity: 0;
+    transform: translateY(50px); /* Start 50px below */
+  }

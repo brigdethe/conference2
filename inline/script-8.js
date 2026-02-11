@@ -1,61 +1,35 @@
 
-window.addEventListener("DOMContentLoaded", (event) => {
-  setTimeout(() => {
-    $(".plyr_component").each(function (index) {
-      let thisComponent = $(this);
+  document.addEventListener('DOMContentLoaded', function () {
+    const growElements = document.querySelectorAll('[data-grow-in]');
+    const observerOptions = {
+      root: null, // Viewport is the root
+      rootMargin: '0px 0px -50% 0px', // Element triggers when it's halfway into the viewport
+      threshold: 0, // Trigger as soon as the rootMargin is met
+    };
+    
+    // Custom easing function (optional, or use linear/ease)
+    const customEase = "cubic-bezier(0.2, 0.8, 0.8, 1)"; // Matches your desired "custom" easing
 
-      // Create plyr settings
-      let player = new Plyr(thisComponent.find(".plyr_video")[0], {
-        controls: ["play", "progress", "current-time", "mute", "fullscreen"],
-        resetOnEnd: true,
-        youtube: {
-          noCookie: true,
+    // Intersection Observer logic
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          const target = entry.target;
+
+          // Apply staggered animation using setTimeout
+          setTimeout(() => {
+            target.style.transition = `transform 0.75s ${customEase}, opacity 0.75s ${customEase}`;
+            target.style.opacity = 1;
+            target.style.transform = 'scale(1)'; // Scale to full size
+          }, index * 100); // Stagger of 100ms per element
+
+          observer.unobserve(target); // Stop observing after animation
         }
       });
+    }, observerOptions);
 
-      // Set the default quality after player initialization
-      player.on('ready', () => {
-        player.media.setQuality('hd1080'); // Set default quality (use 'hd1080', 'hd720', etc.)
-      });
-
-      // Custom video cover
-      thisComponent.find(".plyr_cover").on("click", function () {
-        player.play();
-      });
-
-      player.on("ended", (event) => {
-        thisComponent.removeClass("hide-cover");
-      });
-
-      // Pause other playing videos when this one starts playing
-      player.on("play", (event) => {
-        $(".plyr_component").removeClass("hide-cover");
-        thisComponent.addClass("hide-cover");
-        let prevPlayingComponent = $(".plyr--playing").closest(".plyr_component").not(thisComponent);
-        if (prevPlayingComponent.length > 0) {
-          prevPlayingComponent.find(".plyr_pause-trigger")[0].click();
-        }
-      });
-
-      thisComponent.find(".plyr_pause-trigger").on("click", function () {
-        player.pause();
-      });
-
-      // Exit full screen when video ends
-      player.on("ended", (event) => {
-        if (player.fullscreen.active) {
-          player.fullscreen.exit();
-        }
-      });
-
-      // Set video to contain instead of cover when in full screen mode
-      player.on("enterfullscreen", (event) => {
-        thisComponent.addClass("contain-video");
-      });
-
-      player.on("exitfullscreen", (event) => {
-        thisComponent.removeClass("contain-video");
-      });
+    // Observe each element
+    growElements.forEach(el => {
+      observer.observe(el);
     });
-  }, 1000); // 1 second delay
-});
+  });

@@ -1,53 +1,35 @@
 
-document.addEventListener("DOMContentLoaded", () => {
-  // Select all elements with the respective classes
-  const popUps = document.querySelectorAll('.pop-up');
-  const popUps2 = document.querySelectorAll('.pop-up-2');
-  const popUpsRight = document.querySelectorAll('.pop-up-right');
-  const popUpsLeft = document.querySelectorAll('.pop-up-left');
+  document.addEventListener('DOMContentLoaded', function () {
+    const staggerElements = document.querySelectorAll('[data-stagger-in]');
+    const observerOptions = {
+      root: null, // Viewport is the root
+      rootMargin: '0px', // Adjust margins if needed
+      threshold: 0.1, // Trigger when 10% of the element is visible
+    };
 
-  // Function to animate each element individually
-  const animateElements = (elements, animationProps, triggerProps) => {
-    elements.forEach((element) => {
-      gsap.fromTo(
-        element,
-        animationProps.from,
-        {
-          ...animationProps.to,
-          scrollTrigger: {
-            ...triggerProps,
-            trigger: element, // Use the individual element as the trigger
-          },
+    // Custom easing function using GSAP (Optional) or CSS `CustomEase`
+    const customEase = "cubic-bezier(0.2, 0.8, 0.8, 1)"; // Matches your "custom"
+
+    // Intersection Observer logic
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry, index) => {
+        if (entry.isIntersecting) {
+          const target = entry.target;
+
+          // Apply staggered animation using setTimeout
+          setTimeout(() => {
+            target.style.transition = `transform 0.75s ${customEase}, opacity 0.75s ${customEase}`;
+            target.style.opacity = 1;
+            target.style.transform = 'translateY(0)';
+          }, index * 100); // Stagger of 100ms per element
+
+          observer.unobserve(target); // Stop observing after animation
         }
-      );
+      });
+    }, observerOptions);
+
+    // Observe each element
+    staggerElements.forEach(el => {
+      observer.observe(el);
     });
-  };
-
-  // Animate .pop-up
-  animateElements(
-    popUps,
-    { from: { scale: 0 }, to: { scale: 1, stagger: 0.15, duration: 0.5, ease: "power2.out" } },
-    { start: 'top 70%' }
-  );
-
-  // Animate .pop-up-2
-  animateElements(
-    popUps2,
-    { from: { scale: 0 }, to: { scale: 1, duration: 0.5, delay: 0.15, stagger: 0.15, ease: "power2.out" } },
-    { start: 'top 70%' }
-  );
-
-  // Animate .pop-up-right
-  animateElements(
-    popUpsRight,
-    { from:  { scale: 0, transformOrigin: 'right center' } , to: { scale: 1, stagger: 0.15, duration: 0.5, delay:0.15,  ease: "power2.out" } },
-    { start: 'top 70%' }
-  );
-    // Animate .pop-up-right
-  animateElements(
-    popUpsLeft,
-    { from:  { scale: 0, transformOrigin: 'left center' } , to: { scale: 1, stagger: 0.15, duration: 0.5, delay:0.15,  ease: "power2.out" } },
-    { start: 'top 70%' }
-  );
-});
-
+  });
