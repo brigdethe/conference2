@@ -1,23 +1,18 @@
-const path = require("path");
-const express = require("express");
+﻿const path = require('path');
+const express = require('express');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
 
-app.use("/external", express.static(path.join(__dirname, "external")));
-app.use("/inline", express.static(path.join(__dirname, "inline")));
+app.get('/', (_req, res) => res.render('pages/home'));
+app.get('/contact', (_req, res) => res.render('pages/contact'));
 
-app.get("/", (req, res) => {
-  res.redirect("/services");
-});
-
-app.get("/services", (req, res) => {
-  res.render("pages/services");
-});
+app.use(express.static(__dirname, { index: false }));
 
 app.listen(PORT, () => {
-  console.log(`EJS server running at http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
+

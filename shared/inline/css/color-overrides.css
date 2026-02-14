@@ -1,0 +1,13 @@
+:root {
+    /* Global color overrides */
+    --_primitives---colors--light-orange: #f8efe6;
+    --_primitives---colors--white: #ffffff;
+    --_primitives---colors--pop: #cb9635;
+    --_primitives---colors--dark-brown: #3d2b27;
+    --_primitives---colors--lines-on-brown: #5a413b;
+    --_primitives---colors--cream: #f4ece4;
+    --_primitives---colors--clay: #cc9632;
+    --_primitives---colors--earth: #8f6248;
+    --_primitives---colors--middle-cream: #ddd4cc;
+    --_primitives---colors--seafoam: #b7dcc2;
+}

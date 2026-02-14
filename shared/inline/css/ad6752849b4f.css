@@ -1,0 +1,9 @@
+
+                    /* Initial hidden state */
+
+                    [data-grow-in] {
+                        opacity: 0;
+                        transform: scale(0.9);
+                        /* Start smaller (80% of size) */
+                    }
+                

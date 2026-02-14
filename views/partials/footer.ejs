@@ -1,0 +1,456 @@
+<footer id="footer" class="section footer">
+    <div class="padding-global footer">
+        <div class="footer_container-wrapper">
+            <div class="container-four-col footer-left">
+                <div data-heading-animation="" class="footer-text">Competition &amp; Marketing Center Ltd.</div>
+                <a href="#" class="footer_logo-link w-nav-brand">
+                    <div class="footer-logo">
+                        <img src="https://ik.imagekit.io/dr5fryhth/conference/logo2.svg?updatedAt=1769833653837"
+                            alt="Conference Logo" style="width: 100%; height: 100%;">
+                    </div>
+                </a>
+            </div>
+            <div class="container-four-col is-footer">
+                <div data-no-fade-tablet="" data-fade-in="" class="footer_menu-card">
+                    <div class="footer_inquiry-wrapper">
+                        <div class="footer_inquiry-header">
+                            <div class="detail">Conference Inquiries</div>
+                            <h3 class="footer_inquiry-title">Send an Inquiry</h3>
+                        </div>
+                        <form class="footer_inquiry-form">
+                            <input class="footer_inquiry-input" type="text" name="name" placeholder="Full Name"
+                                required />
+                            <input class="footer_inquiry-input" type="email" name="email" placeholder="Email Address"
+                                required />
+                            <input class="footer_inquiry-input" type="text" name="organization"
+                                placeholder="Company / Law Firm" required />
+                            <select class="footer_inquiry-input" name="inquiryType" required>
+                                <option value="" selected disabled>Inquiry Type</option>
+                                <option value="General Inquiry">General Inquiry</option>
+                                <option value="Conference Registration">Conference Registration</option>
+                                <option value="Sponsorship">Sponsorship</option>
+                                <option value="Speaking Request">Speaking Request</option>
+                                <option value="Media / Press">Media / Press</option>
+                            </select>
+                            <textarea class="footer_inquiry-input footer_inquiry-textarea" name="message" rows="4"
+                                placeholder="How can we help?" required></textarea>
+                            <button class="footer_inquiry-submit" type="submit">Submit Inquiry</button>
+                        </form>
+                    </div>
+                    <div class="footer_legal-wrapper">
+                        <div class="detail">© 2025 Competition & Marketing Center Ltd.</div>
+                        <div class="detail"><a href="https://www.highlynecessary.com/" target="_blank">Site by Highly
+                                Necessary</a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="background-content-wrapper"><img
+            src="https://ik.imagekit.io/dr5fryhth/conferencenew/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg?updatedAt=1770793618312"
+            loading="lazy" data-w-id="27105b20-5dd0-443d-5a8a-46ae9c6eabf4" sizes="(max-width: 3840px) 100vw, 3840px"
+            alt="" class="background-image is-footer" />
+        <div class="background-overlay"></div>
+    </div>
+    <div id="footerTrigger" class="footer_trigger"></div>
+</footer>
+<style>
+    .footer_menu-card {
+        height: fit-content;
+        align-self: start;
+    }
+
+    .footer_inquiry-wrapper {
+        display: grid;
+        gap: 0.95rem;
+        padding: 1.5rem;
+        border: 1px solid rgba(248, 242, 232, 0.1);
+        border-radius: 0;
+        background: rgba(32, 20, 16, 0.6);
+        backdrop-filter: blur(10px);
+        height: fit-content;
+    }
+
+    .footer_inquiry-header {
+        display: grid;
+        gap: 0.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .footer_inquiry-header .detail {
+        color: rgba(248, 242, 232, 0.7);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .footer_inquiry-title {
+        margin: 0;
+        font-size: 1.75rem;
+        line-height: 1.1;
+        color: #f8f2e8;
+        font-weight: 500;
+    }
+
+    .footer_inquiry-form {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .footer_inquiry-input {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid rgba(248, 242, 232, 0.3);
+        background: transparent;
+        color: #f8f2e8;
+        border-radius: 0;
+        padding: 0.6rem 0;
+        font-size: 0.95rem;
+        transition: border-color 0.2s ease;
+    }
+
+    .footer_inquiry-form .footer_inquiry-input:nth-child(5) {
+        grid-column: 1 / -1;
+    }
+
+    .footer_inquiry-input::placeholder {
+        color: rgba(248, 242, 232, 0.4);
+    }
+
+    .footer_inquiry-input:focus {
+        outline: none;
+        border-color: #e78745;
+    }
+
+    .footer_inquiry-textarea {
+        min-height: 80px;
+        resize: none;
+        padding-top: 0.6rem;
+        overflow: hidden;
+    }
+
+    .footer_inquiry-submit {
+        grid-column: 1 / -1;
+        border: 0;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        background: #e78745;
+        color: #fff;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+        margin-top: 0.5rem;
+    }
+
+    .footer_inquiry-submit:hover {
+        background: #d67635;
+        transform: translateY(-1px);
+    }
+
+    @media screen and (max-width: 767px) {
+        .footer_inquiry-wrapper {
+            padding: 1.25rem;
+        }
+
+        .footer_inquiry-form {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .get-tickets-fab {
+        position: fixed;
+        right: 1.25rem;
+        bottom: 1.25rem;
+        z-index: 9999;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: 9999px;
+        background: #1f2d4f;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        line-height: 1;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .get-tickets-fab:hover {
+        opacity: 0.92;
+    }
+
+    .get-tickets-fab__icon {
+        display: inline-flex;
+        width: 1rem;
+        height: 1rem;
+    }
+
+    .tickets-modal[hidden] {
+        display: none;
+    }
+
+    .tickets-modal {
+        position: fixed;
+        right: 1.25rem;
+        bottom: 4.75rem;
+        z-index: 10000;
+        width: min(100vw - 2.5rem, 360px);
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+        transform-origin: bottom right;
+        pointer-events: none;
+        transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .tickets-modal.is-open {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+    }
+
+    .tickets-modal__dialog {
+        width: 100%;
+        background: #fff;
+        border-radius: 12px;
+        padding: 1rem;
+        max-height: min(80vh, 680px);
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .tickets-modal__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+    }
+
+    .tickets-modal__title {
+        margin: 0;
+        font-size: 1.125rem;
+        color: #5b3426;
+    }
+
+    .tickets-modal__close {
+        border: 0;
+        background: transparent;
+        font-size: 1.25rem;
+        line-height: 1;
+        cursor: pointer;
+        color: #5b3426;
+    }
+
+    .tickets-modal__form {
+        display: grid;
+        gap: 0.625rem;
+    }
+
+    .tickets-modal__input {
+        width: 100%;
+        border: 1px solid #d9d9d9;
+        border-radius: 8px;
+        padding: 0.625rem 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .tickets-modal__submit {
+        border: 0;
+        border-radius: 8px;
+        padding: 0.625rem 0.875rem;
+        background: #e78745;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .tickets-modal__disclaimer {
+        margin: 0.125rem 0 0;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        color: #5b3426;
+    }
+
+    .tickets-modal__disclaimer a {
+        color: inherit;
+        text-decoration: underline;
+    }
+
+    @media screen and (min-width: 992px) {
+        .tickets-modal__dialog {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(91, 52, 38, 0.38) transparent;
+        }
+
+        .tickets-modal__dialog::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .tickets-modal__dialog::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .tickets-modal__dialog::-webkit-scrollbar-thumb {
+            background: rgba(91, 52, 38, 0.38);
+            border-radius: 999px;
+        }
+    }
+
+    @media screen and (max-width: 479px) {
+        .get-tickets-fab {
+            right: 0.875rem;
+            bottom: 0.875rem;
+            padding: 0.625rem 0.875rem;
+        }
+
+        .tickets-modal {
+            right: 0.875rem;
+            bottom: 4.25rem;
+            width: min(100vw - 1.75rem, 360px);
+        }
+    }
+</style>
+<button type="button" class="get-tickets-fab" id="openTicketsModal" aria-label="Get Tickets">
+    <span class="get-tickets-fab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M8.5 3.5H15.5C17.38 3.5 18.32 3.5 18.91 4.09C19.5 4.68 19.5 5.62 19.5 7.5V9.5C18.4 9.5 17.5 10.4 17.5 11.5C17.5 12.6 18.4 13.5 19.5 13.5V16.5C19.5 18.38 19.5 19.32 18.91 19.91C18.32 20.5 17.38 20.5 15.5 20.5H8.5C6.62 20.5 5.68 20.5 5.09 19.91C4.5 19.32 4.5 18.38 4.5 16.5V13.5C5.6 13.5 6.5 12.6 6.5 11.5C6.5 10.4 5.6 9.5 4.5 9.5V7.5C4.5 5.62 4.5 4.68 5.09 4.09C5.68 3.5 6.62 3.5 8.5 3.5Z"
+                stroke="currentColor" stroke-width="1.5" />
+            <path d="M9.5 8.5H14.5M9.5 15.5H14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+    </span>
+    <span>Register</span>
+</button>
+<div class="tickets-modal" id="ticketsModal" aria-hidden="true">
+    <div class="tickets-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="ticketsModalTitle">
+        <div class="tickets-modal__header">
+            <h3 class="tickets-modal__title" id="ticketsModalTitle">Register</h3>
+            <button type="button" class="tickets-modal__close" data-close-tickets-modal
+                aria-label="Close registration modal">&times;</button>
+        </div>
+        <form class="tickets-modal__form">
+            <input class="tickets-modal__input" type="text" name="fullName" placeholder="Full Name" required />
+            <input class="tickets-modal__input" type="text" name="companyName" placeholder="Company Name" required />
+            <input class="tickets-modal__input" type="text" name="jobTitle" placeholder="Job Title" required />
+            <select class="tickets-modal__input" name="seniorityLevel" required>
+                <option value="" selected disabled>Seniority Level</option>
+                <option value="Managing Partner">Managing Partner</option>
+                <option value="Partner">Partner</option>
+                <option value="General Counsel">General Counsel</option>
+                <option value="Senior Associate">Senior Associate</option>
+                <option value="Associate">Associate</option>
+                <option value="Other">Other</option>
+            </select>
+            <select class="tickets-modal__input" name="lawFirm" required>
+                <option value="" selected disabled>Law Firm</option>
+                <option value="Bentsi Enchill Letsa and Ankomah">Bentsi Enchill Letsa and Ankomah</option>
+                <option value="AB and David Law Firm Ghana">AB and David Law Firm Ghana</option>
+                <option value="N. Dowuona and Company">N. Dowuona and Company</option>
+                <option value="WTS Nobisfields">WTS Nobisfields</option>
+                <option value="Kulendi at Law">Kulendi at Law</option>
+                <option value="Africa Legal Associates">Africa Legal Associates</option>
+                <option value="ENS Ghana">ENS Ghana</option>
+                <option value="Minkah Premo Osei Bonsu Bruce Cathline and Partners">Minkah Premo Osei Bonsu Bruce
+                    Cathline and Partners</option>
+                <option value="B and P Associates Lawyers Consultants and Notaries Public">B and P Associates Lawyers
+                    Consultants and Notaries Public</option>
+                <option value="Axis Legal">Axis Legal</option>
+                <option value="Zoe Akyea and Company">Zoe Akyea and Company</option>
+                <option value="Griffin Legal">Griffin Legal</option>
+                <option value="Ntrakwah and Company">Ntrakwah and Company</option>
+                <option value="Beyuo and Company">Beyuo and Company</option>
+                <option value="Legal Ink Lawyers and Notaries">Legal Ink Lawyers and Notaries</option>
+                <option value="Legalstone Solicitors">Legalstone Solicitors</option>
+                <option value="Legal Ink Lawyers">Legal Ink Lawyers</option>
+                <option value="Clyde and Company Kumasi">Clyde and Company Kumasi</option>
+                <option value="Koffie and Partners Law">Koffie and Partners Law</option>
+                <option value="Conclave Lawyers">Conclave Lawyers</option>
+                <option value="Amoah and Associates Law Firm">Amoah and Associates Law Firm</option>
+            </select>
+            <select class="tickets-modal__input" name="practiceArea" required>
+                <option value="" selected disabled>Primary Practice Area</option>
+                <option value="Corporate and M&A">Corporate and M&amp;A</option>
+                <option value="Tax">Tax</option>
+                <option value="Dispute Resolution">Dispute Resolution</option>
+                <option value="Banking and Finance">Banking and Finance</option>
+                <option value="Energy and Infrastructure">Energy and Infrastructure</option>
+                <option value="Real Estate">Real Estate</option>
+                <option value="Regulatory and Compliance">Regulatory and Compliance</option>
+            </select>
+            <input class="tickets-modal__input" type="text" name="jurisdiction"
+                placeholder="Bar Admission / Jurisdiction" required />
+            <input class="tickets-modal__input" type="tel" name="phoneNumber" placeholder="Phone Number" required />
+            <input class="tickets-modal__input" type="email" name="email" placeholder="Email" required />
+            <select class="tickets-modal__input" name="attendanceType" required>
+                <option value="" selected disabled>Attendance Type</option>
+                <option value="Conference Access">Conference Access</option>
+                <option value="Conference + VIP Reception">Conference + VIP Reception</option>
+                <option value="On-Site Registration">On-Site Registration</option>
+            </select>
+            <button type="submit" class="tickets-modal__submit">Register</button>
+            <p class="tickets-modal__disclaimer">
+                By registering, you acknowledge and agree to our Conference Attendance Terms, including event
+                communication, badge usage, and on-site conduct guidelines. Review full details on our <a
+                    href="/contact/">Contact &amp; Attendance Policy page</a>.
+            </p>
+        </form>
+    </div>
+</div>
+<script>
+    (function () {
+        var openBtn = document.getElementById('openTicketsModal');
+        var modal = document.getElementById('ticketsModal');
+        if (!openBtn || !modal) return;
+
+        var closeTargets = modal.querySelectorAll('[data-close-tickets-modal]');
+
+        function openModal() {
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeModal() {
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        openBtn.addEventListener('click', function (event) {
+            event.stopPropagation();
+            if (!modal.classList.contains('is-open')) {
+                openModal();
+            } else {
+                closeModal();
+            }
+        });
+
+        closeTargets.forEach(function (el) {
+            el.addEventListener('click', closeModal);
+        });
+
+        modal.addEventListener('click', function (event) {
+            event.stopPropagation();
+        });
+
+        document.addEventListener('click', function () {
+            if (modal.classList.contains('is-open')) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+                closeModal();
+            }
+        });
+
+        var textareas = document.querySelectorAll('.footer_inquiry-textarea');
+        textareas.forEach(function (textarea) {
+            textarea.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
+    })();
+</script>
