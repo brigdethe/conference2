@@ -1,60 +1,65 @@
+document.addEventListener("DOMContentLoaded", () => {
+    const body = document.body;
+    const menuButton = document.querySelector("#navbarMenuButton");
+    const mobileMenu = document.querySelector(".navbar_menu.tablet-down");
+    const mobileMenuLinks = document.querySelectorAll(".navbar_menu.tablet-down a");
+    const mobileQuery = window.matchMedia("(max-width: 991px)");
+    let scrollPosition = 0;
 
-                            document.addEventListener('DOMContentLoaded', () => {
-                                const navMenu = document.querySelector('.navbar_menu');
-                                const navbarMenuButton = document.querySelector('#navbarMenuButton');
-                                const body = document.body;
-                                let scrollPosition = 0;
-                                let lockScrollTimeout = null;
+    if (!menuButton || !mobileMenu) return;
 
-                                if (!navMenu) return;
+    function isMobileViewport() {
+        return mobileQuery.matches;
+    }
 
-                                function lockScroll() {
-                                    // CAPTURE SCROLL POSITION IMMEDIATELY
-                                    scrollPosition = window.pageYOffset || document.documentElement.scrollTop || 0;
+    function setExpandedState(expanded) {
+        menuButton.setAttribute("aria-expanded", expanded ? "true" : "false");
+    }
 
-                                    // Apply the correct top position BEFORE setting the attribute
-                                    body.style.top = `-${scrollPosition}px`;
+    function openMenu() {
+        scrollPosition = window.pageYOffset || document.documentElement.scrollTop || 0;
+        body.style.top = `-${scrollPosition}px`;
+        body.setAttribute("data-menu-visible", "true");
+        setExpandedState(true);
+    }
 
-                                    // Now set attribute (CSS will apply position: fixed, etc.)
-                                    body.setAttribute('data-menu-visible', 'true');
-                                }
+    function closeMenu() {
+        const savedPosition = scrollPosition;
+        body.style.removeProperty("top");
+        body.setAttribute("data-menu-visible", "false");
+        setExpandedState(false);
+        window.scrollTo(0, savedPosition);
+    }
 
-                                function unlockScroll() {
-                                    // Store the captured position
-                                    const savedPosition = scrollPosition;
+    function toggleMenu() {
+        const open = body.getAttribute("data-menu-visible") === "true";
+        if (open) closeMenu();
+        else openMenu();
+    }
 
-                                    // Remove the inline top style
-                                    body.style.removeProperty('top');
+    menuButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        if (!isMobileViewport()) return;
+        toggleMenu();
+    });
 
-                                    // Remove the attribute (CSS will revert)
-                                    body.setAttribute('data-menu-visible', 'false');
+    mobileMenuLinks.forEach((link) => {
+        link.addEventListener("click", () => {
+            if (isMobileViewport()) closeMenu();
+        });
+    });
 
-                                    // Return to the saved scroll position
-                                    window.scrollTo(0, savedPosition);
-                                }
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        if (body.getAttribute("data-menu-visible") === "true") closeMenu();
+    });
 
-                                function updateMenuState() {
-                                    const isVisible = window.getComputedStyle(navMenu).display === 'block';
+    mobileQuery.addEventListener("change", (event) => {
+        if (!event.matches && body.getAttribute("data-menu-visible") === "true") {
+            closeMenu();
+        }
+    });
 
-                                    if (isVisible && body.getAttribute('data-menu-visible') !== 'true') {
-                                        lockScroll();
-                                    } else if (!isVisible && body.getAttribute('data-menu-visible') === 'true') {
-                                        unlockScroll();
-                                    }
-                                }
-
-                                const observer = new MutationObserver(updateMenuState);
-                                observer.observe(navMenu, {
-                                    attributes: true,
-                                    attributeFilter: ['style', 'class']
-                                });
-
-                                if (window.getComputedStyle(navMenu).display === 'block') lockScroll();
-
-                                navbarMenuButton ? .addEventListener('click', () => {
-                                    const currentlyVisible = body.getAttribute('data-menu-visible') === 'true';
-                                    if (!currentlyVisible) lockScroll();
-                                    else unlockScroll();
-                                });
-                            });
-                        
+    body.setAttribute("data-menu-visible", "false");
+    setExpandedState(false);
+});
