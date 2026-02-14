@@ -2,9 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const body = document.body;
     const menuButton = document.querySelector("#navbarMenuButton");
     const mobileMenu = document.querySelector(".navbar_menu.tablet-down");
-    const mobileMenuLinks = document.querySelectorAll(".navbar_menu.tablet-down a");
     const mobileQuery = window.matchMedia("(max-width: 991px)");
-    let scrollPosition = 0;
 
     if (!menuButton || !mobileMenu) return;
 
@@ -12,30 +10,48 @@ document.addEventListener("DOMContentLoaded", () => {
         return mobileQuery.matches;
     }
 
+    function isMenuOpen() {
+        return body.getAttribute("data-menu-visible") === "true";
+    }
+
     function setExpandedState(expanded) {
         menuButton.setAttribute("aria-expanded", expanded ? "true" : "false");
     }
 
-    function openMenu() {
-        scrollPosition = window.pageYOffset || document.documentElement.scrollTop || 0;
-        body.style.top = `-${scrollPosition}px`;
-        body.setAttribute("data-menu-visible", "true");
-        setExpandedState(true);
-    }
-
-    function closeMenu() {
-        const savedPosition = scrollPosition;
+    function resetMenuState() {
         body.style.removeProperty("top");
         body.setAttribute("data-menu-visible", "false");
         setExpandedState(false);
-        window.scrollTo(0, savedPosition);
+        mobileMenu.style.display = "none";
+    }
+
+    function openMenu() {
+        if (isMenuOpen()) return;
+        body.setAttribute("data-menu-visible", "true");
+        setExpandedState(true);
+        mobileMenu.style.display = "flex";
+    }
+
+    function closeMenu() {
+        resetMenuState();
     }
 
     function toggleMenu() {
-        const open = body.getAttribute("data-menu-visible") === "true";
+        const open = isMenuOpen();
         if (open) closeMenu();
         else openMenu();
     }
+
+    function isInsideMenuOrToggle(target) {
+        if (!target) return false;
+        return menuButton.contains(target) || mobileMenu.contains(target);
+    }
+
+    if (!mobileMenu.id) {
+        mobileMenu.id = "mobile-navbar-menu";
+    }
+    menuButton.setAttribute("aria-controls", mobileMenu.id);
+    menuButton.setAttribute("aria-haspopup", "true");
 
     menuButton.addEventListener("click", (event) => {
         event.preventDefault();
@@ -43,23 +59,60 @@ document.addEventListener("DOMContentLoaded", () => {
         toggleMenu();
     });
 
-    mobileMenuLinks.forEach((link) => {
-        link.addEventListener("click", () => {
-            if (isMobileViewport()) closeMenu();
-        });
+    mobileMenu.addEventListener("click", (event) => {
+        if (!isMobileViewport() || !isMenuOpen()) return;
+        const target = event.target;
+        const link = target instanceof Element ? target.closest("a[href]") : null;
+        if (link) closeMenu();
     });
 
     document.addEventListener("keydown", (event) => {
         if (event.key !== "Escape") return;
-        if (body.getAttribute("data-menu-visible") === "true") closeMenu();
+        if (isMenuOpen()) closeMenu();
     });
 
-    mobileQuery.addEventListener("change", (event) => {
-        if (!event.matches && body.getAttribute("data-menu-visible") === "true") {
-            closeMenu();
-        }
+    document.addEventListener("pointerdown", (event) => {
+        if (!isMobileViewport() || !isMenuOpen()) return;
+        const target = event.target;
+        if (isInsideMenuOrToggle(target)) return;
+        closeMenu();
+    }, true);
+
+    document.addEventListener("mousedown", (event) => {
+        if (!isMobileViewport() || !isMenuOpen()) return;
+        const target = event.target;
+        if (isInsideMenuOrToggle(target)) return;
+        closeMenu();
+    }, true);
+
+    document.addEventListener("touchstart", (event) => {
+        if (!isMobileViewport() || !isMenuOpen()) return;
+        const target = event.target;
+        if (isInsideMenuOrToggle(target)) return;
+        closeMenu();
+    }, true);
+
+    document.addEventListener("wheel", () => {
+        if (!isMobileViewport() || !isMenuOpen()) return;
+        closeMenu();
+    }, {
+        passive: true
     });
 
-    body.setAttribute("data-menu-visible", "false");
-    setExpandedState(false);
+    window.addEventListener("scroll", () => {
+        if (!isMobileViewport() || !isMenuOpen()) return;
+        closeMenu();
+    }, {
+        passive: true
+    });
+
+    mobileQuery.addEventListener("change", () => {
+        resetMenuState();
+    });
+
+    window.addEventListener("pageshow", () => {
+        resetMenuState();
+    });
+
+    resetMenuState();
 });
