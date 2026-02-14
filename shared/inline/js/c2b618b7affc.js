@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const body = document.body;
     const menuButton = document.querySelector("#navbarMenuButton");
     const mobileMenu = document.querySelector(".navbar_menu.tablet-down");
+    const footerLinks = document.querySelectorAll('a[href="#footer"]');
     const mobileQuery = window.matchMedia("(max-width: 991px)");
 
     if (!menuButton || !mobileMenu) return;
@@ -57,6 +58,26 @@ document.addEventListener("DOMContentLoaded", () => {
         event.preventDefault();
         if (!isMobileViewport()) return;
         toggleMenu();
+    });
+
+    footerLinks.forEach((link) => {
+        link.addEventListener("click", (event) => {
+            const footer = document.getElementById("footer");
+            if (!footer) return;
+            event.preventDefault();
+            const scrollToFooter = () => {
+                footer.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+            };
+            if (isMobileViewport() && isMenuOpen()) {
+                closeMenu();
+                requestAnimationFrame(scrollToFooter);
+            } else {
+                scrollToFooter();
+            }
+        });
     });
 
     mobileMenu.addEventListener("click", (event) => {

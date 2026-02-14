@@ -2,7 +2,13 @@
     <div class="padding-global footer">
         <div class="footer_container-wrapper">
             <div class="container-four-col footer-left">
-                <div data-heading-animation="" class="footer-text">Submit Seminar Questions</div>
+                <div data-heading-animation="" class="footer-text">
+                    Submit Seminar Questions
+                    <span class="footer-text-note">
+                        Have a question you want answered at the seminar? Select <strong>Seminar Question</strong> in
+                        <strong>Inquiry Type</strong> when submitting your inquiry.
+                    </span>
+                </div>
                 <a href="#" class="footer_logo-link w-nav-brand">
                     <div class="footer-logo">
                         <img src="https://ik.imagekit.io/dr5fryhth/conference/logo2.svg?updatedAt=1769833653837"
@@ -28,6 +34,7 @@
                                 <option value="" selected disabled>Inquiry Type</option>
                                 <option value="General Inquiry">General Inquiry</option>
                                 <option value="Conference Registration">Conference Registration</option>
+                                <option value="Seminar Question">Seminar Question</option>
                                 <option value="Sponsorship">Sponsorship</option>
                                 <option value="Speaking Request">Speaking Request</option>
                                 <option value="Media / Press">Media / Press</option>
@@ -56,6 +63,25 @@
     <div id="footerTrigger" class="footer_trigger"></div>
 </footer>
 <style>
+    .footer-text-note {
+        display: block;
+        margin-top: 0.45rem;
+        max-width: 34ch;
+        color: inherit;
+        font-family: var(--_typography---font-styles--body, inherit);
+        font-size: clamp(0.95rem, 1.05vw, 1.1rem);
+        line-height: 1.38;
+        letter-spacing: 0;
+        font-weight: 500;
+        text-wrap: pretty;
+        opacity: 0.94;
+    }
+
+    .footer-text-note strong {
+        color: white;
+        font-weight: 700;
+    }
+
     .footer_menu-card {
         height: fit-content;
         align-self: start;
