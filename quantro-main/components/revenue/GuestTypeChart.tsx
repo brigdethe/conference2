@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MoreHorizontal } from 'lucide-react';
 
+import { DASHBOARD_STATS } from '../../data/dashboard';
+
 type ChartView = 'guest-type' | 'invited-status' | 'registration-trend';
 
 export const GuestTypeChart: React.FC = () => {
@@ -43,15 +45,29 @@ export const GuestTypeChart: React.FC = () => {
                     total: 52
                 };
             case 'registration-trend':
+                const trendValues = DASHBOARD_STATS.registrationTrend; // Values from centralized stats
+                const days = Array.from({ length: 7 }).map((_, i) => {
+                    const date = new Date();
+                    date.setDate(date.getDate() - (6 - i));
+                    return {
+                        date: date,
+                        label: date.toLocaleDateString('en-US', { disable_offset_days: true, month: 'short', day: 'numeric' }),
+                        value: trendValues[i],
+                        isToday: i === 6
+                    };
+                });
+
+                const totalRegistrations = days.reduce((acc, Day) => acc + Day.value, 0);
+
                 return {
-                    title: 'Registration Trend (10 Days)',
-                    data: Array.from({ length: 10 }).map((_, i) => ({
-                        label: `Day ${i + 1}`,
-                        value: Math.floor(Math.random() * 50) + 10,
-                        color: i === 9 ? 'bg-slate-900' : 'bg-slate-200'
+                    title: 'Registration Trend (7 Days)',
+                    data: days.map(day => ({
+                        label: day.label,
+                        value: day.value,
+                        color: day.isToday ? 'bg-slate-900' : 'bg-slate-200'
                     })),
                     type: 'trend',
-                    total: 0
+                    total: totalRegistrations
                 };
         }
     };
@@ -108,21 +124,19 @@ export const GuestTypeChart: React.FC = () => {
                                     className={`w-full max-w-[40px] ${view === 'registration-trend' ? 'rounded-sm' : 'rounded-t-md'} ${item.color} relative min-h-[4px]`}
                                 >
                                     {/* Tooltip for trend or value label for others */}
-                                    {view !== 'registration-trend' && (
-                                        <motion.div
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            transition={{ delay: 0.4 }}
-                                            className="absolute -top-6 left-1/2 -translate-x-1/2 font-bold text-slate-700 text-sm"
-                                        >
-                                            {item.value}
-                                        </motion.div>
-                                    )}
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.4 }}
+                                        className="absolute -top-6 left-1/2 -translate-x-1/2 font-bold text-slate-700 text-sm"
+                                    >
+                                        {item.value}
+                                    </motion.div>
                                 </motion.div>
                             </div>
                             {/* X-Axis Label */}
                             <span className="text-[10px] sm:text-xs font-medium text-slate-500 truncate max-w-full text-center">
-                                {view === 'registration-trend' ? item.label.replace('Day ', '') : item.label}
+                                {item.label}
                             </span>
                         </motion.div>
                     ))}
@@ -142,7 +156,9 @@ export const GuestTypeChart: React.FC = () => {
             )}
             {view === 'registration-trend' && (
                 <div className="border-t border-slate-100 pt-4 text-center">
-                    <span className="text-sm text-slate-500">Last 10 days activity</span>
+                    <span className="text-sm text-slate-500">
+                        {chartConfig.total} registrations in last 7 days
+                    </span>
                 </div>
             )}
         </div>

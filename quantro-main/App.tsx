@@ -12,9 +12,34 @@ import { useUsers } from './hooks/useUsers';
 
 import { TabOption } from './types';
 
+import { DASHBOARD_STATS } from './data/dashboard';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabOption>(TabOption.Users);
   const { users, total, isLoading, error, refetch } = useUsers();
+
+  const now = new Date();
+  const targetDate = new Date(DASHBOARD_STATS.seminarDate); // Using centralized date
+  const diff = targetDate.getTime() - now.getTime();
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+  const getKPILabel = () => {
+    switch (activeTab) {
+      case TabOption.Revenue: return "Total Revenue";
+      case TabOption.Projects: return "Time until Seminar";
+      default: return "Registered Users";
+    }
+  };
+
+  const getKPIValue = () => {
+    switch (activeTab) {
+      case TabOption.Revenue: return "₵1,000";
+      case TabOption.Projects: return `${days}d ${hours}h`;
+      default: return total.toLocaleString();
+    }
+  };
 
   return (
     <div className="min-h-screen bg-bgPrimary pb-12 font-sans selection:bg-slate-200">
@@ -27,8 +52,8 @@ export default function App() {
             <Controls activeTab={activeTab} onTabChange={setActiveTab} />
 
             <KPIHeader
-              label={activeTab === TabOption.Revenue ? "Total Revenue" : "Registered Users"}
-              value={activeTab === TabOption.Revenue ? "₵1,000" : total.toLocaleString()}
+              label={getKPILabel()}
+              value={getKPIValue()}
               isLoading={isLoading}
             />
 
