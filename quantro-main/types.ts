@@ -14,5 +14,5 @@ export interface ChartDataPoint {
 export enum TabOption {
   Users = 'Users',
   Revenue = 'Revenue',
-  Projects = 'Projects'
+  Overview = 'Overview'
 }
