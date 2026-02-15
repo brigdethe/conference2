@@ -1,11 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { MoreHorizontal } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import type { DashboardMetrics, DashboardTransaction } from '../../data/dashboard';
+import type {
+  DashboardMetrics,
+  DashboardSidebarContent,
+  DashboardTransaction,
+} from '../../data/dashboard';
 
 interface RevenueHistoryProps {
   transactions: DashboardTransaction[];
   revenueByTicketType: DashboardMetrics['revenueByTicketType'];
+  ticketTypeDetails: DashboardMetrics['details']['ticketTypes'];
+  onOpenDetail?: (detail: DashboardSidebarContent) => void;
 }
 
 const formatCurrency = (amount: number) =>
@@ -14,6 +20,8 @@ const formatCurrency = (amount: number) =>
 export const RevenueHistory: React.FC<RevenueHistoryProps> = ({
   transactions,
   revenueByTicketType,
+  ticketTypeDetails,
+  onOpenDetail,
 }) => {
   const [filter, setFilter] = useState<'All' | 'Bought' | 'Refunded'>('All');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -105,7 +113,11 @@ export const RevenueHistory: React.FC<RevenueHistoryProps> = ({
           <tbody className="divide-y divide-slate-50">
             {filteredTransactions.length > 0 ? (
               filteredTransactions.map((transaction) => (
-                <tr key={transaction.id} className="group transition-colors hover:bg-slate-50/50">
+                <tr
+                  key={transaction.id}
+                  onClick={() => onOpenDetail?.({ kind: 'transaction', transaction })}
+                  className="group cursor-pointer transition-colors hover:bg-slate-50/50"
+                >
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-2">
                       <div
@@ -139,7 +151,11 @@ export const RevenueHistory: React.FC<RevenueHistoryProps> = ({
 
       <div className="mt-auto border-t border-slate-200 bg-slate-50/50 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div>
+          <button
+            type="button"
+            onClick={() => onOpenDetail?.({ kind: 'ticketType', ticketType: ticketTypeDetails.VIP })}
+            className="text-left transition-opacity hover:opacity-80"
+          >
             <div className="mb-1 text-sm font-medium text-slate-500">
               VIP Total ({revenueByTicketType.VIP.count})
             </div>
@@ -148,9 +164,17 @@ export const RevenueHistory: React.FC<RevenueHistoryProps> = ({
                 {formatCurrency(revenueByTicketType.VIP.amount)}
               </span>
             </div>
-          </div>
+          </button>
+
           <div className="h-8 w-px bg-slate-200"></div>
-          <div>
+
+          <button
+            type="button"
+            onClick={() =>
+              onOpenDetail?.({ kind: 'ticketType', ticketType: ticketTypeDetails.Regular })
+            }
+            className="text-left transition-opacity hover:opacity-80"
+          >
             <div className="mb-1 text-sm font-medium text-slate-500">
               Regular Total ({revenueByTicketType.Regular.count})
             </div>
@@ -159,9 +183,15 @@ export const RevenueHistory: React.FC<RevenueHistoryProps> = ({
                 {formatCurrency(revenueByTicketType.Regular.amount)}
               </span>
             </div>
-          </div>
+          </button>
+
           <div className="h-8 w-px bg-slate-200"></div>
-          <div>
+
+          <button
+            type="button"
+            onClick={() => onOpenDetail?.({ kind: 'revenueTotal', revenueByTicketType })}
+            className="text-left transition-opacity hover:opacity-80"
+          >
             <div className="mb-1 text-sm font-medium text-slate-500">
               Total Revenue ({revenueByTicketType.total.count})
             </div>
@@ -170,7 +200,7 @@ export const RevenueHistory: React.FC<RevenueHistoryProps> = ({
                 {formatCurrency(revenueByTicketType.total.amount)}
               </span>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>

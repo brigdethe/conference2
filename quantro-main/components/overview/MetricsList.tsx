@@ -1,19 +1,24 @@
 import React from 'react';
-import { Users, Ticket, CreditCard, TrendingUp, UserCheck, UserX } from 'lucide-react';
-import type { DashboardMetrics } from '../../data/dashboard';
+import { Users, Ticket, CreditCard, UserCheck } from 'lucide-react';
+import type { DashboardMetrics, DashboardSidebarContent } from '../../data/dashboard';
 
 interface MetricsListProps {
     dashboard: DashboardMetrics;
+    onOpenDetail?: (detail: DashboardSidebarContent) => void;
 }
 
-export const MetricsList: React.FC<MetricsListProps> = ({ dashboard }) => {
+export const MetricsList: React.FC<MetricsListProps> = ({ dashboard, onOpenDetail }) => {
     const metrics = [
         {
             label: 'Total Registrations',
             value: dashboard.registeredUsers.toLocaleString(),
             icon: Users,
             color: 'text-slate-800',
-            bg: 'bg-slate-100'
+            bg: 'bg-slate-100',
+            detail: {
+                kind: 'overviewRegistrations',
+                registrations: dashboard.details.overview.registrations
+            } as DashboardSidebarContent
         },
         {
             label: 'VIP Tickets Sold',
@@ -21,7 +26,11 @@ export const MetricsList: React.FC<MetricsListProps> = ({ dashboard }) => {
             subValue: `GHS ${(dashboard.revenueByTicketType.VIP.amount).toLocaleString()}`,
             icon: Ticket,
             color: 'text-slate-800',
-            bg: 'bg-slate-100'
+            bg: 'bg-slate-100',
+            detail: {
+                kind: 'ticketType',
+                ticketType: dashboard.details.ticketTypes.VIP
+            } as DashboardSidebarContent
         },
         {
             label: 'Regular Tickets Sold',
@@ -29,21 +38,33 @@ export const MetricsList: React.FC<MetricsListProps> = ({ dashboard }) => {
             subValue: `GHS ${(dashboard.revenueByTicketType.Regular.amount).toLocaleString()}`,
             icon: Ticket,
             color: 'text-slate-800',
-            bg: 'bg-slate-100'
+            bg: 'bg-slate-100',
+            detail: {
+                kind: 'ticketType',
+                ticketType: dashboard.details.ticketTypes.Regular
+            } as DashboardSidebarContent
         },
         {
             label: 'Total Revenue',
             value: `GHS ${dashboard.totalRevenue.toLocaleString()}`,
             icon: CreditCard,
             color: 'text-slate-800',
-            bg: 'bg-slate-100'
+            bg: 'bg-slate-100',
+            detail: {
+                kind: 'revenueTotal',
+                revenueByTicketType: dashboard.revenueByTicketType
+            } as DashboardSidebarContent
         },
         {
             label: 'Invited Guests',
             value: dashboard.invitedGuests.toLocaleString(),
             icon: UserCheck,
             color: 'text-slate-800',
-            bg: 'bg-slate-100'
+            bg: 'bg-slate-100',
+            detail: {
+                kind: 'overviewInvitedGuests',
+                invitedGuests: dashboard.details.overview.invitedGuests
+            } as DashboardSidebarContent
         }
     ];
 
@@ -53,7 +74,12 @@ export const MetricsList: React.FC<MetricsListProps> = ({ dashboard }) => {
 
             <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
                 {metrics.map((metric, index) => (
-                    <div key={index} className="flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 group">
+                    <button
+                        key={index}
+                        type="button"
+                        onClick={() => onOpenDetail?.(metric.detail)}
+                        className="w-full text-left flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 group"
+                    >
                         <div className={`p-3 rounded-2xl ${metric.bg} ${metric.color} group-hover:scale-110 transition-transform`}>
                             <metric.icon className="w-6 h-6" />
                         </div>
@@ -66,7 +92,7 @@ export const MetricsList: React.FC<MetricsListProps> = ({ dashboard }) => {
                                 )}
                             </div>
                         </div>
-                    </div>
+                    </button>
                 ))}
             </div>
             <style>{`

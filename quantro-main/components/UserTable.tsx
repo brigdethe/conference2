@@ -9,6 +9,7 @@ interface UserTableProps {
     isLoading?: boolean;
     error?: string | null;
     onRetry?: () => void;
+    onUserSelect?: (user: User) => void;
 }
 
 export const UserTable: React.FC<UserTableProps> = ({
@@ -16,6 +17,7 @@ export const UserTable: React.FC<UserTableProps> = ({
     isLoading = false,
     error = null,
     onRetry,
+    onUserSelect,
 }) => {
     const [expandedRows, setExpandedRows] = useState<number[]>([]);
     const [activeActionRow, setActiveActionRow] = useState<number | null>(null);
@@ -138,7 +140,10 @@ export const UserTable: React.FC<UserTableProps> = ({
 
                         {!isLoading && !error && users.map((user) => (
                             <React.Fragment key={user.id}>
-                                <tr className="group hover:bg-slate-50/70 transition-colors border-b border-slate-100 last:border-0 relative">
+                                <tr
+                                    onClick={() => onUserSelect?.(user)}
+                                    className={`group hover:bg-slate-50/70 transition-colors border-b border-slate-100 last:border-0 relative ${onUserSelect ? 'cursor-pointer' : ''}`}
+                                >
                                     <td className="py-4 px-6">
                                         <div className="flex items-center gap-3 min-w-[220px]">
                                             <div className="min-w-0">
@@ -147,7 +152,10 @@ export const UserTable: React.FC<UserTableProps> = ({
                                             </div>
                                             {/* Mobile Expand Button - Visible only when columns are hidden */}
                                             <button
-                                                onClick={() => toggleRow(user.id)}
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    toggleRow(user.id);
+                                                }}
                                                 className="ml-1 p-1 rounded-full hover:bg-slate-200 text-slate-400 xl:hidden"
                                             >
                                                 {expandedRows.includes(user.id) ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -167,7 +175,10 @@ export const UserTable: React.FC<UserTableProps> = ({
                                     </td>
                                     <td className="py-4 px-6 text-right relative">
                                         <button
-                                            onClick={(event) => toggleActionMenu(user.id, event.currentTarget)}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                toggleActionMenu(user.id, event.currentTarget);
+                                            }}
                                             className="inline-flex items-center justify-center h-8 w-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                                         >
                                             <MoreHorizontal className="w-4 h-4" />

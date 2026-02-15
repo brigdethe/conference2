@@ -1,4 +1,5 @@
 import type { User } from './users';
+import type { Inquiry } from './inquiries';
 
 export type TicketType = 'VIP' | 'Regular';
 export type TransactionType = 'Bought' | 'Refunded';
@@ -9,7 +10,103 @@ export interface DashboardTransaction {
   ticketType: TicketType;
   amount: number;
   date: string;
+  buyerId: number | null;
+  buyerName: string;
 }
+
+export interface RevenueBucket {
+  count: number;
+  amount: number;
+}
+
+export interface RevenueByTicketType {
+  VIP: RevenueBucket;
+  Regular: RevenueBucket;
+  total: RevenueBucket;
+}
+
+export interface DashboardTicketPurchase {
+  transactionId: string;
+  buyerId: number | null;
+  buyerName: string;
+  type: TransactionType;
+  amount: number;
+  date: string;
+}
+
+export interface DashboardTicketTypeDetail {
+  ticketType: TicketType;
+  count: number;
+  amount: number;
+  purchases: DashboardTicketPurchase[];
+}
+
+export interface DashboardUserDetail extends User {
+  ticketType: TicketType;
+  registeredAt: string;
+  totalSpent: number;
+  transactions: DashboardTransaction[];
+}
+
+export interface DashboardRegistrationsOverviewDetail {
+  total: number;
+  vip: number;
+  regular: number;
+  inPerson: number;
+  virtual: number;
+  knownProfiles: number;
+  latestRegistrationAt: string | null;
+}
+
+export interface DashboardInvitedGuestsOverviewDetail {
+  total: number;
+  accepted: number;
+  declined: number;
+  pending: number;
+}
+
+export interface DashboardDetails {
+  users: DashboardUserDetail[];
+  transactions: DashboardTransaction[];
+  ticketTypes: {
+    VIP: DashboardTicketTypeDetail;
+    Regular: DashboardTicketTypeDetail;
+  };
+  overview: {
+    registrations: DashboardRegistrationsOverviewDetail;
+    invitedGuests: DashboardInvitedGuestsOverviewDetail;
+  };
+}
+
+export type DashboardSidebarContent =
+  | {
+    kind: 'user';
+    user: DashboardUserDetail;
+  }
+  | {
+    kind: 'transaction';
+    transaction: DashboardTransaction;
+  }
+  | {
+    kind: 'ticketType';
+    ticketType: DashboardTicketTypeDetail;
+  }
+  | {
+    kind: 'revenueTotal';
+    revenueByTicketType: RevenueByTicketType;
+  }
+  | {
+    kind: 'overviewRegistrations';
+    registrations: DashboardRegistrationsOverviewDetail;
+  }
+  | {
+    kind: 'overviewInvitedGuests';
+    invitedGuests: DashboardInvitedGuestsOverviewDetail;
+  }
+  | {
+    kind: 'inquiry';
+    inquiry: Inquiry;
+  };
 
 export interface DashboardMetrics {
   seminarDate: string;
@@ -22,22 +119,10 @@ export interface DashboardMetrics {
   regularSales: number;
   totalSales: number;
   totalRevenue: number;
-  revenueByTicketType: {
-    VIP: {
-      count: number;
-      amount: number;
-    };
-    Regular: {
-      count: number;
-      amount: number;
-    };
-    total: {
-      count: number;
-      amount: number;
-    };
-  };
+  revenueByTicketType: RevenueByTicketType;
   registrationTrend: number[];
   transactions: DashboardTransaction[];
+  details: DashboardDetails;
 }
 
 export const DASHBOARD_STATS = {
@@ -47,6 +132,7 @@ export const DASHBOARD_STATS = {
     Regular: 100,
   },
   trendWeights: [0.12, 0.14, 0.13, 0.15, 0.14, 0.15, 0.17],
+  recentTransactionLimit: 30,
 };
 
 function buildRegistrationTrend(totalRegistrations: number): number[] {
@@ -74,6 +160,82 @@ function inferVipSales(users: User[], totalRegistrations: number): number {
   return Math.round(totalRegistrations * ratio);
 }
 
+function resolveTicketType(user: User): TicketType {
+  if (user.ticketType === 'VIP' || user.ticketType === 'Regular') {
+    return user.ticketType;
+  }
+
+  return user.attendanceType === 'In-Person' ? 'VIP' : 'Regular';
+}
+
+function resolveRegistrationDate(user: User, index: number): string {
+  if (user.registeredAt) {
+    const parsedDate = new Date(user.registeredAt);
+    if (!Number.isNaN(parsedDate.getTime())) {
+      return parsedDate.toISOString();
+    }
+  }
+
+  const fallbackDate = new Date();
+  fallbackDate.setDate(fallbackDate.getDate() - (index + 1));
+  fallbackDate.setHours(9 + (index % 8), (index * 11) % 60, 0, 0);
+  return fallbackDate.toISOString();
+}
+
+function toSignedAmount(transaction: DashboardTransaction): number {
+  return transaction.type === 'Refunded' ? -transaction.amount : transaction.amount;
+}
+
+function buildUserDetails(users: User[]): DashboardUserDetail[] {
+  return users.map((user, index) => ({
+    ...user,
+    ticketType: resolveTicketType(user),
+    registeredAt: resolveRegistrationDate(user, index),
+    totalSpent: 0,
+    transactions: [],
+  }));
+}
+
+function buildTransactions(users: DashboardUserDetail[]): DashboardTransaction[] {
+  const transactions = users.map((user) => ({
+    id: `txn-${user.id}`,
+    type: 'Bought' as const,
+    ticketType: user.ticketType,
+    amount: DASHBOARD_STATS.ticketPrice[user.ticketType],
+    date: user.registeredAt,
+    buyerId: user.id,
+    buyerName: user.fullName,
+  }));
+
+  return transactions
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, DASHBOARD_STATS.recentTransactionLimit);
+}
+
+function buildTicketTypeDetail(
+  ticketType: TicketType,
+  revenue: RevenueBucket,
+  transactions: DashboardTransaction[]
+): DashboardTicketTypeDetail {
+  const purchases = transactions
+    .filter((transaction) => transaction.ticketType === ticketType)
+    .map((transaction) => ({
+      transactionId: transaction.id,
+      buyerId: transaction.buyerId,
+      buyerName: transaction.buyerName,
+      type: transaction.type,
+      amount: transaction.amount,
+      date: transaction.date,
+    }));
+
+  return {
+    ticketType,
+    count: revenue.count,
+    amount: revenue.amount,
+    purchases,
+  };
+}
+
 export function buildDashboardMetrics(users: User[], totalUsers: number): DashboardMetrics {
   const registeredUsers = Math.max(totalUsers, users.length, 0);
   const vipSales = Math.min(inferVipSales(users, registeredUsers), registeredUsers);
@@ -83,20 +245,57 @@ export function buildDashboardMetrics(users: User[], totalUsers: number): Dashbo
   const invitedGuests = 0;
   const invitedAccepted = 0;
   const invitedDeclined = 0;
+
   const vipRevenue = vipSales * DASHBOARD_STATS.ticketPrice.VIP;
   const regularRevenue = regularSales * DASHBOARD_STATS.ticketPrice.Regular;
   const totalRevenue = vipRevenue + regularRevenue;
 
-  const transactions: DashboardTransaction[] = users.slice(0, 12).map((user, index) => {
-    const ticketType: TicketType = user.attendanceType === 'In-Person' ? 'VIP' : 'Regular';
+  const revenueByTicketType: RevenueByTicketType = {
+    VIP: {
+      count: vipSales,
+      amount: vipRevenue,
+    },
+    Regular: {
+      count: regularSales,
+      amount: regularRevenue,
+    },
+    total: {
+      count: vipSales + regularSales,
+      amount: totalRevenue,
+    },
+  };
+
+  const userDetails = buildUserDetails(users);
+  const transactions = buildTransactions(userDetails);
+
+  const transactionsByUserId = new Map<number, DashboardTransaction[]>();
+  for (const transaction of transactions) {
+    if (transaction.buyerId == null) continue;
+    const current = transactionsByUserId.get(transaction.buyerId) ?? [];
+    current.push(transaction);
+    transactionsByUserId.set(transaction.buyerId, current);
+  }
+
+  const usersWithTransactions = userDetails.map((user) => {
+    const userTransactions = transactionsByUserId.get(user.id) ?? [];
+    const totalSpent = userTransactions.reduce((sum, transaction) => sum + toSignedAmount(transaction), 0);
+
     return {
-      id: String(user.id),
-      type: 'Bought',
-      ticketType,
-      amount: DASHBOARD_STATS.ticketPrice[ticketType],
-      date: new Date(Date.now() - index * 60 * 60 * 1000).toISOString(),
+      ...user,
+      transactions: userTransactions,
+      totalSpent,
     };
   });
+
+  const ticketTypes = {
+    VIP: buildTicketTypeDetail('VIP', revenueByTicketType.VIP, transactions),
+    Regular: buildTicketTypeDetail('Regular', revenueByTicketType.Regular, transactions),
+  };
+
+  const latestRegistrationAt =
+    usersWithTransactions
+      .map((user) => user.registeredAt)
+      .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] ?? null;
 
   return {
     seminarDate: DASHBOARD_STATS.seminarDate,
@@ -109,21 +308,30 @@ export function buildDashboardMetrics(users: User[], totalUsers: number): Dashbo
     regularSales,
     totalSales: vipSales + regularSales,
     totalRevenue,
-    revenueByTicketType: {
-      VIP: {
-        count: vipSales,
-        amount: vipRevenue,
-      },
-      Regular: {
-        count: regularSales,
-        amount: regularRevenue,
-      },
-      total: {
-        count: vipSales + regularSales,
-        amount: totalRevenue,
-      },
-    },
+    revenueByTicketType,
     registrationTrend: buildRegistrationTrend(registeredUsers),
     transactions,
+    details: {
+      users: usersWithTransactions,
+      transactions,
+      ticketTypes,
+      overview: {
+        registrations: {
+          total: registeredUsers,
+          vip: revenueByTicketType.VIP.count,
+          regular: revenueByTicketType.Regular.count,
+          inPerson: vipSales,
+          virtual: regularSales,
+          knownProfiles: usersWithTransactions.length,
+          latestRegistrationAt,
+        },
+        invitedGuests: {
+          total: invitedGuests,
+          accepted: invitedAccepted,
+          declined: invitedDeclined,
+          pending: Math.max(invitedGuests - invitedAccepted - invitedDeclined, 0),
+        },
+      },
+    },
   };
 }

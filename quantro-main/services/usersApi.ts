@@ -21,11 +21,31 @@ function toAttendanceType(value: unknown): User['attendanceType'] {
   return normalized.includes('in') ? 'In-Person' : 'Virtual';
 }
 
+function toTicketType(value: unknown): User['ticketType'] {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.toLowerCase();
+  if (normalized.includes('vip')) return 'VIP';
+  if (normalized.includes('reg')) return 'Regular';
+  return undefined;
+}
+
+function toDateString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
 function toStringValue(value: unknown): string {
   return typeof value === 'string' ? value : '';
 }
 
 function normalizeUser(raw: Record<string, unknown>, index: number): User {
+  const attendanceType = toAttendanceType(
+    raw.attendanceType ?? raw.attendance_type ?? raw.attendance
+  );
+  const ticketType = toTicketType(raw.ticketType ?? raw.ticket_type ?? raw.ticket) ??
+    (attendanceType === 'In-Person' ? 'VIP' : 'Regular');
+
   return {
     id: Number(raw.id ?? raw.userId ?? index + 1),
     fullName: toStringValue(raw.fullName ?? raw.name ?? raw.full_name) || `User ${index + 1}`,
@@ -33,7 +53,16 @@ function normalizeUser(raw: Record<string, unknown>, index: number): User {
     lawFirm: toStringValue(raw.lawFirm ?? raw.firm ?? raw.company),
     email: toStringValue(raw.email),
     phone: toStringValue(raw.phone ?? raw.phoneNumber ?? raw.phone_number),
-    attendanceType: toAttendanceType(raw.attendanceType ?? raw.attendance_type ?? raw.attendance),
+    attendanceType,
+    ticketType,
+    registeredAt: toDateString(
+      raw.registeredAt ??
+        raw.registered_at ??
+        raw.registrationDate ??
+        raw.registration_date ??
+        raw.createdAt ??
+        raw.created_at
+    ),
   };
 }
 
