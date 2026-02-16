@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Payment | Ghana Competition Law Seminar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-slate-900 p-6 text-center">
+            <h1 class="text-xl font-bold text-white mb-2">Complete Verification</h1>
+            <p class="text-slate-400 text-sm">Secure Payment Gateway</p>
+        </div>
+
+        <div class="p-8">
+            <div class="flex flex-col items-center mb-8">
+                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
+                    <i class="fas fa-lock text-orange-600 text-2xl"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800 text-center">Payment Required</h2>
+                <p class="text-slate-500 text-center mt-2">
+                    The free guest limit for <span class="font-semibold text-slate-700">
+                        <%= registration.lawFirm %>
+                    </span> has been reached.
+                </p>
+            </div>
+
+            <div class="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-100">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-slate-500 text-sm">Attendee</span>
+                    <span class="font-medium text-slate-900">
+                        <%= registration.fullName %>
+                    </span>
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-slate-500 text-sm">Ticket Type</span>
+                    <span class="font-medium text-slate-900">Standard Access</span>
+                </div>
+                <div class="border-t border-slate-200 my-2"></div>
+                <div class="flex justify-between items-center">
+                    <span class="font-bold text-slate-800">Total</span>
+                    <span class="font-bold text-2xl text-orange-600">GHS 150.00</span>
+                </div>
+            </div>
+
+            <button id="payBtn"
+                class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2">
+                <i class="fas fa-credit-card"></i>
+                <span>Pay GHS 150.00</span>
+            </button>
+
+            <p class="text-xs text-center text-slate-400 mt-6">
+                This is a secure 256-bit SSL encrypted payment.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('payBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('payBtn');
+            const originalContent = btn.innerHTML;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+
+            try {
+                // Simulate network delay
+                await new Promise(r => setTimeout(r, 1500));
+
+                const res = await fetch('/api/pay', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ registrationId: '<%= registration.id %>' })
+                });
+
+                if (res.ok) {
+                    btn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+                    btn.classList.add('bg-green-500', 'hover:bg-green-600');
+                    btn.innerHTML = '<i class="fas fa-check"></i> Payment Successful';
+
+                    setTimeout(() => {
+                        window.location.href = '/?status=payment_success';
+                    }, 1000);
+                } else {
+                    throw new Error('Payment failed');
+                }
+            } catch (err) {
+                console.error(err);
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+                alert('Payment processing failed. Please try again.');
+            }
+        });
+    </script>
+</body>
+
+</html>

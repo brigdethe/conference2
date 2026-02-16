@@ -1,0 +1,78 @@
+{
+  "lawFirms": [
+    {
+      "name": "Akosua Mintah",
+      "code": "AKOS837"
+    },
+    {
+      "name": "Douglass Firm",
+      "code": "DOUG285"
+    },
+    {
+      "name": "Lawrence Firm",
+      "code": "LAWR692"
+    }
+  ],
+  "registrations": [
+    {
+      "id": 1,
+      "registeredAt": "2026-02-16T01:50:53.765Z",
+      "fullName": "Bright Omari Owusu",
+      "companyName": "Code2040",
+      "jobTitle": "AI Automation Extern",
+      "lawFirm": "Lawrence Firm",
+      "phoneNumber": "3182658445",
+      "email": "owusuomaribright@outlook.com",
+      "status": "confirmed",
+      "ticketType": "Access Code"
+    },
+    {
+      "id": 2,
+      "registeredAt": "2026-02-16T01:59:59.685Z",
+      "fullName": "Precious Mefful",
+      "companyName": "Grambling State University",
+      "jobTitle": "IT Support Volunteer",
+      "lawFirm": "Lawrence Firm",
+      "phoneNumber": "2403518096",
+      "email": "pmefful@gsumail.gram.edu",
+      "status": "confirmed",
+      "ticketType": "Access Code"
+    },
+    {
+      "id": 3,
+      "registeredAt": "2026-02-16T02:03:26.726Z",
+      "fullName": "Ramat Lidiya",
+      "companyName": "Ukraine",
+      "jobTitle": "Fellow",
+      "lawFirm": "Lawrence Firm",
+      "phoneNumber": "3183946625",
+      "email": "owusuomaribright@gmail.com",
+      "status": "pending_payment",
+      "ticketType": "Paid"
+    },
+    {
+      "id": 4,
+      "registeredAt": "2026-02-16T03:55:03.714Z",
+      "fullName": "Bright Omari Owusu",
+      "companyName": "Grambling State University",
+      "jobTitle": "Fellow",
+      "lawFirm": "Lawrence Firm",
+      "phoneNumber": "3182658445",
+      "email": "owusuomaribright@gmail.com",
+      "status": "pending_payment",
+      "ticketType": "Paid"
+    },
+    {
+      "id": 5,
+      "registeredAt": "2026-02-16T03:56:05.451Z",
+      "fullName": "Bright Omari Owusu",
+      "companyName": "Grambling State University",
+      "jobTitle": "Fellow",
+      "lawFirm": "Douglass Firm",
+      "phoneNumber": "3182658445",
+      "email": "owusuomaribright@gmail.com",
+      "status": "confirmed",
+      "ticketType": "Access Code"
+    }
+  ]
+}
