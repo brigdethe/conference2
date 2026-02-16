@@ -154,26 +154,6 @@ export const RevenueHistory: React.FC<RevenueHistoryProps> = ({
       </div>
 
       <div className="mt-auto border-t border-slate-200 bg-slate-50/50 px-6 py-4">
-        <div className="mb-6 grid grid-cols-2 gap-4">
-          <div className="rounded-lg bg-slate-50 p-4">
-            <p className="text-sm font-medium text-slate-500">Access Code Value</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">
-              GHS {revenueByTicketType.AccessCode.amount.toLocaleString()}
-            </p>
-            <div className="mt-1 text-xs text-slate-500">
-              {revenueByTicketType.AccessCode.count} attendees ({Math.round(revenueByTicketType.AccessCode.count / Math.max(1, revenueByTicketType.total.count) * 100)}%)
-            </div>
-          </div>
-          <div className="rounded-lg bg-slate-50 p-4">
-            <p className="text-sm font-medium text-slate-500">Paid Revenue</p>
-            <p className="mt-1 text-2xl font-bold text-slate-900">
-              GHS {revenueByTicketType.Paid.amount.toLocaleString()}
-            </p>
-            <div className="mt-1 text-xs text-slate-500">
-              {revenueByTicketType.Paid.count} purchasers ({Math.round(revenueByTicketType.Paid.count / Math.max(1, revenueByTicketType.total.count) * 100)}%)
-            </div>
-          </div>
-        </div>
         <div className="flex items-center justify-between">
           <button
             type="button"

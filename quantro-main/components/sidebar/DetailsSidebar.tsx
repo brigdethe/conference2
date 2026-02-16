@@ -46,6 +46,7 @@ function SidebarContent({ detail }: { detail: DashboardSidebarContent }) {
           <DetailLine label="Job Title" value={user.jobTitle} />
           <DetailLine label="Law Firm" value={user.lawFirm} />
           <DetailLine label="Attendance" value={user.attendanceType} />
+
           <DetailLine label="Ticket Type" value={user.ticketType} />
           <DetailLine label="Registered" value={formatDate(user.registeredAt)} />
           <DetailLine label="Total Spent" value={formatCurrency(user.totalSpent)} />
@@ -158,6 +159,91 @@ function SidebarContent({ detail }: { detail: DashboardSidebarContent }) {
     );
   }
 
+  if (detail.kind === 'firmActivity') {
+    const firm = detail.firm;
+    const accessCodeRegistrations = firm.registrations.filter(
+      (registration) =>
+        registration.status === 'confirmed' &&
+        registration.ticketType === 'Access Code'
+    );
+    const paidRegistrations = firm.registrations.filter(
+      (registration) =>
+        registration.status === 'confirmed' &&
+        registration.ticketType === 'Paid'
+    );
+    const pendingRegistrations = firm.registrations.filter(
+      (registration) => registration.status === 'pending_payment'
+    );
+
+    const RegistrationList = ({
+      title,
+      rows,
+      tone,
+    }: {
+      title: string;
+      rows: typeof firm.registrations;
+      tone: string;
+    }) => (
+      <div>
+        <h4 className="mb-2 text-sm font-semibold text-slate-800">{title}</h4>
+        <div className="divide-y divide-slate-100 border-y border-slate-200">
+          {rows.length === 0 ? (
+            <div className="py-3 text-sm text-slate-500">No records available.</div>
+          ) : (
+            rows.map((registration) => (
+              <div key={registration.id} className="py-3 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-medium text-slate-800">{registration.fullName}</span>
+                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone}`}>
+                    {registration.ticketType}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-500">{registration.email}</div>
+                {registration.registeredAt && (
+                  <div className="text-xs text-slate-500">{formatDate(registration.registeredAt)}</div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+
+    return (
+      <div className="space-y-5">
+        <div>
+          <DetailLine label="Law Firm" value={firm.name} />
+          <DetailLine label="Access Code" value={firm.code} />
+          <DetailLine label="Total Registrations" value={firm.totalRegistrations} />
+          <DetailLine label="Confirmed (Access Code)" value={firm.confirmedAccessCode} />
+          <DetailLine label="Confirmed (Paid)" value={firm.confirmedPaid} />
+          <DetailLine label="Pending Payment" value={firm.pendingPayment} />
+          <DetailLine label="Free Slots Remaining" value={firm.freeSlotsRemaining} />
+          <DetailLine
+            label="Latest Activity"
+            value={firm.lastRegistrationAt ? formatDate(firm.lastRegistrationAt) : 'N/A'}
+          />
+        </div>
+
+        <RegistrationList
+          title="Access Code Registrations"
+          rows={accessCodeRegistrations}
+          tone="bg-emerald-50 text-emerald-700"
+        />
+        <RegistrationList
+          title="Paid Registrations"
+          rows={paidRegistrations}
+          tone="bg-blue-50 text-blue-700"
+        />
+        <RegistrationList
+          title="Payment In Progress"
+          rows={pendingRegistrations}
+          tone="bg-amber-50 text-amber-700"
+        />
+      </div>
+    );
+  }
+
   if (detail.kind === 'inquiry') {
     const inquiry = detail.inquiry;
     return (
@@ -213,6 +299,7 @@ function getTitle(detail: DashboardSidebarContent): string {
   if (detail.kind === 'ticketType') return `${detail.ticketType.ticketType} Ticket Details`;
   if (detail.kind === 'overviewRegistrations') return 'Overview: Total Registrations';
   if (detail.kind === 'overviewInvitedGuests') return 'Overview: Invited Guests';
+  if (detail.kind === 'firmActivity') return `Firm Activity: ${detail.firm.name}`;
   if (detail.kind === 'inquiry') return 'Inquiry Details';
   return 'Revenue Totals';
 }

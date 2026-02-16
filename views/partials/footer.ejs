@@ -298,6 +298,32 @@
         cursor: pointer;
     }
 
+    .tickets-modal__feedback {
+        display: none;
+        margin: 0;
+        padding: 0.625rem 0.75rem;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    .tickets-modal__feedback.is-visible {
+        display: block;
+    }
+
+    .tickets-modal__feedback.is-success {
+        background: #ecf9f0;
+        border-color: #b8e6c6;
+        color: #1f6b45;
+    }
+
+    .tickets-modal__feedback.is-error {
+        background: #fff1f1;
+        border-color: #f3c2c2;
+        color: #8f2d2d;
+    }
+
     .tickets-modal__disclaimer {
         margin: 0.125rem 0 0;
         font-size: 0.75rem;
@@ -308,6 +334,60 @@
     .tickets-modal__disclaimer a {
         color: inherit;
         text-decoration: underline;
+    }
+
+    .tickets-celebration-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 11000;
+        backdrop-filter: blur(4px);
+    }
+
+    .tickets-celebration-content {
+        background: #fffdf9;
+        padding: 2rem;
+        border-radius: 14px;
+        text-align: center;
+        max-width: 420px;
+        width: 92%;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.14);
+        border: 1px solid #eadfce;
+    }
+
+    .tickets-celebration-title {
+        margin: 0 0 0.5rem;
+        color: #5b3426;
+        font-size: 1.4rem;
+        font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .tickets-celebration-text {
+        margin: 0 0 1.25rem;
+        color: #7b6a5e;
+        font-family: system-ui, -apple-system, sans-serif;
+        line-height: 1.5;
+    }
+
+    .tickets-celebration-btn {
+        background: #e78745;
+        color: #fff;
+        border: 0;
+        padding: 0.7rem 1.4rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    .tickets-celebration-btn.secondary {
+        background: #7b6a5e;
     }
 
     @media screen and (min-width: 992px) {
@@ -363,18 +443,11 @@
                 aria-label="Close registration modal">&times;</button>
         </div>
         <form class="tickets-modal__form">
+            <input class="tickets-modal__input" type="text" name="accessCode"
+                placeholder="Firm Access Code (Optional)" />
             <input class="tickets-modal__input" type="text" name="fullName" placeholder="Full Name" required />
             <input class="tickets-modal__input" type="text" name="companyName" placeholder="Company Name" required />
             <input class="tickets-modal__input" type="text" name="jobTitle" placeholder="Job Title" required />
-            <select class="tickets-modal__input" name="seniorityLevel" required>
-                <option value="" selected disabled>Seniority Level</option>
-                <option value="Managing Partner">Managing Partner</option>
-                <option value="Partner">Partner</option>
-                <option value="General Counsel">General Counsel</option>
-                <option value="Senior Associate">Senior Associate</option>
-                <option value="Associate">Associate</option>
-                <option value="Other">Other</option>
-            </select>
             <select class="tickets-modal__input" name="lawFirm" required>
                 <option value="" selected disabled>Law Firm</option>
                 <option value="Bentsi Enchill Letsa and Ankomah">Bentsi Enchill Letsa and Ankomah</option>
@@ -401,33 +474,30 @@
                 <option value="Conclave Lawyers">Conclave Lawyers</option>
                 <option value="Amoah and Associates Law Firm">Amoah and Associates Law Firm</option>
             </select>
-            <select class="tickets-modal__input" name="practiceArea" required>
-                <option value="" selected disabled>Primary Practice Area</option>
-                <option value="Corporate and M&A">Corporate and M&amp;A</option>
-                <option value="Tax">Tax</option>
-                <option value="Dispute Resolution">Dispute Resolution</option>
-                <option value="Banking and Finance">Banking and Finance</option>
-                <option value="Energy and Infrastructure">Energy and Infrastructure</option>
-                <option value="Real Estate">Real Estate</option>
-                <option value="Regulatory and Compliance">Regulatory and Compliance</option>
-            </select>
-            <input class="tickets-modal__input" type="text" name="jurisdiction"
-                placeholder="Bar Admission / Jurisdiction" required />
             <input class="tickets-modal__input" type="tel" name="phoneNumber" placeholder="Phone Number" required />
             <input class="tickets-modal__input" type="email" name="email" placeholder="Email" required />
-            <select class="tickets-modal__input" name="attendanceType" required>
-                <option value="" selected disabled>Attendance Type</option>
-                <option value="Conference Access">Conference Access</option>
-                <option value="Conference + VIP Reception">Conference + VIP Reception</option>
-                <option value="On-Site Registration">On-Site Registration</option>
-            </select>
             <button type="submit" class="tickets-modal__submit">Register</button>
+            <p class="tickets-modal__feedback" role="status" aria-live="polite"></p>
             <p class="tickets-modal__disclaimer">
                 By registering, you acknowledge and agree to our Conference Attendance Terms, including event
                 communication, badge usage, and on-site conduct guidelines. Review full details on our <a
                     href="/contact/">Contact &amp; Attendance Policy page</a>.
             </p>
         </form>
+    </div>
+</div>
+<div id="ticketsConfirmationModal" class="tickets-celebration-overlay" style="display: none;" aria-hidden="true">
+    <div class="tickets-celebration-content" role="dialog" aria-modal="true" aria-labelledby="ticketsConfirmTitle">
+        <h3 class="tickets-celebration-title" id="ticketsConfirmTitle">Registration Confirmed</h3>
+        <p class="tickets-celebration-text">Your registration has been confirmed. We look forward to seeing you.</p>
+        <button type="button" id="ticketsConfirmModalBtn" class="tickets-celebration-btn">Continue</button>
+    </div>
+</div>
+<div id="ticketsCelebrationModal" class="tickets-celebration-overlay" style="display: none;" aria-hidden="true">
+    <div class="tickets-celebration-content" role="dialog" aria-modal="true" aria-labelledby="ticketsCelebrationTitle">
+        <h3 class="tickets-celebration-title" id="ticketsCelebrationTitle">Registration Complete</h3>
+        <p class="tickets-celebration-text">Thank you for registering. We look forward to your participation.</p>
+        <button type="button" id="ticketsCelebrationCloseBtn" class="tickets-celebration-btn secondary">Close</button>
     </div>
 </div>
 <script>
@@ -439,11 +509,13 @@
         var closeTargets = modal.querySelectorAll('[data-close-tickets-modal]');
 
         function openModal() {
+            clearTicketsFeedback();
             modal.classList.add('is-open');
             modal.setAttribute('aria-hidden', 'false');
         }
 
         function closeModal() {
+            clearTicketsFeedback();
             modal.classList.remove('is-open');
             modal.setAttribute('aria-hidden', 'true');
         }
@@ -476,6 +548,193 @@
                 closeModal();
             }
         });
+
+        var ticketsForm = modal.querySelector('.tickets-modal__form');
+        var ticketsAccessCode = ticketsForm && ticketsForm.querySelector('input[name="accessCode"]');
+        var ticketsLawFirm = ticketsForm && ticketsForm.querySelector('select[name="lawFirm"]');
+        var ticketsFeedback = ticketsForm && ticketsForm.querySelector('.tickets-modal__feedback');
+        var ticketsConfirmationModal = document.getElementById('ticketsConfirmationModal');
+        var ticketsCelebrationModal = document.getElementById('ticketsCelebrationModal');
+        var ticketsConfirmModalBtn = document.getElementById('ticketsConfirmModalBtn');
+        var ticketsCelebrationCloseBtn = document.getElementById('ticketsCelebrationCloseBtn');
+
+        function clearTicketsFeedback() {
+            if (!ticketsFeedback) return;
+            ticketsFeedback.textContent = '';
+            ticketsFeedback.className = 'tickets-modal__feedback';
+        }
+
+        function showTicketsFeedback(message, type) {
+            if (!ticketsFeedback) return;
+            ticketsFeedback.textContent = message;
+            ticketsFeedback.className = 'tickets-modal__feedback is-visible ' + (type === 'success' ? 'is-success' : 'is-error');
+        }
+
+        function hideTicketsCelebrationOverlays() {
+            if (ticketsConfirmationModal) {
+                ticketsConfirmationModal.style.display = 'none';
+                ticketsConfirmationModal.setAttribute('aria-hidden', 'true');
+            }
+            if (ticketsCelebrationModal) {
+                ticketsCelebrationModal.style.display = 'none';
+                ticketsCelebrationModal.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        function runConfetti() {
+            if (typeof confetti !== 'function') return;
+
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 12000 };
+
+            function random(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function () {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+
+                var particleCount = 50 * (timeLeft / duration);
+                confetti({ ...defaults, particleCount: particleCount, origin: { x: random(0.1, 0.3), y: Math.random() - 0.2 } });
+                confetti({ ...defaults, particleCount: particleCount, origin: { x: random(0.7, 0.9), y: Math.random() - 0.2 } });
+            }, 250);
+        }
+
+        if (ticketsConfirmModalBtn) {
+            ticketsConfirmModalBtn.addEventListener('click', function () {
+                if (ticketsConfirmationModal) {
+                    ticketsConfirmationModal.style.display = 'none';
+                    ticketsConfirmationModal.setAttribute('aria-hidden', 'true');
+                }
+                if (ticketsCelebrationModal) {
+                    ticketsCelebrationModal.style.display = 'flex';
+                    ticketsCelebrationModal.setAttribute('aria-hidden', 'false');
+                }
+                runConfetti();
+            });
+        }
+
+        if (ticketsCelebrationCloseBtn) {
+            ticketsCelebrationCloseBtn.addEventListener('click', hideTicketsCelebrationOverlays);
+        }
+
+        function selectTicketLawFirm(name) {
+            if (!ticketsLawFirm) return;
+            var option = Array.from(ticketsLawFirm.options).find(function (opt) {
+                return opt.value === name;
+            });
+
+            if (!option) {
+                option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                option.setAttribute('data-generated', 'true');
+                ticketsLawFirm.appendChild(option);
+            }
+
+            ticketsLawFirm.value = name;
+        }
+
+        async function setupTicketsAccessCodeAutofill() {
+            if (!ticketsAccessCode || !ticketsLawFirm) return;
+
+            var firms = [];
+            try {
+                var response = await fetch('/api/firms');
+                if (response.ok) {
+                    firms = await response.json();
+                }
+            } catch (error) {
+                console.error('Error fetching firms for tickets modal:', error);
+                return;
+            }
+
+            function syncLawFirmFromCode(rawCode) {
+                var code = String(rawCode || '').trim().toUpperCase();
+                if (!code) return;
+
+                var firm = firms.find(function (item) {
+                    return String(item.code || '').trim().toUpperCase() === code;
+                });
+
+                if (firm && firm.name) {
+                    selectTicketLawFirm(firm.name);
+                }
+            }
+
+            ticketsAccessCode.addEventListener('input', function (event) {
+                var normalizedCode = String(event.target.value || '').toUpperCase();
+                if (event.target.value !== normalizedCode) {
+                    event.target.value = normalizedCode;
+                }
+                syncLawFirmFromCode(normalizedCode);
+            });
+
+            syncLawFirmFromCode(ticketsAccessCode.value);
+        }
+
+        setupTicketsAccessCodeAutofill();
+
+        async function handleTicketsRegistrationSubmit(event) {
+            event.preventDefault();
+            if (!ticketsForm) return;
+            clearTicketsFeedback();
+
+            var submitBtn = ticketsForm.querySelector('.tickets-modal__submit');
+            var originalText = submitBtn ? submitBtn.innerText : '';
+            if (submitBtn) {
+                submitBtn.innerText = 'Processing...';
+                submitBtn.disabled = true;
+            }
+
+            var payload = Object.fromEntries(new FormData(ticketsForm).entries());
+
+            try {
+                var response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                var result = await response.json();
+
+                if (!result.success) {
+                    showTicketsFeedback('Registration failed: ' + (result.error || 'Unknown error'), 'error');
+                    return;
+                }
+
+                if (result.status === 'pending_payment' && result.registration && result.registration.id) {
+                    window.location.href = '/payment?id=' + result.registration.id;
+                    return;
+                }
+
+                if (ticketsConfirmationModal && ticketsCelebrationModal) {
+                    closeModal();
+                    ticketsConfirmationModal.style.display = 'flex';
+                    ticketsConfirmationModal.setAttribute('aria-hidden', 'false');
+                } else {
+                    showTicketsFeedback(result.message || 'Registration confirmed! Welcome to the seminar.', 'success');
+                }
+
+                ticketsForm.reset();
+            } catch (error) {
+                console.error('Tickets registration error:', error);
+                showTicketsFeedback('An error occurred. Please try again.', 'error');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.innerText = originalText;
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+
+        if (ticketsForm) {
+            ticketsForm.addEventListener('submit', handleTicketsRegistrationSubmit);
+        }
 
         var textareas = document.querySelectorAll('.footer_inquiry-textarea');
         textareas.forEach(function (textarea) {

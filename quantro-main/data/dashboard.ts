@@ -65,6 +65,31 @@ export interface DashboardInvitedGuestsOverviewDetail {
   pending: number;
 }
 
+export type FirmRegistrationStatus = 'confirmed' | 'pending_payment';
+
+export interface FirmRegistrationDetail {
+  id: number;
+  fullName: string;
+  email: string;
+  jobTitle: string;
+  phone: string;
+  ticketType: TicketType;
+  status: FirmRegistrationStatus;
+  registeredAt: string | null;
+}
+
+export interface FirmActivityDetail {
+  name: string;
+  code: string;
+  totalRegistrations: number;
+  confirmedAccessCode: number;
+  confirmedPaid: number;
+  pendingPayment: number;
+  freeSlotsRemaining: number;
+  lastRegistrationAt: string | null;
+  registrations: FirmRegistrationDetail[];
+}
+
 export interface DashboardDetails {
   users: DashboardUserDetail[];
   transactions: DashboardTransaction[];
@@ -102,6 +127,10 @@ export type DashboardSidebarContent =
   | {
     kind: 'overviewInvitedGuests';
     invitedGuests: DashboardInvitedGuestsOverviewDetail;
+  }
+  | {
+    kind: 'firmActivity';
+    firm: FirmActivityDetail;
   }
   | {
     kind: 'inquiry';

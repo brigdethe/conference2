@@ -6,11 +6,12 @@ import { GuestTypeChart } from './components/revenue/GuestTypeChart';
 import { DetailsSidebar } from './components/sidebar/DetailsSidebar';
 import { UserTable } from './components/UserTable';
 import { useDashboard } from './hooks/useDashboard';
-import { TodoList } from './components/overview/TodoList';
+import { InvitedFirmsList } from './components/overview/InvitedFirmsList';
 import { MetricsList } from './components/overview/MetricsList';
 import { InquiriesTab } from './components/inquiries/InquiriesTab';
 import { TabOption } from './types';
 import type { DashboardSidebarContent } from './data/dashboard';
+import type { FirmActivityDetail } from './data/dashboard';
 import type { User } from './data/users';
 import { INQUIRIES } from './data/inquiries';
 
@@ -19,16 +20,50 @@ export default function App() {
   const [activeDetail, setActiveDetail] = useState<DashboardSidebarContent | null>(null);
   const { users, isLoading, error, refetch, dashboard } = useDashboard();
   const [selectedFirm, setSelectedFirm] = useState<string>('All');
-  const [firms, setFirms] = useState<string[]>([]);
+  const [invitedFirms, setInvitedFirms] = useState<FirmActivityDetail[]>([]);
+  const [firmsLoading, setFirmsLoading] = useState(true);
+  const [firmsError, setFirmsError] = useState<string | null>(null);
+
+  const fetchInvitedFirms = React.useCallback(async () => {
+    setFirmsLoading(true);
+    setFirmsError(null);
+
+    try {
+      const res = await fetch('/api/firms/activity');
+      if (!res.ok) {
+        throw new Error(`Failed to load firms: ${res.status}`);
+      }
+
+      const data = await res.json();
+      const rows = Array.isArray(data?.firms) ? (data.firms as FirmActivityDetail[]) : [];
+      setInvitedFirms(rows);
+    } catch (err) {
+      console.error('Failed to fetch firm activities:', err);
+      setInvitedFirms([]);
+      setFirmsError(err instanceof Error ? err.message : 'Unable to load firm activities');
+    } finally {
+      setFirmsLoading(false);
+    }
+  }, []);
 
   React.useEffect(() => {
-    fetch('/api/firms')
-      .then((res) => res.json())
-      .then((data: { name: string }[]) => {
-        setFirms(data.map((f) => f.name).sort());
-      })
-      .catch((err) => console.error('Failed to fetch firms:', err));
-  }, []);
+    fetchInvitedFirms();
+  }, [fetchInvitedFirms]);
+
+  const firms = React.useMemo(() => {
+    const names = new Set<string>();
+    invitedFirms.forEach((firm) => names.add(firm.name));
+    users.forEach((user) => {
+      if (user.lawFirm) names.add(user.lawFirm);
+    });
+    return Array.from(names).sort();
+  }, [invitedFirms, users]);
+
+  React.useEffect(() => {
+    if (selectedFirm !== 'All' && !firms.includes(selectedFirm)) {
+      setSelectedFirm('All');
+    }
+  }, [firms, selectedFirm]);
 
   const filteredUsers = React.useMemo(() => {
     if (selectedFirm === 'All') return users;
@@ -88,7 +123,13 @@ export default function App() {
             {activeTab === TabOption.Overview && (
               <div className="mb-8 grid h-[500px] grid-cols-1 gap-6 lg:grid-cols-3">
                 <div className="h-full lg:col-span-2">
-                  <TodoList />
+                  <InvitedFirmsList
+                    firms={invitedFirms}
+                    isLoading={firmsLoading}
+                    error={firmsError}
+                    onRetry={fetchInvitedFirms}
+                    onOpenDetail={setActiveDetail}
+                  />
                 </div>
                 <div className="h-full">
                   <MetricsList dashboard={dashboard} onOpenDetail={setActiveDetail} />

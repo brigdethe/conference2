@@ -1,5 +1,4 @@
 import React from 'react';
-import { Users, Ticket, CreditCard, UserCheck } from 'lucide-react';
 import type { DashboardMetrics, DashboardSidebarContent } from '../../data/dashboard';
 
 interface MetricsListProps {
@@ -12,9 +11,6 @@ export const MetricsList: React.FC<MetricsListProps> = ({ dashboard, onOpenDetai
         {
             label: 'Total Registrations',
             value: dashboard.registeredUsers.toLocaleString(),
-            icon: Users,
-            color: 'text-slate-800',
-            bg: 'bg-slate-100',
             detail: {
                 kind: 'overviewRegistrations',
                 registrations: dashboard.details.overview.registrations
@@ -24,9 +20,6 @@ export const MetricsList: React.FC<MetricsListProps> = ({ dashboard, onOpenDetai
             label: 'Access Code Users',
             value: dashboard.accessCodeSales.toLocaleString(),
             subValue: `GHS ${(dashboard.revenueByTicketType.AccessCode.amount).toLocaleString()}`,
-            icon: Ticket,
-            color: 'text-slate-800',
-            bg: 'bg-slate-100',
             detail: {
                 kind: 'ticketType',
                 ticketType: dashboard.details.ticketTypes.AccessCode
@@ -36,9 +29,6 @@ export const MetricsList: React.FC<MetricsListProps> = ({ dashboard, onOpenDetai
             label: 'Paid Guests',
             value: dashboard.paidSales.toLocaleString(),
             subValue: `GHS ${(dashboard.revenueByTicketType.Paid.amount).toLocaleString()}`,
-            icon: Ticket,
-            color: 'text-slate-800',
-            bg: 'bg-slate-100',
             detail: {
                 kind: 'ticketType',
                 ticketType: dashboard.details.ticketTypes.Paid
@@ -47,9 +37,6 @@ export const MetricsList: React.FC<MetricsListProps> = ({ dashboard, onOpenDetai
         {
             label: 'Total Revenue',
             value: `GHS ${dashboard.totalRevenue.toLocaleString()}`,
-            icon: CreditCard,
-            color: 'text-slate-800',
-            bg: 'bg-slate-100',
             detail: {
                 kind: 'revenueTotal',
                 revenueByTicketType: dashboard.revenueByTicketType
@@ -58,9 +45,6 @@ export const MetricsList: React.FC<MetricsListProps> = ({ dashboard, onOpenDetai
         {
             label: 'Invited Guests',
             value: dashboard.invitedGuests.toLocaleString(),
-            icon: UserCheck,
-            color: 'text-slate-800',
-            bg: 'bg-slate-100',
             detail: {
                 kind: 'overviewInvitedGuests',
                 invitedGuests: dashboard.details.overview.invitedGuests
@@ -78,17 +62,14 @@ export const MetricsList: React.FC<MetricsListProps> = ({ dashboard, onOpenDetai
                         key={index}
                         type="button"
                         onClick={() => onOpenDetail?.(metric.detail)}
-                        className="w-full text-left flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100 group"
+                        className="w-full text-left p-4 rounded-2xl transition-colors border border-slate-100 hover:border-slate-200 hover:bg-slate-50"
                     >
-                        <div className={`p-3 rounded-2xl ${metric.bg} ${metric.color} group-hover:scale-110 transition-transform`}>
-                            <metric.icon className="w-6 h-6" />
-                        </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="min-w-0">
                             <p className="text-sm font-medium text-gray-500 truncate">{metric.label}</p>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-lg font-bold text-gray-900">{metric.value}</span>
+                            <div className="mt-1 flex items-baseline gap-2">
+                                <span className="text-lg font-semibold text-gray-900">{metric.value}</span>
                                 {metric.subValue && (
-                                    <span className="text-xs text-gray-400 font-medium">{metric.subValue}</span>
+                                    <span className="text-xs text-gray-500">{metric.subValue}</span>
                                 )}
                             </div>
                         </div>

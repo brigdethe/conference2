@@ -58,7 +58,10 @@ module.exports = {
     },
 
     getFirmByCode: (code) => {
-        return dbData.lawFirms.find(f => f.code === code);
+        const normalizedCode = String(code || '').trim().toUpperCase();
+        return dbData.lawFirms.find(f =>
+            String(f.code || '').trim().toUpperCase() === normalizedCode
+        );
     },
 
     getRegistrations: () => dbData.registrations,
@@ -88,5 +91,16 @@ module.exports = {
             r.lawFirm === firmName &&
             r.status === 'confirmed'
         ).length;
+    },
+
+    updateRegistration: (id, updates) => {
+        dbData = loadData();
+        const reg = dbData.registrations.find(r => r.id == id);
+        if (reg) {
+            Object.assign(reg, updates);
+            saveData(dbData);
+            return reg;
+        }
+        return null;
     }
 };

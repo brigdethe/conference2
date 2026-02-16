@@ -447,16 +447,7 @@
                                                 placeholder="Company Name" required />
                                             <input class="footer-mirror-register__input" type="text" name="jobTitle"
                                                 placeholder="Job Title" required />
-                                            <select class="footer-mirror-register__input" name="seniorityLevel"
-                                                required>
-                                                <option value="" selected disabled>Seniority Level</option>
-                                                <option value="Managing Partner">Managing Partner</option>
-                                                <option value="Partner">Partner</option>
-                                                <option value="General Counsel">General Counsel</option>
-                                                <option value="Senior Associate">Senior Associate</option>
-                                                <option value="Associate">Associate</option>
-                                                <option value="Other">Other</option>
-                                            </select>
+
                                             <!-- Law Firm Select - Removed hardcoded options to rely on API or free text if needed, 
                                                  but for now let's keep it simple or maybe fetch? 
                                                  Actually, if Access Code is used, Law Firm is auto-derived. 
@@ -499,32 +490,13 @@
                                                 <option value="Amoah and Associates Law Firm">Amoah and Associates Law
                                                     Firm</option>
                                             </select>
-                                            <select class="footer-mirror-register__input" name="practiceArea" required>
-                                                <option value="" selected disabled>Primary Practice Area</option>
-                                                <option value="Corporate and M&A">Corporate and M&amp;A</option>
-                                                <option value="Tax">Tax</option>
-                                                <option value="Dispute Resolution">Dispute Resolution</option>
-                                                <option value="Banking and Finance">Banking and Finance</option>
-                                                <option value="Energy and Infrastructure">Energy and Infrastructure
-                                                </option>
-                                                <option value="Real Estate">Real Estate</option>
-                                                <option value="Regulatory and Compliance">Regulatory and Compliance
-                                                </option>
-                                            </select>
-                                            <input class="footer-mirror-register__input" type="text" name="jurisdiction"
-                                                placeholder="Bar Admission / Jurisdiction" required />
+
+
                                             <input class="footer-mirror-register__input" type="tel" name="phoneNumber"
                                                 placeholder="Phone Number" required />
                                             <input class="footer-mirror-register__input" type="email" name="email"
                                                 placeholder="Email" required />
-                                            <select class="footer-mirror-register__input" name="attendanceType"
-                                                required>
-                                                <option value="" selected disabled>Attendance Type</option>
-                                                <option value="Conference Access">Conference Access</option>
-                                                <option value="Conference + VIP Reception">Conference + VIP Reception
-                                                </option>
-                                                <option value="On-Site Registration">On-Site Registration</option>
-                                            </select>
+
                                         </div>
                                         <button class="footer-mirror-register__submit" type="submit"
                                             id="submitBtn">Register</button>
@@ -557,9 +529,57 @@
 
                                                 if (result.success) {
                                                     if (result.status === 'confirmed') {
-                                                        alert('Registration Confirmed! Welcome to the seminar.');
+                                                        // Show Confirmation Modal
+                                                        const confModal = document.getElementById('confirmationModal');
+                                                        const celModal = document.getElementById('celebrationModal');
+
+                                                        confModal.style.display = 'flex';
+
+                                                        // Setup button handlers (once)
+                                                        const confirmBtn = document.getElementById('modalConfirmBtn');
+                                                        const closeBtn = document.getElementById('modalCloseBtn');
+
+                                                        // Clone to remove old listeners if any
+                                                        const newConfirmBtn = confirmBtn.cloneNode(true);
+                                                        confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+
+                                                        const newCloseBtn = closeBtn.cloneNode(true);
+                                                        closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+
+                                                        newConfirmBtn.addEventListener('click', () => {
+                                                            confModal.style.display = 'none';
+                                                            celModal.style.display = 'flex';
+
+                                                            // Fire Confetti
+                                                            var duration = 3 * 1000;
+                                                            var animationEnd = Date.now() + duration;
+                                                            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 10000 };
+
+                                                            function random(min, max) {
+                                                                return Math.random() * (max - min) + min;
+                                                            }
+
+                                                            var interval = setInterval(function () {
+                                                                var timeLeft = animationEnd - Date.now();
+
+                                                                if (timeLeft <= 0) {
+                                                                    return clearInterval(interval);
+                                                                }
+
+                                                                var particleCount = 50 * (timeLeft / duration);
+                                                                // since particles fall down, start a bit higher than random
+                                                                confetti({ ...defaults, particleCount, origin: { x: random(0.1, 0.3), y: Math.random() - 0.2 } });
+                                                                confetti({ ...defaults, particleCount, origin: { x: random(0.7, 0.9), y: Math.random() - 0.2 } });
+                                                            }, 250);
+                                                        });
+
+                                                        newCloseBtn.addEventListener('click', () => {
+                                                            celModal.style.display = 'none';
+                                                        });
+
                                                     } else if (result.status === 'pending_payment') {
-                                                        alert('Registration Received. Payment is required to confirm your spot. ' + (result.message || ''));
+                                                        // Redirect to payment page
+                                                        window.location.href = `/payment?id=${result.registration.id}`;
                                                     }
                                                     this.reset();
                                                 } else {
@@ -632,6 +652,63 @@
 
                             window.addEventListener('load', syncFooterMirrorHeight);
                             window.addEventListener('resize', syncFooterMirrorHeight);
+
+                            // Auto-populate Law Firm based on Access Code
+                            document.addEventListener('DOMContentLoaded', async function () {
+                                var firms = [];
+                                try {
+                                    var res = await fetch('/api/firms');
+                                    if (res.ok) firms = await res.json();
+                                } catch (e) {
+                                    console.error('Error fetching firms:', e);
+                                }
+
+                                var form = document.getElementById('registrationForm');
+                                if (!form) return;
+
+                                var codeInput = form.querySelector('input[name="accessCode"]');
+                                var firmSelect = form.querySelector('select[name="lawFirm"]');
+                                if (!codeInput || !firmSelect) return;
+
+                                function selectFirm(name) {
+                                    var option = Array.from(firmSelect.options).find(function (opt) {
+                                        return opt.value === name;
+                                    });
+
+                                    if (!option) {
+                                        option = document.createElement('option');
+                                        option.value = name;
+                                        option.textContent = name;
+                                        option.setAttribute('data-generated', 'true');
+                                        firmSelect.appendChild(option);
+                                    }
+
+                                    firmSelect.value = name;
+                                }
+
+                                function syncLawFirmFromCode(rawCode) {
+                                    var code = String(rawCode || '').trim().toUpperCase();
+                                    if (!code) return;
+
+                                    var firm = firms.find(function (item) {
+                                        return String(item.code || '').trim().toUpperCase() === code;
+                                    });
+
+                                    if (firm && firm.name) {
+                                        selectFirm(firm.name);
+                                    }
+                                }
+
+                                codeInput.addEventListener('input', function (event) {
+                                    var normalizedCode = String(event.target.value || '').toUpperCase();
+                                    if (event.target.value !== normalizedCode) {
+                                        event.target.value = normalizedCode;
+                                    }
+                                    syncLawFirmFromCode(normalizedCode);
+                                });
+
+                                syncLawFirmFromCode(codeInput.value);
+                            });
                         })();
                     </script>
 
@@ -650,6 +727,103 @@
 
 
 
+    <!-- Confetti Library -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Registration Modals -->
+    <div id="confirmationModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3>Registration Confirmed</h3>
+            <p>Your spot has been secured. We look forward to seeing you.</p>
+            <button id="modalConfirmBtn" class="modal-btn">Continue</button>
+        </div>
+    </div>
+
+    <div id="celebrationModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3>Registration Complete</h3>
+            <p>Thank you for registering. We look forward to your participation.</p>
+            <button id="modalCloseBtn" class="modal-btn secondary">Close</button>
+        </div>
+    </div>
+
+    <style>
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            animation: fadeIn 0.3s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background: #fffdf9;
+            padding: 2.5rem;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid #eadfce;
+            transform: scale(0.9);
+            animation: scaleIn 0.3s 0.1s forwards;
+            opacity: 0;
+        }
+
+        @keyframes scaleIn {
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .modal-content h3 {
+            color: #5b3426;
+            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .modal-content p {
+            color: #7b6a5e;
+            margin-bottom: 1.5rem;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .modal-btn {
+            background: #e78745;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-size: 1rem;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .modal-btn.secondary {
+            background: #7b6a5e;
+        }
+    </style>
 </body>
 
 </html>
