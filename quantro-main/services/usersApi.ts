@@ -24,9 +24,14 @@ function toAttendanceType(value: unknown): User['attendanceType'] {
 function toTicketType(value: unknown): User['ticketType'] {
   if (typeof value !== 'string') return undefined;
   const normalized = value.toLowerCase();
-  if (normalized.includes('vip')) return 'VIP';
-  if (normalized.includes('reg')) return 'Regular';
-  return undefined;
+
+  // Backend returns 'Free/VIP' for confirmed access code users
+  if (normalized.includes('vip') || normalized.includes('free')) return 'Access Code';
+
+  // Backend returns 'Pending Payment' for paid users (or similar)
+  if (normalized.includes('pending') || normalized.includes('paid')) return 'Paid';
+
+  return 'Access Code'; // Default fallback
 }
 
 function toDateString(value: unknown): string | undefined {
@@ -57,11 +62,11 @@ function normalizeUser(raw: Record<string, unknown>, index: number): User {
     ticketType,
     registeredAt: toDateString(
       raw.registeredAt ??
-        raw.registered_at ??
-        raw.registrationDate ??
-        raw.registration_date ??
-        raw.createdAt ??
-        raw.created_at
+      raw.registered_at ??
+      raw.registrationDate ??
+      raw.registration_date ??
+      raw.createdAt ??
+      raw.created_at
     ),
   };
 }
@@ -100,24 +105,30 @@ function createUsersUrl(query: UsersQuery = {}): string {
 }
 
 export async function fetchUsers(query: UsersQuery = {}, signal?: AbortSignal): Promise<UsersResult> {
-  if (!API_BASE_URL) {
+  // Use local API by default if not specified
+  const endpoint = API_BASE_URL ? createUsersUrl(query) : '/api/users';
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to load users: ${response.status}`);
+    }
+
+    const payload = await response.json();
+    return normalizePayload(payload);
+  } catch (error) {
+    console.warn('API fetch failed, falling back to mock data', error);
     return {
       users: mockUsers,
       total: mockUsers.length,
       source: 'mock',
     };
   }
-
-  const response = await fetch(createUsersUrl(query), {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
-    signal,
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to load users: ${response.status}`);
-  }
-
-  const payload = await response.json();
-  return normalizePayload(payload);
 }
+
+

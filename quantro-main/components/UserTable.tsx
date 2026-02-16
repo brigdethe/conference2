@@ -103,7 +103,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                             <th className="py-4 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em] hidden xl:table-cell">Job Title</th>
                             <th className="py-4 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em] hidden lg:table-cell">Law Firm</th>
                             {/* <th className="py-4 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-wider hidden md:table-cell">Phone / Email</th> */}
-                            <th className="py-4 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em] hidden sm:table-cell">Attendance</th>
+                            <th className="py-4 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em] hidden sm:table-cell">Guest Type</th>
                             <th className="py-4 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em] text-right">Actions</th>
                         </tr>
                     </thead>
@@ -166,11 +166,11 @@ export const UserTable: React.FC<UserTableProps> = ({
                                     <td className="py-4 px-6 text-slate-700 hidden lg:table-cell">{user.lawFirm || '—'}</td>
                                     {/* Phone/Email Column Removed */}
                                     <td className="px-6 py-4 hidden sm:table-cell">
-                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${user.attendanceType === 'In-Person'
+                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${user.ticketType === 'Paid'
                                             ? 'bg-slate-900 text-white border-slate-900'
                                             : 'bg-white text-slate-600 border-slate-300'
                                             }`}>
-                                            {user.attendanceType}
+                                            {user.ticketType || 'Access Code'}
                                         </span>
                                     </td>
                                     <td className="py-4 px-6 text-right relative">

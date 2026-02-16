@@ -5,12 +5,16 @@ import type {
   DashboardMetrics,
   DashboardSidebarContent,
   DashboardTransaction,
+  DashboardTicketTypeDetail,
 } from '../../data/dashboard';
 
 interface RevenueHistoryProps {
   transactions: DashboardTransaction[];
   revenueByTicketType: DashboardMetrics['revenueByTicketType'];
-  ticketTypeDetails: DashboardMetrics['details']['ticketTypes'];
+  ticketTypeDetails: {
+    AccessCode: DashboardTicketTypeDetail;
+    Paid: DashboardTicketTypeDetail;
+  };
   onOpenDetail?: (detail: DashboardSidebarContent) => void;
 }
 
@@ -150,18 +154,38 @@ export const RevenueHistory: React.FC<RevenueHistoryProps> = ({
       </div>
 
       <div className="mt-auto border-t border-slate-200 bg-slate-50/50 px-6 py-4">
+        <div className="mb-6 grid grid-cols-2 gap-4">
+          <div className="rounded-lg bg-slate-50 p-4">
+            <p className="text-sm font-medium text-slate-500">Access Code Value</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">
+              GHS {revenueByTicketType.AccessCode.amount.toLocaleString()}
+            </p>
+            <div className="mt-1 text-xs text-slate-500">
+              {revenueByTicketType.AccessCode.count} attendees ({Math.round(revenueByTicketType.AccessCode.count / Math.max(1, revenueByTicketType.total.count) * 100)}%)
+            </div>
+          </div>
+          <div className="rounded-lg bg-slate-50 p-4">
+            <p className="text-sm font-medium text-slate-500">Paid Revenue</p>
+            <p className="mt-1 text-2xl font-bold text-slate-900">
+              GHS {revenueByTicketType.Paid.amount.toLocaleString()}
+            </p>
+            <div className="mt-1 text-xs text-slate-500">
+              {revenueByTicketType.Paid.count} purchasers ({Math.round(revenueByTicketType.Paid.count / Math.max(1, revenueByTicketType.total.count) * 100)}%)
+            </div>
+          </div>
+        </div>
         <div className="flex items-center justify-between">
           <button
             type="button"
-            onClick={() => onOpenDetail?.({ kind: 'ticketType', ticketType: ticketTypeDetails.VIP })}
+            onClick={() => onOpenDetail?.({ kind: 'ticketType', ticketType: ticketTypeDetails.AccessCode })}
             className="text-left transition-opacity hover:opacity-80"
           >
             <div className="mb-1 text-sm font-medium text-slate-500">
-              VIP Total ({revenueByTicketType.VIP.count})
+              Access Code Total ({revenueByTicketType.AccessCode.count})
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-bold tracking-tight text-slate-800">
-                {formatCurrency(revenueByTicketType.VIP.amount)}
+                {formatCurrency(revenueByTicketType.AccessCode.amount)}
               </span>
             </div>
           </button>
@@ -171,16 +195,16 @@ export const RevenueHistory: React.FC<RevenueHistoryProps> = ({
           <button
             type="button"
             onClick={() =>
-              onOpenDetail?.({ kind: 'ticketType', ticketType: ticketTypeDetails.Regular })
+              onOpenDetail?.({ kind: 'ticketType', ticketType: ticketTypeDetails.Paid })
             }
             className="text-left transition-opacity hover:opacity-80"
           >
             <div className="mb-1 text-sm font-medium text-slate-500">
-              Regular Total ({revenueByTicketType.Regular.count})
+              Paid Total ({revenueByTicketType.Paid.count})
             </div>
             <div className="flex items-baseline gap-1">
               <span className="text-2xl font-bold tracking-tight text-slate-800">
-                {formatCurrency(revenueByTicketType.Regular.amount)}
+                {formatCurrency(revenueByTicketType.Paid.amount)}
               </span>
             </div>
           </button>

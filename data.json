@@ -1,0 +1,89 @@
+{
+    "lawFirms": [
+        {
+            "name": "Bentsi Enchill Letsa and Ankomah",
+            "code": "BELA001"
+        },
+        {
+            "name": "AB and David Law Firm Ghana",
+            "code": "ABDL001"
+        },
+        {
+            "name": "N. Dowuona and Company",
+            "code": "NDOC001"
+        },
+        {
+            "name": "WTS Nobisfields",
+            "code": "WTSN001"
+        },
+        {
+            "name": "Kulendi at Law",
+            "code": "KULA001"
+        },
+        {
+            "name": "Africa Legal Associates",
+            "code": "ALAS001"
+        },
+        {
+            "name": "ENS Ghana",
+            "code": "ENSG001"
+        },
+        {
+            "name": "Minkah Premo Osei Bonsu Bruce Cathline and Partners",
+            "code": "MPOB001"
+        },
+        {
+            "name": "B and P Associates Lawyers Consultants and Notaries Public",
+            "code": "BPAL001"
+        },
+        {
+            "name": "Axis Legal",
+            "code": "AXIS001"
+        },
+        {
+            "name": "Zoe Akyea and Company",
+            "code": "ZAKC001"
+        },
+        {
+            "name": "Griffin Legal",
+            "code": "GLEG001"
+        },
+        {
+            "name": "Ntrakwah and Company",
+            "code": "NTRA001"
+        },
+        {
+            "name": "Beyuo and Company",
+            "code": "BEYU001"
+        },
+        {
+            "name": "Legal Ink Lawyers and Notaries",
+            "code": "LINL001"
+        },
+        {
+            "name": "Legalstone Solicitors",
+            "code": "LSOL001"
+        },
+        {
+            "name": "Legal Ink Lawyers",
+            "code": "LILL001"
+        },
+        {
+            "name": "Clyde and Company Kumasi",
+            "code": "CLYD001"
+        },
+        {
+            "name": "Koffie and Partners Law",
+            "code": "KOFF001"
+        },
+        {
+            "name": "Conclave Lawyers",
+            "code": "CONC001"
+        },
+        {
+            "name": "Amoah and Associates Law Firm",
+            "code": "AMOA001"
+        }
+    ],
+    "registrations": []
+}

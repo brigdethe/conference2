@@ -21,27 +21,27 @@ export const MetricsList: React.FC<MetricsListProps> = ({ dashboard, onOpenDetai
             } as DashboardSidebarContent
         },
         {
-            label: 'VIP Tickets Sold',
-            value: dashboard.vipSales.toLocaleString(),
-            subValue: `GHS ${(dashboard.revenueByTicketType.VIP.amount).toLocaleString()}`,
+            label: 'Access Code Users',
+            value: dashboard.accessCodeSales.toLocaleString(),
+            subValue: `GHS ${(dashboard.revenueByTicketType.AccessCode.amount).toLocaleString()}`,
             icon: Ticket,
             color: 'text-slate-800',
             bg: 'bg-slate-100',
             detail: {
                 kind: 'ticketType',
-                ticketType: dashboard.details.ticketTypes.VIP
+                ticketType: dashboard.details.ticketTypes.AccessCode
             } as DashboardSidebarContent
         },
         {
-            label: 'Regular Tickets Sold',
-            value: dashboard.regularSales.toLocaleString(),
-            subValue: `GHS ${(dashboard.revenueByTicketType.Regular.amount).toLocaleString()}`,
+            label: 'Paid Guests',
+            value: dashboard.paidSales.toLocaleString(),
+            subValue: `GHS ${(dashboard.revenueByTicketType.Paid.amount).toLocaleString()}`,
             icon: Ticket,
             color: 'text-slate-800',
             bg: 'bg-slate-100',
             detail: {
                 kind: 'ticketType',
-                ticketType: dashboard.details.ticketTypes.Regular
+                ticketType: dashboard.details.ticketTypes.Paid
             } as DashboardSidebarContent
         },
         {

@@ -133,8 +133,8 @@ function SidebarContent({ detail }: { detail: DashboardSidebarContent }) {
     return (
       <div>
         <DetailLine label="Total Registrations" value={registrations.total} />
-        <DetailLine label="VIP Tickets" value={registrations.vip} />
-        <DetailLine label="Regular Tickets" value={registrations.regular} />
+        <DetailLine label="Access Code" value={registrations.vip} />
+        <DetailLine label="Paid" value={registrations.regular} />
         <DetailLine label="In-Person" value={registrations.inPerson} />
         <DetailLine label="Virtual" value={registrations.virtual} />
         <DetailLine label="Known Profiles" value={registrations.knownProfiles} />
@@ -192,12 +192,12 @@ function SidebarContent({ detail }: { detail: DashboardSidebarContent }) {
   return (
     <div>
       <DetailLine
-        label="VIP"
-        value={`${detail.revenueByTicketType.VIP.count} tickets, ${formatCurrency(detail.revenueByTicketType.VIP.amount)}`}
+        label="Access Code"
+        value={`${detail.revenueByTicketType.AccessCode.count} tickets, ${formatCurrency(detail.revenueByTicketType.AccessCode.amount)}`}
       />
       <DetailLine
-        label="Regular"
-        value={`${detail.revenueByTicketType.Regular.count} tickets, ${formatCurrency(detail.revenueByTicketType.Regular.amount)}`}
+        label="Paid"
+        value={`${detail.revenueByTicketType.Paid.count} tickets, ${formatCurrency(detail.revenueByTicketType.Paid.amount)}`}
       />
       <DetailLine
         label="Total"

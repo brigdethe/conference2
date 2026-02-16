@@ -6,7 +6,7 @@ export interface User {
   email: string;
   phone: string;
   attendanceType: 'In-Person' | 'Virtual';
-  ticketType?: 'VIP' | 'Regular';
+  ticketType?: 'Access Code' | 'Paid';
   registeredAt?: string;
 }
 
@@ -19,7 +19,7 @@ export const mockUsers: User[] = [
     email: 'sarah.j@example.com',
     phone: '+1 (555) 123-4567',
     attendanceType: 'In-Person',
-    ticketType: 'VIP',
+    ticketType: 'Access Code',
     registeredAt: '2026-02-08T10:15:00.000Z',
   },
   {
