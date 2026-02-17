@@ -451,7 +451,7 @@
             <input class="tickets-modal__input" type="text" name="fullName" placeholder="Full Name" required />
             <input class="tickets-modal__input" type="text" name="jobTitle" placeholder="Job Title" required />
             <div id="ticketsCompanyWrapper">
-                <input class="tickets-modal__input" type="text" name="companyName" id="ticketsCompanyInput" placeholder="Company / Organization" />
+                <input class="tickets-modal__input" type="text" name="companyName" id="ticketsCompanyInput" placeholder="Law Firm / Company" />
             </div>
             <div id="ticketsLawFirmWrapper" style="display: none;">
                 <select class="tickets-modal__input" name="lawFirm" id="ticketsLawFirmSelect">
@@ -481,12 +481,15 @@
     <div class="tickets-celebration-content" role="dialog" aria-modal="true" aria-labelledby="ticketsCelebrationTitle" style="max-width: 400px;">
         <h3 class="tickets-celebration-title" id="ticketsCelebrationTitle">Your Conference Ticket</h3>
         <p class="tickets-celebration-text" style="margin-bottom: 1rem;">Present this ticket at check-in</p>
+        <div id="ticketOrgLogoArea" style="display: none; margin-bottom: 1rem; text-align: center;">
+            <img id="ticketOrgLogo" src="" alt="Organization Logo" style="max-height: 60px; max-width: 150px; object-fit: contain;" />
+        </div>
         <div id="ticketDisplayArea" style="background: #f8f2e8; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #eadfce;">
             <p style="font-size: 0.8rem; color: #7b6a5e; margin: 0 0 0.5rem;">Ticket Code</p>
             <p id="ticketCodeText" style="font-size: 2.5rem; font-family: monospace; font-weight: bold; color: #5b3426; letter-spacing: 0.15em; margin: 0;">----</p>
         </div>
         <div id="ticketQrArea" style="display: none; margin-bottom: 1.5rem; text-align: center;">
-            <img id="ticketQrImage" src="" alt="QR Code" style="width: 150px; height: 150px; border-radius: 8px; border: 1px solid #eadfce;" />
+            <img id="ticketQrImage" src="" alt="QR Code" style="width: 150px; height: 150px; border-radius: 8px; border: 1px solid #eadfce; display: block; margin: 0 auto;" />
         </div>
         <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
             <button type="button" id="ticketPrintBtn" class="tickets-celebration-btn" style="background: #5b3426;">Print Ticket</button>
@@ -559,9 +562,60 @@
         var ticketCodeText = document.getElementById('ticketCodeText');
         var ticketQrArea = document.getElementById('ticketQrArea');
         var ticketQrImage = document.getElementById('ticketQrImage');
+        var ticketOrgLogoArea = document.getElementById('ticketOrgLogoArea');
+        var ticketOrgLogo = document.getElementById('ticketOrgLogo');
         
         var currentTicketCode = '';
         var currentQrImage = '';
+        var currentOrgLogo = '';
+
+        // Check for payment success redirect
+        (async function checkPaymentSuccess() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var paymentStatus = urlParams.get('payment');
+            var ticketCode = urlParams.get('ticket');
+            var regId = urlParams.get('regId');
+            
+            if (paymentStatus === 'success') {
+                // Clear URL params
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // Set ticket code
+                if (ticketCode) {
+                    currentTicketCode = ticketCode;
+                    if (ticketCodeText) ticketCodeText.textContent = ticketCode;
+                }
+                
+                // Fetch QR code if we have registration ID
+                if (regId) {
+                    try {
+                        var ticketRes = await fetch('/api/registration/' + regId + '/ticket');
+                        if (ticketRes.ok) {
+                            var ticketData = await ticketRes.json();
+                            currentTicketCode = ticketData.ticket_code || currentTicketCode;
+                            currentQrImage = ticketData.qr_image || '';
+                            currentOrgLogo = ticketData.firm_logo || '';
+                            if (ticketCodeText) ticketCodeText.textContent = currentTicketCode;
+                            if (ticketQrImage && currentQrImage) {
+                                ticketQrImage.src = 'data:image/png;base64,' + currentQrImage;
+                                ticketQrImage.style.display = 'block';
+                            }
+                            if (ticketOrgLogo && ticketOrgLogoArea && currentOrgLogo) {
+                                ticketOrgLogo.src = currentOrgLogo;
+                                ticketOrgLogoArea.style.display = 'block';
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error fetching ticket:', e);
+                    }
+                }
+                
+                if (ticketsConfirmationModal) {
+                    ticketsConfirmationModal.style.display = 'flex';
+                    ticketsConfirmationModal.setAttribute('aria-hidden', 'false');
+                }
+            }
+        })();
 
         function clearTicketsFeedback() {
             if (!ticketsFeedback) return;
@@ -620,6 +674,10 @@
                     ticketQrImage.src = 'data:image/png;base64,' + currentQrImage;
                     ticketQrArea.style.display = 'block';
                 }
+                if (currentOrgLogo && ticketOrgLogo && ticketOrgLogoArea) {
+                    ticketOrgLogo.src = currentOrgLogo;
+                    ticketOrgLogoArea.style.display = 'block';
+                }
                 
                 if (ticketsCelebrationModal) {
                     ticketsCelebrationModal.style.display = 'flex';
@@ -646,6 +704,7 @@
                     <div style="font-family: Arial, sans-serif; padding: 40px; max-width: 400px; margin: 0 auto; text-align: center; border: 2px solid #5b3426; border-radius: 16px;">
                         <h2 style="color: #5b3426; margin-bottom: 8px;">Ghana Competition Law Seminar</h2>
                         <p style="color: #7b6a5e; font-size: 14px; margin-bottom: 24px;">Conference Ticket</p>
+                        ${currentOrgLogo ? '<div style="margin-bottom: 20px;"><img src="' + currentOrgLogo + '" style="max-height: 60px; max-width: 150px; object-fit: contain;" /></div>' : ''}
                         <div style="background: #f8f2e8; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
                             <p style="font-size: 12px; color: #7b6a5e; margin: 0 0 8px;">Ticket Code</p>
                             <p style="font-size: 36px; font-family: monospace; font-weight: bold; color: #5b3426; letter-spacing: 4px; margin: 0;">${currentTicketCode}</p>
@@ -788,10 +847,35 @@
 
         setupTicketsAccessCodeAutofill();
 
+        function validatePhoneNumber(phone) {
+            // Remove spaces, dashes, and other non-digit characters
+            var cleaned = phone.replace(/\D/g, '');
+            // Must be at least 10 digits
+            if (cleaned.length < 10) {
+                return { valid: false, message: 'Phone number must be at least 10 digits' };
+            }
+            // Check for all zeros or repeated single digit
+            if (/^0+$/.test(cleaned) || /^(.)\1+$/.test(cleaned)) {
+                return { valid: false, message: 'Please enter a valid phone number' };
+            }
+            return { valid: true, message: '' };
+        }
+
         async function handleTicketsRegistrationSubmit(event) {
             event.preventDefault();
             if (!ticketsForm) return;
             clearTicketsFeedback();
+
+            // Validate phone number
+            var phoneInput = ticketsForm.querySelector('input[name="phoneNumber"]');
+            if (phoneInput) {
+                var phoneValidation = validatePhoneNumber(phoneInput.value);
+                if (!phoneValidation.valid) {
+                    showTicketsFeedback(phoneValidation.message, 'error');
+                    phoneInput.focus();
+                    return;
+                }
+            }
 
             var submitBtn = ticketsForm.querySelector('.tickets-modal__submit');
             var originalText = submitBtn ? submitBtn.innerText : '';
@@ -831,6 +915,7 @@
                 // Get ticket code from registration response
                 currentTicketCode = result.registration?.ticket_code || '----';
                 currentQrImage = '';
+                currentOrgLogo = '';
                 
                 // Fetch ticket with QR code
                 var regId = result.registration?.id;
@@ -841,6 +926,7 @@
                             var ticketData = await ticketRes.json();
                             currentTicketCode = ticketData.ticket_code || currentTicketCode;
                             currentQrImage = ticketData.qr_image || '';
+                            currentOrgLogo = ticketData.firm_logo || '';
                         }
                     } catch (e) {
                         console.error('Error fetching ticket:', e);
@@ -876,5 +962,53 @@
                 this.style.height = (this.scrollHeight) + 'px';
             });
         });
+
+        // Inquiry form submission
+        var inquiryForm = document.querySelector('.footer_inquiry-form');
+        if (inquiryForm) {
+            inquiryForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                var submitBtn = inquiryForm.querySelector('.footer_inquiry-submit');
+                var originalText = submitBtn ? submitBtn.innerText : '';
+                
+                if (submitBtn) {
+                    submitBtn.innerText = 'Submitting...';
+                    submitBtn.disabled = true;
+                }
+                
+                var formData = new FormData(inquiryForm);
+                var payload = {
+                    name: formData.get('name'),
+                    email: formData.get('email'),
+                    organization: formData.get('organization'),
+                    inquiry_type: formData.get('inquiryType'),
+                    message: formData.get('message')
+                };
+                
+                try {
+                    var response = await fetch('/api/inquiries', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    if (response.ok) {
+                        alert('Thank you! Your inquiry has been submitted. We will get back to you soon.');
+                        inquiryForm.reset();
+                    } else {
+                        alert('Failed to submit inquiry. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Inquiry submission error:', error);
+                    alert('An error occurred. Please try again.');
+                } finally {
+                    if (submitBtn) {
+                        submitBtn.innerText = originalText;
+                        submitBtn.disabled = false;
+                    }
+                }
+            });
+        }
     })();
 </script>

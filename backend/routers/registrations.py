@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
 
@@ -6,6 +6,7 @@ from database import get_db
 from models import LawFirm, Registration, Settings
 from schemas import RegistrationCreate, RegistrationResponse
 from utils import generate_ticket_code, generate_qr_data
+from routers.notifications import send_ticket_notification, send_admin_payment_notification
 
 router = APIRouter(prefix="/api/registrations", tags=["registrations"])
 
@@ -51,6 +52,26 @@ def get_registrations(
     return {"registrations": result, "total": len(result)}
 
 
+@router.get("/pending-payments")
+def get_pending_payments(db: Session = Depends(get_db)):
+    registrations = db.query(Registration).filter(
+        Registration.status == "awaiting_verification"
+    ).order_by(Registration.created_at.desc()).all()
+    
+    result = []
+    for r in registrations:
+        result.append({
+            "id": r.id,
+            "fullName": r.full_name,
+            "email": r.email,
+            "firmName": r.firm.name if r.firm else None,
+            "status": r.status,
+            "registeredAt": r.created_at.isoformat() if r.created_at else None
+        })
+    
+    return {"registrations": result}
+
+
 @router.get("/users", response_model=dict)
 def get_users(
     status: str = "confirmed",
@@ -66,11 +87,16 @@ def get_users(
     users = []
     for r in registrations:
         firm_name = r.firm.name if r.firm else None
+        company = r.company if r.company and r.company.strip() else None
+        # Show law firm if available, otherwise show company
+        organization = firm_name or company or None
         users.append({
             "id": r.id,
             "fullName": r.full_name,
             "jobTitle": r.job_title,
             "lawFirm": firm_name,
+            "company": company,
+            "organization": organization,
             "email": r.email,
             "phone": r.phone,
             "attendanceType": "In-Person",
@@ -83,8 +109,9 @@ def get_users(
 
 
 @router.post("", response_model=dict)
-def create_registration(
+async def create_registration(
     data: RegistrationCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     firm = None
@@ -141,6 +168,17 @@ def create_registration(
         registration.qr_data = qr_data
         db.commit()
         db.refresh(registration)
+        
+        # Send ticket notification in background
+        await send_ticket_notification(
+            db=db,
+            email=registration.email,
+            phone=registration.phone,
+            full_name=registration.full_name,
+            ticket_code=ticket_code,
+            qr_data=qr_data,
+            org_name=firm.name if firm else None
+        )
     
     message = "Registration successful"
     if status == "pending_payment":
@@ -226,12 +264,27 @@ def get_ticket(registration_id: int, db: Session = Depends(get_db)):
         "qr_image": qr_base64,
         "full_name": registration.full_name,
         "firm_name": registration.firm.name if registration.firm else None,
+        "firm_logo": registration.firm.logo_url if registration.firm else None,
         "status": registration.status
     }
 
 
+@router.get("/{registration_id}/status")
+def get_registration_status(registration_id: int, db: Session = Depends(get_db)):
+    registration = db.query(Registration).filter(
+        Registration.id == registration_id
+    ).first()
+    if not registration:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    
+    return {
+        "status": registration.status,
+        "ticket_code": registration.ticket_code
+    }
+
+
 @router.post("/{registration_id}/payment-submitted")
-def mark_payment_submitted(registration_id: int, db: Session = Depends(get_db)):
+async def mark_payment_submitted(registration_id: int, db: Session = Depends(get_db)):
     registration = db.query(Registration).filter(
         Registration.id == registration_id
     ).first()
@@ -242,15 +295,24 @@ def mark_payment_submitted(registration_id: int, db: Session = Depends(get_db)):
     registration.status = "awaiting_verification"
     db.commit()
     
+    # Get ticket price for notification
+    ticket_price = int(get_setting(db, "ticket_price", "150"))
+    
+    # Notify admins
+    await send_admin_payment_notification(
+        db=db,
+        full_name=registration.full_name,
+        email=registration.email,
+        phone=registration.phone,
+        org_name=registration.firm.name if registration.firm else registration.company,
+        amount=ticket_price
+    )
+    
     return {"success": True, "message": "Payment submission recorded. Awaiting admin verification."}
 
 
 @router.post("/{registration_id}/verify-payment")
-def verify_payment(registration_id: int, db: Session = Depends(get_db)):
-    import qrcode
-    import io
-    import base64
-    
+async def verify_payment(registration_id: int, db: Session = Depends(get_db)):
     registration = db.query(Registration).filter(
         Registration.id == registration_id
     ).first()
@@ -282,46 +344,20 @@ def verify_payment(registration_id: int, db: Session = Depends(get_db)):
     registration.status = "confirmed"
     db.commit()
     
-    # Generate QR code for email
-    qr = qrcode.QRCode(version=1, box_size=10, border=4)
-    qr.add_data(registration.qr_data or registration.ticket_code)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    buffer = io.BytesIO()
-    img.save(buffer, format='PNG')
-    buffer.seek(0)
-    qr_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-    
-    # Log email simulation (in production, send actual email)
-    print(f"""
-    ======================================================
-    [CONFIRMATION EMAIL SIMULATION]
-    To: {registration.email}
-    Subject: Your Conference Ticket - Payment Confirmed
-    ======================================================
-    
-    Dear {registration.full_name},
-    
-    Your payment has been verified and your registration is now confirmed!
-    
-    **YOUR TICKET CODE: {registration.ticket_code}**
-    
-    Please save this code and present it at check-in.
-    
-    Event Details:
-    - Ghana Competition Law Seminar
-    - Mövenpick Ambassador Hotel, Accra
-    
-    We look forward to seeing you!
-    
-    Best regards,
-    Conference Team
-    ======================================================
-    """)
+    # Send ticket notification to user
+    await send_ticket_notification(
+        db=db,
+        email=registration.email,
+        phone=registration.phone,
+        full_name=registration.full_name,
+        ticket_code=registration.ticket_code,
+        qr_data=registration.qr_data,
+        org_name=registration.firm.name if registration.firm else None
+    )
     
     return {
         "success": True, 
-        "message": "Payment verified and confirmation email sent",
+        "message": "Payment verified and confirmation sent",
         "ticket_code": registration.ticket_code
     }
 

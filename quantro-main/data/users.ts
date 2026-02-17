@@ -3,6 +3,8 @@ export interface User {
   fullName: string;
   jobTitle: string;
   lawFirm: string;
+  company?: string;
+  organization?: string;
   email: string;
   phone: string;
   attendanceType: 'In-Person' | 'Virtual';

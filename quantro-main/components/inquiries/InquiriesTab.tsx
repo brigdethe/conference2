@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { Search, Filter, MessageSquare, Briefcase, Calendar } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Filter, MessageSquare, Briefcase, Calendar, RefreshCw } from 'lucide-react';
 import type { Inquiry, InquiryType } from '../../data/inquiries';
-import { INQUIRIES } from '../../data/inquiries';
 
 const INQUIRY_TYPES: InquiryType[] = [
     'General Inquiry',
@@ -19,12 +18,43 @@ interface InquiriesTabProps {
 export const InquiriesTab: React.FC<InquiriesTabProps> = ({ onSelect }) => {
     const [selectedType, setSelectedType] = useState<InquiryType | 'All'>('All');
     const [searchQuery, setSearchQuery] = useState('');
+    const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const filteredInquiries = INQUIRIES.filter(inquiry => {
+    const fetchInquiries = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/inquiries');
+            if (res.ok) {
+                const data = await res.json();
+                // Map backend response to frontend format
+                const mapped = data.map((item: any) => ({
+                    id: String(item.id),
+                    name: item.name,
+                    email: item.email,
+                    organization: item.organization || '',
+                    type: item.inquiry_type as InquiryType,
+                    message: item.message,
+                    date: item.created_at
+                }));
+                setInquiries(mapped);
+            }
+        } catch (err) {
+            console.error('Error fetching inquiries:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchInquiries();
+    }, []);
+
+    const filteredInquiries = inquiries.filter(inquiry => {
         const matchesType = selectedType === 'All' || inquiry.type === selectedType;
         const matchesSearch =
             inquiry.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            inquiry.organization.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (inquiry.organization || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
             inquiry.email.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesType && matchesSearch;
     });
@@ -55,6 +85,14 @@ export const InquiriesTab: React.FC<InquiriesTabProps> = ({ onSelect }) => {
                             {type}
                         </button>
                     ))}
+                    <button
+                        onClick={fetchInquiries}
+                        disabled={loading}
+                        className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-2"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </button>
                 </div>
             </div>
 
@@ -117,10 +155,17 @@ export const InquiriesTab: React.FC<InquiriesTabProps> = ({ onSelect }) => {
                                     </td>
                                 </tr>
                             ))
+                        ) : loading ? (
+                            <tr>
+                                <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
+                                    Loading inquiries...
+                                </td>
+                            </tr>
                         ) : (
                             <tr>
                                 <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
-                                    No inquiries found matching your filter.
+                                    No inquiries found. Submit an inquiry on the website to see it here.
                                 </td>
                             </tr>
                         )}

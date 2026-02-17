@@ -11,6 +11,8 @@ import { MetricsList } from './components/overview/MetricsList';
 import { FirmsTab } from './components/firms/FirmsTab';
 import { TicketsTab } from './components/tickets/TicketsTab';
 import { SettingsTab } from './components/settings/SettingsTab';
+import { InquiriesTab } from './components/inquiries/InquiriesTab';
+import { PaymentsTab } from './components/payments/PaymentsTab';
 import { TabOption } from './types';
 import type { DashboardSidebarContent } from './data/dashboard';
 import type { FirmActivityDetail } from './data/dashboard';
@@ -88,10 +90,16 @@ export default function App() {
         return 'Total Firms';
       case TabOption.Tickets:
         return 'Active Tickets';
+      case TabOption.Payments:
+        return 'Pending Payments';
+      case TabOption.Inquiries:
+        return 'Inquiries';
       case TabOption.Settings:
         return 'Configuration';
+      case TabOption.Attendees:
+        return 'Total Attendees';
       default:
-        return 'Registered Users';
+        return 'Total Attendees';
     }
   };
 
@@ -105,8 +113,14 @@ export default function App() {
         return invitedFirms.length.toLocaleString();
       case TabOption.Tickets:
         return dashboard.registeredUsers.toLocaleString();
+      case TabOption.Payments:
+        return '';
+      case TabOption.Inquiries:
+        return '';
       case TabOption.Settings:
         return '';
+      case TabOption.Attendees:
+        return dashboard.registeredUsers.toLocaleString();
       default:
         return dashboard.registeredUsers.toLocaleString();
     }
@@ -158,7 +172,7 @@ export default function App() {
               </div>
             )}
 
-            {activeTab === TabOption.Users && (
+            {activeTab === TabOption.Attendees && (
               <section className="mb-8">
                 <div className="mb-4 flex items-center justify-end">
                   <div className="relative">
@@ -209,6 +223,19 @@ export default function App() {
             {activeTab === TabOption.Tickets && (
               <section className="mb-8">
                 <TicketsTab />
+              </section>
+            )}
+
+            {activeTab === TabOption.Payments && (
+              <section className="mb-8">
+                <PaymentsTab />
+              </section>
+            )}
+
+            
+            {activeTab === TabOption.Inquiries && (
+              <section className="mb-8">
+                <InquiriesTab onSelect={(inquiry) => setActiveDetail({ kind: 'inquiry', inquiry })} />
               </section>
             )}
 

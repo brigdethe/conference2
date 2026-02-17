@@ -6,6 +6,7 @@ from database import get_db
 from models import Payment, Registration, Settings
 from schemas import PaymentCreate, PaymentResponse
 from utils import generate_ticket_code, generate_qr_data
+from routers.notifications import send_ticket_notification, send_admin_payment_notification
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
 
@@ -82,7 +83,7 @@ def create_payment(data: PaymentCreate, db: Session = Depends(get_db)):
 
 
 @router.patch("/{payment_id}/confirm")
-def confirm_payment(payment_id: int, db: Session = Depends(get_db)):
+async def confirm_payment(payment_id: int, db: Session = Depends(get_db)):
     payment = db.query(Payment).filter(Payment.id == payment_id).first()
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
@@ -112,8 +113,21 @@ def confirm_payment(payment_id: int, db: Session = Depends(get_db)):
             
             registration.ticket_code = ticket_code
             registration.qr_data = qr_data
-    
-    db.commit()
+        
+        db.commit()
+        
+        # Send ticket notification to user
+        await send_ticket_notification(
+            db=db,
+            email=registration.email,
+            phone=registration.phone,
+            full_name=registration.full_name,
+            ticket_code=registration.ticket_code,
+            qr_data=registration.qr_data,
+            org_name=registration.firm.name if registration.firm else None
+        )
+    else:
+        db.commit()
     
     return {"success": True}
 

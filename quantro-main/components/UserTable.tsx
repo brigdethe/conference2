@@ -101,7 +101,7 @@ export const UserTable: React.FC<UserTableProps> = ({
 
                             <th className="py-4 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em]">Full Name</th>
                             <th className="py-4 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em] hidden xl:table-cell">Job Title</th>
-                            <th className="py-4 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em] hidden lg:table-cell">Law Firm</th>
+                            <th className="py-4 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em] hidden lg:table-cell">Organization</th>
                             {/* <th className="py-4 px-6 text-[10px] font-bold text-gray-400 uppercase tracking-wider hidden md:table-cell">Phone / Email</th> */}
                             <th className="py-4 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em] hidden sm:table-cell">Guest Type</th>
                             <th className="py-4 px-6 text-[11px] font-semibold text-slate-500 uppercase tracking-[0.12em] text-right">Actions</th>
@@ -163,7 +163,7 @@ export const UserTable: React.FC<UserTableProps> = ({
                                         </div>
                                     </td>
                                     <td className="py-4 px-6 text-slate-700 hidden xl:table-cell">{user.jobTitle || '—'}</td>
-                                    <td className="py-4 px-6 text-slate-700 hidden lg:table-cell">{user.lawFirm || '—'}</td>
+                                    <td className="py-4 px-6 text-slate-700 hidden lg:table-cell">{user.organization || user.lawFirm || user.company || '—'}</td>
                                     {/* Phone/Email Column Removed */}
                                     <td className="px-6 py-4 hidden sm:table-cell">
                                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${user.ticketType === 'Paid'
@@ -202,8 +202,8 @@ export const UserTable: React.FC<UserTableProps> = ({
                                                             <div className="text-slate-700">{user.jobTitle || '—'}</div>
                                                         </div>
                                                         <div className="lg:hidden">
-                                                            <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.12em] mb-1">Law Firm</div>
-                                                            <div className="text-slate-700">{user.lawFirm || '—'}</div>
+                                                            <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.12em] mb-1">Organization</div>
+                                                            <div className="text-slate-700">{user.organization || user.lawFirm || user.company || '—'}</div>
                                                         </div>
                                                         <div className="md:hidden">
                                                             <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-[0.12em] mb-1">Contact</div>

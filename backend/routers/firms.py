@@ -31,7 +31,10 @@ def get_firms(db: Session = Depends(get_db)):
             created_at=firm.created_at,
             registration_count=total_count,
             confirmed_count=confirmed_count,
-            free_slots_remaining=max(0, 2 - confirmed_count)
+            free_slots_remaining=max(0, (firm.required_registrations or 1) - confirmed_count),
+            required_registrations=firm.required_registrations or 1,
+            is_law_firm=bool(firm.is_law_firm),
+            logo_url=firm.logo_url
         ))
     return result
 
@@ -48,7 +51,14 @@ def create_firm(firm_data: LawFirmCreate, db: Session = Depends(get_db)):
     while db.query(LawFirm).filter(LawFirm.code == code).first():
         code = generate_firm_code(firm_data.name)
     
-    firm = LawFirm(name=firm_data.name, code=code, email=firm_data.email)
+    firm = LawFirm(
+        name=firm_data.name, 
+        code=code, 
+        email=firm_data.email,
+        required_registrations=firm_data.required_registrations,
+        is_law_firm=1 if firm_data.is_law_firm else 0,
+        logo_url=firm_data.logo_url
+    )
     db.add(firm)
     db.commit()
     db.refresh(firm)
@@ -61,7 +71,10 @@ def create_firm(firm_data: LawFirmCreate, db: Session = Depends(get_db)):
         created_at=firm.created_at,
         registration_count=0,
         confirmed_count=0,
-        free_slots_remaining=2
+        free_slots_remaining=firm.required_registrations or 1,
+        required_registrations=firm.required_registrations or 1,
+        is_law_firm=bool(firm.is_law_firm),
+        logo_url=firm.logo_url
     )
 
 
@@ -111,7 +124,7 @@ def get_firms_activity(db: Session = Depends(get_db)):
             confirmed_access_code=confirmed_access,
             confirmed_paid=confirmed_paid,
             pending_payment=pending,
-            free_slots_remaining=max(0, 2 - confirmed_access),
+            free_slots_remaining=max(0, (firm.required_registrations or 1) - confirmed_access),
             last_registration_at=registrations[0].created_at if registrations else None,
             registrations=reg_responses
         ))
@@ -142,7 +155,10 @@ def get_firm_by_code(code: str, db: Session = Depends(get_db)):
             Registration.firm_id == firm.id
         ).count(),
         confirmed_count=confirmed_count,
-        free_slots_remaining=max(0, 2 - confirmed_count)
+        free_slots_remaining=max(0, (firm.required_registrations or 1) - confirmed_count),
+        required_registrations=firm.required_registrations or 1,
+        is_law_firm=bool(firm.is_law_firm),
+        logo_url=firm.logo_url
     )
 
 
@@ -156,6 +172,12 @@ def update_firm(firm_id: int, firm_data: LawFirmUpdate, db: Session = Depends(ge
         firm.name = firm_data.name
     if firm_data.email is not None:
         firm.email = firm_data.email
+    if firm_data.required_registrations is not None:
+        firm.required_registrations = firm_data.required_registrations
+    if firm_data.is_law_firm is not None:
+        firm.is_law_firm = 1 if firm_data.is_law_firm else 0
+    if firm_data.logo_url is not None:
+        firm.logo_url = firm_data.logo_url
     
     db.commit()
     db.refresh(firm)
@@ -177,7 +199,10 @@ def update_firm(firm_id: int, firm_data: LawFirmUpdate, db: Session = Depends(ge
         created_at=firm.created_at,
         registration_count=total_count,
         confirmed_count=confirmed_count,
-        free_slots_remaining=max(0, 2 - confirmed_count)
+        free_slots_remaining=max(0, (firm.required_registrations or 1) - confirmed_count),
+        required_registrations=firm.required_registrations or 1,
+        is_law_firm=bool(firm.is_law_firm),
+        logo_url=firm.logo_url
     )
 
 

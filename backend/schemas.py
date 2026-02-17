@@ -6,6 +6,9 @@ from datetime import datetime
 class LawFirmCreate(BaseModel):
     name: str
     email: Optional[str] = None
+    required_registrations: int = 1
+    is_law_firm: bool = False
+    logo_url: Optional[str] = None
 
 
 class LawFirmResponse(BaseModel):
@@ -16,7 +19,10 @@ class LawFirmResponse(BaseModel):
     created_at: datetime
     registration_count: int = 0
     confirmed_count: int = 0
-    free_slots_remaining: int = 2
+    free_slots_remaining: int = 1
+    required_registrations: int = 1
+    is_law_firm: bool = False
+    logo_url: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -116,6 +122,9 @@ class FirmActivityResponse(BaseModel):
 class LawFirmUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
+    required_registrations: Optional[int] = None
+    is_law_firm: Optional[bool] = None
+    logo_url: Optional[str] = None
 
 
 class DashboardStats(BaseModel):
@@ -125,3 +134,25 @@ class DashboardStats(BaseModel):
     pending_registrations: int
     total_revenue: int
     checked_in_count: int
+
+
+class InquiryCreate(BaseModel):
+    name: str
+    email: str
+    organization: Optional[str] = None
+    inquiry_type: str
+    message: str
+
+
+class InquiryResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    organization: Optional[str]
+    inquiry_type: str
+    message: str
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

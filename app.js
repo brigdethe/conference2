@@ -57,6 +57,54 @@ app.get('/api/registration/:id/ticket', async (req, res) => {
   }
 });
 
+app.get('/api/registration/:id/status', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const response = await fetchBackend(`/api/registrations/${id}/status`);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching status:', error);
+    res.status(500).json({ error: 'Failed to fetch status' });
+  }
+});
+
+app.get('/api/registrations/pending-payments', async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/registrations/pending-payments');
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching pending payments:', error);
+    res.status(500).json({ error: 'Failed to fetch pending payments' });
+  }
+});
+
+app.get('/api/inquiries', async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/inquiries');
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching inquiries:', error);
+    res.status(500).json({ error: 'Failed to fetch inquiries' });
+  }
+});
+
+app.post('/api/inquiries', async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/inquiries', {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+    });
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error creating inquiry:', error);
+    res.status(500).json({ error: 'Failed to create inquiry' });
+  }
+});
+
 app.post('/api/admin/invite', async (req, res) => {
   const { firmName, email } = req.body;
   if (!firmName || !email) {

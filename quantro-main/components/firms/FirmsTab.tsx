@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Building2, Copy, Check, LayoutGrid, List, Download, Trash2, X, Users, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Plus, Building2, Copy, Check, LayoutGrid, List, Download, Trash2, X, Users, Loader2, Pencil, Filter } from 'lucide-react';
 
 interface Registration {
   id: number;
@@ -22,6 +22,9 @@ interface Firm {
   registration_count: number;
   confirmed_count: number;
   free_slots_remaining: number;
+  required_registrations: number;
+  is_law_firm: boolean;
+  logo_url: string | null;
 }
 
 interface FirmDetail {
@@ -47,12 +50,31 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newFirmName, setNewFirmName] = useState('');
   const [newFirmEmail, setNewFirmEmail] = useState('');
+  const [newFirmRequired, setNewFirmRequired] = useState(1);
+  const [newFirmIsLawFirm, setNewFirmIsLawFirm] = useState(false);
+  const [newFirmLogoUrl, setNewFirmLogoUrl] = useState('');
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editRequired, setEditRequired] = useState(1);
+  const [editLogoUrl, setEditLogoUrl] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   const [selectedFirm, setSelectedFirm] = useState<FirmDetail | null>(null);
   const [isLoadingDetail, setIsLoadingDetail] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingFirm, setEditingFirm] = useState<Firm | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editIsLawFirm, setEditIsLawFirm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [filterType, setFilterType] = useState<'all' | 'law_firm' | 'organization'>('all');
+
+  const filteredFirms = useMemo(() => {
+    if (filterType === 'all') return firms;
+    if (filterType === 'law_firm') return firms.filter(f => f.is_law_firm);
+    return firms.filter(f => !f.is_law_firm);
+  }, [firms, filterType]);
 
   const fetchFirms = useCallback(async () => {
     setIsLoading(true);
@@ -82,7 +104,13 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
       const res = await fetch('/api/firms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newFirmName.trim(), email: newFirmEmail.trim() || null }),
+        body: JSON.stringify({ 
+          name: newFirmName.trim(), 
+          email: newFirmEmail.trim() || null,
+          required_registrations: newFirmRequired,
+          is_law_firm: newFirmIsLawFirm,
+          logo_url: newFirmLogoUrl.trim() || null
+        }),
       });
 
       if (!res.ok) {
@@ -92,6 +120,9 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
 
       setNewFirmName('');
       setNewFirmEmail('');
+      setNewFirmRequired(1);
+      setNewFirmIsLawFirm(false);
+      setNewFirmLogoUrl('');
       setShowAddModal(false);
       fetchFirms();
       onFirmCreated?.();
@@ -109,9 +140,49 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  const openEditModal = (firm: Firm, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingFirm(firm);
+    setEditName(firm.name);
+    setEditEmail(firm.email || '');
+    setEditRequired(firm.required_registrations);
+    setEditLogoUrl(firm.logo_url || '');
+    setEditIsLawFirm(firm.is_law_firm);
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingFirm) return;
+    setIsSaving(true);
+    try {
+      const res = await fetch(`/api/firms/${editingFirm.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName.trim(),
+          email: editEmail.trim() || null,
+          required_registrations: editRequired,
+          logo_url: editLogoUrl.trim() || null,
+          is_law_firm: editIsLawFirm,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || 'Failed to update');
+      }
+      setShowEditModal(false);
+      setEditingFirm(null);
+      fetchFirms();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to update');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleDeleteFirm = async (firmId: number, e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (!confirm('Are you sure you want to delete this firm?')) return;
+    if (!confirm('Are you sure you want to delete this organization?')) return;
     
     setDeletingId(firmId);
     try {
@@ -171,10 +242,19 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-slate-900">Law Firms</h2>
-          <p className="text-sm text-slate-500">Manage invited law firms and their access codes</p>
+          <h2 className="text-xl font-bold text-slate-900">Organizations</h2>
+          <p className="text-sm text-slate-500">Manage invited organizations and their access codes</p>
         </div>
         <div className="flex items-center gap-3">
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as 'all' | 'law_firm' | 'organization')}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-200"
+          >
+            <option value="all">All ({firms.length})</option>
+            <option value="law_firm">Law Firms ({firms.filter(f => f.is_law_firm).length})</option>
+            <option value="organization">Companies ({firms.filter(f => !f.is_law_firm).length})</option>
+          </select>
           <div className="flex rounded-lg border border-slate-200 bg-white p-1">
             <button
               onClick={() => setViewMode('table')}
@@ -235,28 +315,44 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
           <table className="w-full">
             <thead className="bg-slate-50 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="px-6 py-4">Firm Name</th>
-                <th className="px-6 py-4">Email</th>
-                <th className="px-6 py-4">Access Code</th>
-                <th className="px-6 py-4">Registrations</th>
-                <th className="px-6 py-4">Free Slots</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-4 py-4">Logo</th>
+                <th className="px-4 py-4">Organization</th>
+                <th className="px-4 py-4">Type</th>
+                <th className="px-4 py-4">Access Code</th>
+                <th className="px-4 py-4">Registered</th>
+                <th className="px-4 py-4" title="Number of free registration slots allocated">Quota</th>
+                <th className="px-4 py-4">Free Slots</th>
+                <th className="px-4 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {firms.map((firm) => (
+              {filteredFirms.map((firm) => (
                 <tr
                   key={firm.id}
                   onClick={() => handleFirmClick(firm.code)}
                   className="hover:bg-slate-50 cursor-pointer transition-colors"
                 >
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-slate-900">{firm.name}</span>
+                  <td className="px-4 py-4">
+                    {firm.logo_url ? (
+                      <img src={firm.logo_url} alt={firm.name} className="h-8 w-8 rounded-lg object-contain bg-slate-100" />
+                    ) : (
+                      <div className="h-8 w-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                        <Building2 className="h-4 w-4 text-slate-400" />
+                      </div>
+                    )}
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-500">
-                    {firm.email || <span className="text-slate-300">-</span>}
+                  <td className="px-4 py-4">
+                    <div>
+                      <span className="font-medium text-slate-900">{firm.name}</span>
+                      {firm.email && <p className="text-xs text-slate-500">{firm.email}</p>}
+                    </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${firm.is_law_firm ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
+                      {firm.is_law_firm ? 'Law Firm' : 'Company'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4">
                     <button
                       onClick={(e) => copyCode(firm.code, e)}
                       className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-mono font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
@@ -269,25 +365,35 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
                       )}
                     </button>
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{firm.registration_count}</td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4 text-sm text-slate-600">{firm.confirmed_count}</td>
+                  <td className="px-4 py-4 text-sm font-medium text-slate-900">{firm.required_registrations}</td>
+                  <td className="px-4 py-4">
                     <span className={`text-sm font-medium ${firm.free_slots_remaining > 0 ? 'text-green-600' : 'text-amber-600'}`}>
                       {firm.free_slots_remaining}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={(e) => handleDeleteFirm(firm.id, e)}
-                      disabled={deletingId === firm.id || firm.registration_count > 0}
-                      className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      title={firm.registration_count > 0 ? 'Cannot delete firm with registrations' : 'Delete firm'}
-                    >
-                      {deletingId === firm.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-4 w-4" />
-                      )}
-                    </button>
+                  <td className="px-4 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={(e) => openEditModal(firm, e)}
+                        className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+                        title="Edit organization"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteFirm(firm.id, e)}
+                        disabled={deletingId === firm.id || firm.registration_count > 0}
+                        className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        title={firm.registration_count > 0 ? 'Cannot delete with registrations' : 'Delete'}
+                      >
+                        {deletingId === firm.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -360,13 +466,13 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
           />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <div className="pointer-events-auto w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-              <h3 className="mb-4 text-lg font-semibold text-slate-900">Add New Law Firm</h3>
+              <h3 className="mb-4 text-lg font-semibold text-slate-900">Add New Organization</h3>
               <form onSubmit={handleCreateFirm}>
                 <input
                   type="text"
                   value={newFirmName}
                   onChange={(e) => setNewFirmName(e.target.value)}
-                  placeholder="Enter law firm name"
+                  placeholder="Organization name"
                   className="mb-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
                   autoFocus
                 />
@@ -374,9 +480,44 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
                   type="email"
                   value={newFirmEmail}
                   onChange={(e) => setNewFirmEmail(e.target.value)}
-                  placeholder="Contact email (for bulk invitations)"
+                  placeholder="Contact email (optional)"
+                  className="mb-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
+                />
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-slate-600">Free Slots (Quota)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={newFirmRequired}
+                      onChange={(e) => setNewFirmRequired(parseInt(e.target.value) || 1)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
+                    />
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newFirmIsLawFirm}
+                        onChange={(e) => setNewFirmIsLawFirm(e.target.checked)}
+                        className="rounded border-slate-300"
+                      />
+                      Is Law Firm
+                    </label>
+                  </div>
+                </div>
+                <input
+                  type="url"
+                  value={newFirmLogoUrl}
+                  onChange={(e) => setNewFirmLogoUrl(e.target.value)}
+                  placeholder="Logo URL (optional)"
                   className="mb-4 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
                 />
+                {newFirmLogoUrl && (
+                  <div className="mb-4 flex justify-center">
+                    <img src={newFirmLogoUrl} alt="Logo preview" className="h-16 w-16 rounded-lg object-contain bg-slate-100 border border-slate-200" />
+                  </div>
+                )}
                 <div className="flex justify-end gap-3">
                   <button
                     type="button"
@@ -512,6 +653,95 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <Loader2 className="h-8 w-8 animate-spin text-white" />
         </div>
+      )}
+
+      {showEditModal && editingFirm && (
+        <>
+          <div
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowEditModal(false)}
+          />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+            <div className="pointer-events-auto w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+              <h3 className="mb-4 text-lg font-semibold text-slate-900">Edit Organization</h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">Name</label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">Email</label>
+                  <input
+                    type="email"
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    placeholder="Contact email (optional)"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-slate-600">Quota (Free Slots)</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={editRequired}
+                      onChange={(e) => setEditRequired(parseInt(e.target.value) || 1)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
+                    />
+                  </div>
+                  <div className="flex items-end pb-1">
+                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={editIsLawFirm}
+                        onChange={(e) => setEditIsLawFirm(e.target.checked)}
+                        className="rounded border-slate-300"
+                      />
+                      Is Law Firm
+                    </label>
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs font-medium text-slate-600">Logo URL</label>
+                  <input
+                    type="url"
+                    value={editLogoUrl}
+                    onChange={(e) => setEditLogoUrl(e.target.value)}
+                    placeholder="https://example.com/logo.png"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
+                  />
+                </div>
+                {editLogoUrl && (
+                  <div className="flex justify-center">
+                    <img src={editLogoUrl} alt="Logo preview" className="h-16 w-16 rounded-lg object-contain bg-slate-100 border border-slate-200" />
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={isSaving || !editName.trim()}
+                  className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+                >
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
