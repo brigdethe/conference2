@@ -467,6 +467,29 @@
             const stopBtn = document.getElementById('stopScannerBtn');
             const permError = document.getElementById('permissionError');
             
+            // Check if mediaDevices is available (requires HTTPS or localhost)
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                permError.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                
+                // Check if it's an HTTPS issue
+                if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+                    permError.querySelector('p.text-red-600').textContent = 'HTTPS Required';
+                    permError.querySelector('p.text-slate-500').textContent = 'Camera access requires a secure connection (HTTPS)';
+                    permError.querySelector('.text-left').innerHTML = `
+                        <p class="font-medium">Please use the secure URL:</p>
+                        <a href="https://${window.location.host}${window.location.pathname}" 
+                           class="block mt-2 text-emerald-600 font-medium underline">
+                            https://${window.location.host}${window.location.pathname}
+                        </a>
+                    `;
+                } else {
+                    permError.querySelector('p.text-red-600').textContent = 'Camera Not Supported';
+                    permError.querySelector('p.text-slate-500').textContent = 'Your browser does not support camera access';
+                }
+                return;
+            }
+            
             // Hide placeholder, show reader
             placeholder.classList.add('hidden');
             permError.classList.add('hidden');
@@ -511,7 +534,9 @@
                     permError.querySelector('p.text-slate-500').textContent = 'This device does not have a camera';
                 } else {
                     placeholder.classList.remove('hidden');
-                    alert('Camera error: ' + (err.message || 'Unknown error'));
+                    permError.classList.remove('hidden');
+                    permError.querySelector('p.text-red-600').textContent = 'Camera Error';
+                    permError.querySelector('p.text-slate-500').textContent = err.message || 'Could not access camera';
                 }
             }
         }
