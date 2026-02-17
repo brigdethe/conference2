@@ -492,7 +492,7 @@
             <img id="ticketQrImage" src="" alt="QR Code" style="width: 150px; height: 150px; border-radius: 8px; border: 1px solid #eadfce; display: block; margin: 0 auto;" />
         </div>
         <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
-            <button type="button" id="ticketPrintBtn" class="tickets-celebration-btn" style="background: #5b3426;">Print Ticket</button>
+            <button type="button" id="ticketPrintBtn" class="tickets-celebration-btn" style="background: #5b3426;">Download PDF</button>
             <button type="button" id="ticketsCelebrationCloseBtn" class="tickets-celebration-btn secondary">Close</button>
         </div>
     </div>
@@ -696,80 +696,103 @@
         
         if (ticketPrintBtn) {
             ticketPrintBtn.addEventListener('click', async function() {
-                // Generate and print/save as PDF using browser print
+                // Generate and download PDF directly
                 if (!currentTicketCode) return;
                 
-                // Create a print-friendly window
-                var printWindow = window.open('', '_blank', 'width=450,height=650');
-                if (!printWindow) {
-                    alert('Please allow popups to print your ticket');
-                    return;
+                // Change button state
+                ticketPrintBtn.disabled = true;
+                ticketPrintBtn.textContent = 'Generating...';
+                
+                try {
+                    // Load jsPDF dynamically if not loaded
+                    if (typeof jspdf === 'undefined') {
+                        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+                    }
+                    
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: [100, 150] // Ticket size
+                    });
+                    
+                    // Background
+                    doc.setFillColor(255, 255, 255);
+                    doc.rect(0, 0, 100, 150, 'F');
+                    
+                    // Border
+                    doc.setDrawColor(91, 52, 38);
+                    doc.setLineWidth(1);
+                    doc.roundedRect(5, 5, 90, 140, 3, 3, 'S');
+                    
+                    // Title
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(11);
+                    doc.setTextColor(91, 52, 38);
+                    doc.text('Ghana Competition Law Seminar', 50, 18, { align: 'center' });
+                    
+                    // Subtitle
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.setTextColor(123, 106, 94);
+                    doc.text('Conference Ticket', 50, 24, { align: 'center' });
+                    
+                    // Code box background
+                    doc.setFillColor(248, 242, 232);
+                    doc.roundedRect(10, 32, 80, 28, 2, 2, 'F');
+                    
+                    // Code label
+                    doc.setFontSize(7);
+                    doc.setTextColor(123, 106, 94);
+                    doc.text('TICKET CODE', 50, 40, { align: 'center' });
+                    
+                    // Ticket code
+                    doc.setFont('courier', 'bold');
+                    doc.setFontSize(22);
+                    doc.setTextColor(91, 52, 38);
+                    doc.text(currentTicketCode, 50, 52, { align: 'center' });
+                    
+                    // QR Code
+                    if (currentQrImage) {
+                        doc.addImage('data:image/png;base64,' + currentQrImage, 'PNG', 30, 65, 40, 40);
+                    }
+                    
+                    // Footer text
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.setTextColor(123, 106, 94);
+                    doc.text('Present this ticket at check-in', 50, 115, { align: 'center' });
+                    
+                    // Venue
+                    doc.setFontSize(7);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text('Mövenpick Ambassador Hotel, Accra', 50, 122, { align: 'center' });
+                    
+                    // Date
+                    doc.setFontSize(6);
+                    doc.text('March 2026', 50, 128, { align: 'center' });
+                    
+                    // Download
+                    doc.save('ticket-' + currentTicketCode + '.pdf');
+                    
+                } catch (err) {
+                    console.error('PDF generation error:', err);
+                    alert('Could not generate PDF. Please try again.');
+                } finally {
+                    ticketPrintBtn.disabled = false;
+                    ticketPrintBtn.textContent = 'Download PDF';
                 }
-                
-                var ticketHtml = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Conference Ticket - ${currentTicketCode}</title>
-                        <style>
-                            @media print {
-                                body { margin: 0; padding: 0; }
-                                .no-print { display: none !important; }
-                            }
-                            body {
-                                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                                margin: 0;
-                                padding: 20px;
-                                background: #fff;
-                            }
-                            .ticket {
-                                max-width: 380px;
-                                margin: 0 auto;
-                                padding: 32px;
-                                text-align: center;
-                                border: 3px solid #5b3426;
-                                border-radius: 16px;
-                                background: #fff;
-                            }
-                            .title { color: #5b3426; margin: 0 0 4px; font-size: 20px; }
-                            .subtitle { color: #7b6a5e; font-size: 13px; margin: 0 0 20px; }
-                            .org-logo { max-height: 50px; max-width: 140px; margin-bottom: 16px; }
-                            .code-box { background: #f8f2e8; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
-                            .code-label { font-size: 11px; color: #7b6a5e; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 1px; }
-                            .code { font-size: 42px; font-family: 'Courier New', monospace; font-weight: bold; color: #5b3426; letter-spacing: 6px; margin: 0; }
-                            .qr { width: 160px; height: 160px; margin: 0 auto 16px; display: block; }
-                            .footer-text { font-size: 12px; color: #7b6a5e; margin: 0; }
-                            .venue { font-size: 11px; color: #999; margin-top: 12px; }
-                            .print-btn { 
-                                margin-top: 20px; padding: 12px 24px; background: #5b3426; color: #fff; 
-                                border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer;
-                            }
-                            .print-btn:hover { background: #4a2a1f; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="ticket">
-                            <h2 class="title">Ghana Competition Law Seminar</h2>
-                            <p class="subtitle">Conference Ticket</p>
-                            ${currentOrgLogo ? '<img src="' + currentOrgLogo + '" class="org-logo" alt="Organization" />' : ''}
-                            <div class="code-box">
-                                <p class="code-label">Ticket Code</p>
-                                <p class="code">${currentTicketCode}</p>
-                            </div>
-                            ${currentQrImage ? '<img src="data:image/png;base64,' + currentQrImage + '" class="qr" alt="QR Code" />' : ''}
-                            <p class="footer-text">Present this ticket at check-in</p>
-                            <p class="venue">Mövenpick Ambassador Hotel, Accra</p>
-                        </div>
-                        <div style="text-align: center;" class="no-print">
-                            <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
-                            <p style="font-size: 12px; color: #666; margin-top: 12px;">Tip: Choose "Save as PDF" in print dialog to download</p>
-                        </div>
-                    </body>
-                    </html>
-                `;
-                
-                printWindow.document.write(ticketHtml);
-                printWindow.document.close();
+            });
+        }
+        
+        // Helper to load scripts dynamically
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
             });
         }
 

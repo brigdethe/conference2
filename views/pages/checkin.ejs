@@ -467,29 +467,6 @@
             const stopBtn = document.getElementById('stopScannerBtn');
             const permError = document.getElementById('permissionError');
             
-            // Check if mediaDevices is available (requires HTTPS or localhost)
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                permError.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-                
-                // Check if it's an HTTPS issue
-                if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-                    permError.querySelector('p.text-red-600').textContent = 'HTTPS Required';
-                    permError.querySelector('p.text-slate-500').textContent = 'Camera access requires a secure connection (HTTPS)';
-                    permError.querySelector('.text-left').innerHTML = `
-                        <p class="font-medium">Please use the secure URL:</p>
-                        <a href="https://${window.location.host}${window.location.pathname}" 
-                           class="block mt-2 text-emerald-600 font-medium underline">
-                            https://${window.location.host}${window.location.pathname}
-                        </a>
-                    `;
-                } else {
-                    permError.querySelector('p.text-red-600').textContent = 'Camera Not Supported';
-                    permError.querySelector('p.text-slate-500').textContent = 'Your browser does not support camera access';
-                }
-                return;
-            }
-            
             // Hide placeholder, show reader
             placeholder.classList.add('hidden');
             permError.classList.add('hidden');
@@ -498,15 +475,10 @@
             html5QrCode = new Html5Qrcode("reader");
             
             try {
-                // First check if we have camera permission
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" } 
-                });
-                // Stop the test stream
-                stream.getTracks().forEach(track => track.stop());
+                // Calculate QR box size based on screen
+                const qrboxSize = Math.min(window.innerWidth - 80, 250);
                 
-                // Now start the QR scanner
-                const qrboxSize = Math.min(window.innerWidth - 60, 280);
+                // Start the QR scanner directly - let the library handle camera access
                 await html5QrCode.start(
                     { facingMode: "environment" },
                     { 
@@ -524,19 +496,45 @@
                 console.error('Camera error:', err);
                 reader.classList.add('hidden');
                 stopBtn.classList.add('hidden');
+                permError.classList.remove('hidden');
                 
-                // Show appropriate error
-                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    permError.classList.remove('hidden');
-                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                    permError.classList.remove('hidden');
-                    permError.querySelector('p.text-red-600').textContent = 'No Camera Found';
-                    permError.querySelector('p.text-slate-500').textContent = 'This device does not have a camera';
+                // Show appropriate error message
+                const errorTitle = permError.querySelector('p.text-red-600');
+                const errorDesc = permError.querySelector('p.text-slate-500');
+                const errorHelp = permError.querySelector('.text-left');
+                
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError' || 
+                    (err.message && err.message.includes('Permission'))) {
+                    errorTitle.textContent = 'Camera Permission Denied';
+                    errorDesc.textContent = 'Please allow camera access in your browser settings';
+                    errorHelp.innerHTML = `
+                        <p class="font-medium">How to enable:</p>
+                        <ol class="list-decimal list-inside space-y-1 text-xs mt-2">
+                            <li>Tap the lock/settings icon in the address bar</li>
+                            <li>Find "Camera" and set to "Allow"</li>
+                            <li>Refresh the page and try again</li>
+                        </ol>
+                    `;
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError' ||
+                           (err.message && err.message.includes('not found'))) {
+                    errorTitle.textContent = 'No Camera Found';
+                    errorDesc.textContent = 'This device does not have a camera or it is in use';
+                    errorHelp.innerHTML = `<p class="text-xs">Try closing other apps that might be using the camera.</p>`;
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    errorTitle.textContent = 'Camera In Use';
+                    errorDesc.textContent = 'The camera is being used by another application';
+                    errorHelp.innerHTML = `<p class="text-xs">Close other apps using the camera and try again.</p>`;
+                } else if (err.name === 'OverconstrainedError') {
+                    errorTitle.textContent = 'Camera Error';
+                    errorDesc.textContent = 'Could not find a suitable camera';
+                    errorHelp.innerHTML = `<p class="text-xs">Try using a different browser.</p>`;
                 } else {
-                    placeholder.classList.remove('hidden');
-                    permError.classList.remove('hidden');
-                    permError.querySelector('p.text-red-600').textContent = 'Camera Error';
-                    permError.querySelector('p.text-slate-500').textContent = err.message || 'Could not access camera';
+                    errorTitle.textContent = 'Camera Error';
+                    errorDesc.textContent = err.message || 'Could not start camera';
+                    errorHelp.innerHTML = `
+                        <p class="text-xs">Error details: ${err.name || 'Unknown'}</p>
+                        <p class="text-xs mt-1">Try refreshing the page or using a different browser.</p>
+                    `;
                 }
             }
         }
