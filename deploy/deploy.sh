@@ -13,6 +13,12 @@ git pull origin main
 echo "=== Installing Node.js dependencies ==="
 npm install --production
 
+echo "=== Building admin panel ==="
+cd quantro-main
+npm install
+npm run build
+cd $APP_DIR
+
 echo "=== Setting up Python backend ==="
 cd backend
 
@@ -28,6 +34,10 @@ pip install -r requirements.txt
 deactivate
 
 cd $APP_DIR
+
+echo "=== Updating Nginx config ==="
+cp deploy/nginx.conf /etc/nginx/sites-available/conference
+nginx -t && systemctl reload nginx
 
 echo "=== Restarting services ==="
 # Restart PM2 processes
