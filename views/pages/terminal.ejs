@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Logs | Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+        }
+        .header {
+            background: #16213e;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #0f3460;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 {
+            font-size: 1.25rem;
+            color: #00ff88;
+        }
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #0f3460;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #1a4a7a;
+        }
+        .btn-danger {
+            background: #e94560;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #ff6b6b;
+        }
+        .btn-success {
+            background: #00bf63;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #00e676;
+        }
+        .tabs {
+            display: flex;
+            background: #16213e;
+            border-bottom: 1px solid #0f3460;
+        }
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: #888;
+            font-size: 0.875rem;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover {
+            color: #fff;
+        }
+        .tab.active {
+            color: #00ff88;
+            border-bottom-color: #00ff88;
+        }
+        .log-container {
+            padding: 1rem;
+            height: calc(100vh - 120px);
+            overflow-y: auto;
+        }
+        .log-entry {
+            padding: 0.25rem 0;
+            font-size: 0.8125rem;
+            line-height: 1.5;
+            border-bottom: 1px solid #2a2a4a;
+        }
+        .log-entry:hover {
+            background: #2a2a4a;
+        }
+        .log-time {
+            color: #888;
+            margin-right: 1rem;
+        }
+        .log-source {
+            color: #00bcd4;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+        .log-message {
+            color: #eee;
+        }
+        .log-error {
+            color: #ff6b6b;
+        }
+        .log-warn {
+            color: #ffa726;
+        }
+        .log-info {
+            color: #4fc3f7;
+        }
+        .log-success {
+            color: #00ff88;
+        }
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #16213e;
+            padding: 0.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #0f3460;
+            font-size: 0.75rem;
+        }
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #00ff88;
+            animation: pulse 2s infinite;
+        }
+        .status-dot.disconnected {
+            background: #ff6b6b;
+            animation: none;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: #666;
+        }
+        .btn-warning {
+            background: #ff9800;
+            color: #000;
+        }
+        .btn-warning:hover {
+            background: #ffb74d;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: #1e1e3f;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid #0f3460;
+        }
+        .modal h2 {
+            color: #ff9800;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .modal p {
+            color: #aaa;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .modal-actions .btn {
+            flex: 1;
+            min-width: 120px;
+        }
+        .warning-text {
+            color: #ff6b6b;
+            font-size: 0.875rem;
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(255,107,107,0.1);
+            border-radius: 4px;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .loading-overlay.active {
+            display: flex;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #333;
+            border-top-color: #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .filter-bar {
+            padding: 0.75rem 1rem;
+            background: #1e1e3f;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+        .filter-bar input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #0f3460;
+            border-radius: 4px;
+            background: #16213e;
+            color: #fff;
+            font-family: inherit;
+        }
+        .filter-bar input:focus {
+            outline: none;
+            border-color: #00ff88;
+        }
+        .auto-scroll-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #888;
+            font-size: 0.8125rem;
+        }
+        .auto-scroll-toggle input {
+            width: 16px;
+            height: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📟 Server Terminal Logs</h1>
+        <div class="header-actions">
+            <button class="btn btn-primary" onclick="refreshLogs()">🔄 Refresh</button>
+            <button class="btn btn-success" onclick="downloadLogs('all')">⬇️ Download All</button>
+            <button class="btn btn-danger" onclick="downloadLogs('errors')">⚠️ Download Errors</button>
+            <button class="btn btn-danger" onclick="clearLogs()">🗑️ Clear Logs</button>
+            <button class="btn btn-warning" onclick="showDbModal()">🗄️ Database</button>
+        </div>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab active" data-tab="all">All Logs</button>
+        <button class="tab" data-tab="frontend">Frontend (PM2)</button>
+        <button class="tab" data-tab="backend">Backend (FastAPI)</button>
+        <button class="tab" data-tab="nginx">Nginx</button>
+        <button class="tab" data-tab="errors">Errors Only</button>
+    </div>
+    
+    <div class="filter-bar">
+        <input type="text" id="filterInput" placeholder="Filter logs..." oninput="filterLogs()">
+        <label class="auto-scroll-toggle">
+            <input type="checkbox" id="autoScroll" checked>
+            Auto-scroll
+        </label>
+    </div>
+    
+    <div class="log-container" id="logContainer">
+        <div class="empty-state">Loading logs...</div>
+    </div>
+    
+    <!-- Database Modal -->
+    <div class="modal-overlay" id="dbModal">
+        <div class="modal">
+            <h2>🗄️ Database Management</h2>
+            <p>Use these options to manage the production database. This is useful for testing and resetting data.</p>
+            
+            <div class="modal-actions">
+                <button class="btn btn-danger" onclick="resetDatabase(false)">🗑️ Clear All Data</button>
+                <button class="btn btn-success" onclick="resetDatabase(true)">🔄 Reset & Seed</button>
+                <button class="btn btn-primary" onclick="hideDbModal()">Cancel</button>
+            </div>
+            
+            <div class="warning-text">
+                ⚠️ <strong>Warning:</strong> These actions are irreversible! "Clear All Data" will delete everything. "Reset & Seed" will clear and then add the default organizations.
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div style="color: #fff;">Processing database operation...</div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-indicator">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Connected</span>
+        </div>
+        <div>
+            <span id="logCount">0</span> log entries | Last updated: <span id="lastUpdate">-</span>
+        </div>
+    </div>
+
+    <script>
+        let allLogs = [];
+        let currentTab = 'all';
+        let refreshInterval;
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentTab = tab.dataset.tab;
+                renderLogs();
+            });
+        });
+
+        async function fetchLogs() {
+            try {
+                const response = await fetch('/api/terminal/logs');
+                const data = await response.json();
+                allLogs = data.logs || [];
+                document.getElementById('statusDot').classList.remove('disconnected');
+                document.getElementById('statusText').textContent = 'Connected';
+                document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+                renderLogs();
+            } catch (error) {
+                console.error('Failed to fetch logs:', error);
+                document.getElementById('statusDot').classList.add('disconnected');
+                document.getElementById('statusText').textContent = 'Disconnected';
+            }
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logContainer');
+            const filter = document.getElementById('filterInput').value.toLowerCase();
+            
+            let filteredLogs = allLogs;
+            
+            if (currentTab === 'frontend') {
+                filteredLogs = allLogs.filter(log => log.source === 'frontend');
+            } else if (currentTab === 'backend') {
+                filteredLogs = allLogs.filter(log => log.source === 'backend');
+            } else if (currentTab === 'nginx') {
+                filteredLogs = allLogs.filter(log => log.source === 'nginx');
+            } else if (currentTab === 'errors') {
+                filteredLogs = allLogs.filter(log => log.level === 'error');
+            }
+            
+            if (filter) {
+                filteredLogs = filteredLogs.filter(log => 
+                    log.message.toLowerCase().includes(filter) ||
+                    log.source.toLowerCase().includes(filter)
+                );
+            }
+            
+            document.getElementById('logCount').textContent = filteredLogs.length;
+            
+            if (filteredLogs.length === 0) {
+                container.innerHTML = '<div class="empty-state">No logs found</div>';
+                return;
+            }
+            
+            container.innerHTML = filteredLogs.map(log => `
+                <div class="log-entry">
+                    <span class="log-time">${log.timestamp}</span>
+                    <span class="log-source">[${log.source.toUpperCase()}]</span>
+                    <span class="log-message ${log.level === 'error' ? 'log-error' : log.level === 'warn' ? 'log-warn' : log.level === 'info' ? 'log-info' : ''}">${escapeHtml(log.message)}</span>
+                </div>
+            `).join('');
+            
+            if (document.getElementById('autoScroll').checked) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function filterLogs() {
+            renderLogs();
+        }
+
+        function refreshLogs() {
+            fetchLogs();
+        }
+
+        async function downloadLogs(type) {
+            let logsToDownload = allLogs;
+            let filename = 'server-logs.txt';
+            
+            if (type === 'errors') {
+                logsToDownload = allLogs.filter(log => log.level === 'error');
+                filename = 'error-logs.txt';
+            }
+            
+            const content = logsToDownload.map(log => 
+                `[${log.timestamp}] [${log.source.toUpperCase()}] ${log.message}`
+            ).join('\n');
+            
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        async function clearLogs() {
+            if (!confirm('Are you sure you want to clear all logs?')) return;
+            
+            try {
+                await fetch('/api/terminal/clear', { method: 'POST' });
+                allLogs = [];
+                renderLogs();
+            } catch (error) {
+                alert('Failed to clear logs');
+            }
+        }
+
+        function showDbModal() {
+            document.getElementById('dbModal').classList.add('active');
+        }
+
+        function hideDbModal() {
+            document.getElementById('dbModal').classList.remove('active');
+        }
+
+        async function resetDatabase(withSeed) {
+            const action = withSeed ? 'reset and seed' : 'clear';
+            if (!confirm(`Are you ABSOLUTELY sure you want to ${action} the database? This cannot be undone!`)) return;
+            if (!confirm('This is your FINAL warning. All data will be lost. Continue?')) return;
+            
+            hideDbModal();
+            document.getElementById('loadingOverlay').classList.add('active');
+            
+            try {
+                const response = await fetch('/api/terminal/reset-db', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ seed: withSeed })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`Database ${withSeed ? 'reset and seeded' : 'cleared'} successfully!\n\n${data.message || ''}`);
+                    addLog('system', `Database ${action} completed`, 'success');
+                } else {
+                    alert('Database operation failed: ' + (data.error || 'Unknown error'));
+                    addLog('system', `Database ${action} failed: ${data.error}`, 'error');
+                }
+            } catch (error) {
+                alert('Failed to reset database: ' + error.message);
+            } finally {
+                document.getElementById('loadingOverlay').classList.remove('active');
+                fetchLogs();
+            }
+        }
+
+        // Initial load
+        fetchLogs();
+        
+        // Auto-refresh every 5 seconds
+        refreshInterval = setInterval(fetchLogs, 5000);
+    </script>
+</body>
+</html>

@@ -208,6 +208,27 @@ app.get('/payment', async (req, res) => {
       return res.redirect('/');
     }
 
+    // Fetch payment settings
+    let settings = {
+      ticket_price: '150',
+      merchant_code: '123456',
+      merchant_name: 'CMC Conference'
+    };
+    
+    try {
+      const settingsResponse = await fetchBackend('/api/settings');
+      if (settingsResponse.ok) {
+        const settingsData = await settingsResponse.json();
+        settingsData.forEach(s => {
+          if (s.key === 'ticket_price' && s.value) settings.ticket_price = s.value;
+          if (s.key === 'merchant_code' && s.value) settings.merchant_code = s.value;
+          if (s.key === 'merchant_name' && s.value) settings.merchant_name = s.value;
+        });
+      }
+    } catch (e) {
+      console.error('Error fetching settings:', e);
+    }
+
     res.render('pages/payment', { 
       registration: {
         id: registration.id,
@@ -219,7 +240,8 @@ app.get('/payment', async (req, res) => {
         status: registration.status,
         ticketType: registration.ticket_type,
         firmName: registration.firm_name
-      }
+      },
+      settings
     });
   } catch (error) {
     console.error('Error fetching registration:', error);
@@ -335,6 +357,141 @@ app.get('/api/registration/:id/ticket', async (req, res) => {
 
 app.get('/', (_req, res) => res.render('pages/home'));
 app.get('/contact', (_req, res) => res.render('pages/contact'));
+app.get('/terminal', (_req, res) => res.render('pages/terminal'));
+app.get('/checkin', (_req, res) => res.render('pages/checkin'));
+
+// Terminal logs storage
+let serverLogs = [];
+const MAX_LOGS = 1000;
+
+function addLog(source, message, level = 'info') {
+  const log = {
+    timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+    source,
+    message: String(message),
+    level
+  };
+  serverLogs.push(log);
+  if (serverLogs.length > MAX_LOGS) {
+    serverLogs = serverLogs.slice(-MAX_LOGS);
+  }
+}
+
+// Override console methods to capture logs
+const originalConsoleLog = console.log;
+const originalConsoleError = console.error;
+const originalConsoleWarn = console.warn;
+
+console.log = (...args) => {
+  addLog('frontend', args.join(' '), 'info');
+  originalConsoleLog.apply(console, args);
+};
+
+console.error = (...args) => {
+  addLog('frontend', args.join(' '), 'error');
+  originalConsoleError.apply(console, args);
+};
+
+console.warn = (...args) => {
+  addLog('frontend', args.join(' '), 'warn');
+  originalConsoleWarn.apply(console, args);
+};
+
+// Terminal API endpoints
+app.get('/api/terminal/logs', async (_req, res) => {
+  try {
+    const { exec } = require('child_process');
+    const util = require('util');
+    const execPromise = util.promisify(exec);
+    
+    // Fetch backend logs
+    try {
+      const { stdout: backendLogs } = await execPromise('journalctl -u conference-backend -n 100 --no-pager --output=short-iso 2>/dev/null || echo ""');
+      backendLogs.split('\n').filter(line => line.trim()).forEach(line => {
+        const isError = line.toLowerCase().includes('error') || line.toLowerCase().includes('exception');
+        const existing = serverLogs.find(l => l.source === 'backend' && l.message === line);
+        if (!existing) {
+          addLog('backend', line, isError ? 'error' : 'info');
+        }
+      });
+    } catch (e) {}
+    
+    // Fetch nginx access logs
+    try {
+      const { stdout: nginxLogs } = await execPromise('tail -n 50 /var/log/nginx/access.log 2>/dev/null || echo ""');
+      nginxLogs.split('\n').filter(line => line.trim()).forEach(line => {
+        const existing = serverLogs.find(l => l.source === 'nginx' && l.message === line);
+        if (!existing) {
+          addLog('nginx', line, 'info');
+        }
+      });
+    } catch (e) {}
+    
+    // Fetch nginx error logs
+    try {
+      const { stdout: nginxErrors } = await execPromise('tail -n 50 /var/log/nginx/error.log 2>/dev/null || echo ""');
+      nginxErrors.split('\n').filter(line => line.trim()).forEach(line => {
+        const existing = serverLogs.find(l => l.source === 'nginx' && l.message === line);
+        if (!existing) {
+          addLog('nginx', line, 'error');
+        }
+      });
+    } catch (e) {}
+    
+    res.json({ logs: serverLogs.slice(-500) });
+  } catch (error) {
+    res.json({ logs: serverLogs.slice(-500) });
+  }
+});
+
+app.post('/api/terminal/clear', (_req, res) => {
+  serverLogs = [];
+  res.json({ success: true });
+});
+
+app.post('/api/terminal/reset-db', async (req, res) => {
+  const { seed } = req.body;
+  
+  try {
+    const { exec } = require('child_process');
+    const util = require('util');
+    const execPromise = util.promisify(exec);
+    
+    console.log('Starting database reset...');
+    
+    // Stop the backend service temporarily
+    await execPromise('systemctl stop conference-backend || true');
+    
+    // Remove the database file
+    await execPromise('rm -f /var/www/conference2/backend/conference.db');
+    console.log('Database file removed');
+    
+    // Restart the backend (this will recreate the tables)
+    await execPromise('systemctl start conference-backend');
+    console.log('Backend service restarted');
+    
+    // Wait a moment for the service to start
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    let seedMessage = '';
+    if (seed) {
+      // Run the seed script
+      console.log('Running seed script...');
+      const { stdout, stderr } = await execPromise('cd /var/www/conference2/backend && source venv/bin/activate && python seed_organizations.py');
+      seedMessage = stdout || 'Seed completed';
+      if (stderr) console.error('Seed stderr:', stderr);
+      console.log('Seed script completed');
+    }
+    
+    res.json({ 
+      success: true, 
+      message: seed ? `Database reset and seeded. ${seedMessage}` : 'Database cleared successfully.'
+    });
+  } catch (error) {
+    console.error('Database reset error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 

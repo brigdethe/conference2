@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check-In | Ghana Competition Law Seminar</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .slide-in { animation: slideIn 0.3s ease-out; }
+        .pulse { animation: pulse 2s infinite; }
+        #reader { width: 100%; }
+        #reader video { border-radius: 12px; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <img src="https://ik.imagekit.io/dr5fryhth/conference/imglogo?updatedAt=1769778325875" alt="Logo" class="h-10">
+                <div>
+                    <h1 class="font-bold text-slate-900">Event Check-In</h1>
+                    <p class="text-xs text-slate-500">Ghana Competition Law Seminar</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-slate-900" id="checkedInCount">0</p>
+                    <p class="text-xs text-slate-500">Checked In</p>
+                </div>
+                <div class="w-px h-10 bg-slate-200"></div>
+                <div class="text-right">
+                    <p class="text-2xl font-bold text-emerald-600" id="totalCount">0</p>
+                    <p class="text-xs text-slate-500">Total Tickets</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6">
+        <div class="grid lg:grid-cols-3 gap-6">
+            <!-- Left: Scanner & Input -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- QR Scanner -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-semibold text-slate-900">QR Scanner</h2>
+                        <button id="toggleScanner" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
+                            Start Scanner
+                        </button>
+                    </div>
+                    <div id="reader" class="rounded-xl overflow-hidden bg-slate-100 min-h-[250px] flex items-center justify-center">
+                        <p class="text-slate-400 text-sm" id="scannerPlaceholder">Click "Start Scanner" to begin</p>
+                    </div>
+                </div>
+
+                <!-- Manual Entry -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+                    <h2 class="font-semibold text-slate-900 mb-4">Manual Entry</h2>
+                    <div class="flex gap-2">
+                        <input 
+                            type="text" 
+                            id="ticketCodeInput" 
+                            placeholder="Enter ticket code (e.g., GCL-ABC123)"
+                            class="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent uppercase"
+                            onkeydown="if(event.key === 'Enter') verifyTicket()"
+                        >
+                        <button 
+                            onclick="verifyTicket()"
+                            class="px-6 py-3 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors"
+                        >
+                            Verify
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Result Card -->
+                <div id="resultCard" class="hidden">
+                    <!-- Will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Right: Attendance List -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="p-6 border-b border-slate-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="font-semibold text-slate-900">Attendance</h2>
+                            <div class="flex gap-2">
+                                <button onclick="filterAttendance('all')" class="filter-btn px-3 py-1.5 text-sm rounded-lg bg-slate-900 text-white" data-filter="all">All</button>
+                                <button onclick="filterAttendance('checked')" class="filter-btn px-3 py-1.5 text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200" data-filter="checked">Checked In</button>
+                                <button onclick="filterAttendance('pending')" class="filter-btn px-3 py-1.5 text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200" data-filter="pending">Pending</button>
+                            </div>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            placeholder="Search by name, email, or ticket code..."
+                            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            oninput="searchAttendees()"
+                        >
+                    </div>
+                    <div class="max-h-[600px] overflow-y-auto">
+                        <table class="w-full">
+                            <thead class="bg-slate-50 sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Attendee</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Ticket</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendeesList" class="divide-y divide-slate-100">
+                                <!-- Will be populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 text-center slide-in">
+            <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-900 mb-2" id="modalName">John Doe</h3>
+            <p class="text-slate-500 mb-1" id="modalOrg">Law Firm Name</p>
+            <p class="text-sm text-emerald-600 font-medium mb-6" id="modalTicket">GCL-ABC123</p>
+            <p class="text-lg font-semibold text-emerald-600 mb-6">✓ Checked In Successfully</p>
+            <button onclick="closeModal()" class="w-full py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800">
+                Continue
+            </button>
+        </div>
+    </div>
+
+    <!-- Already Checked In Modal -->
+    <div id="alreadyCheckedModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 text-center slide-in">
+            <div class="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-900 mb-2" id="alreadyModalName">John Doe</h3>
+            <p class="text-slate-500 mb-1" id="alreadyModalOrg">Law Firm Name</p>
+            <p class="text-sm text-slate-600 font-medium mb-2" id="alreadyModalTicket">GCL-ABC123</p>
+            <p class="text-amber-600 font-semibold mb-2">Already Checked In</p>
+            <p class="text-sm text-slate-500 mb-6" id="alreadyModalTime">at 10:30 AM</p>
+            <button onclick="closeAlreadyModal()" class="w-full py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 text-center slide-in">
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-slate-900 mb-2">Invalid Ticket</h3>
+            <p class="text-slate-500 mb-6" id="errorMessage">Ticket not found or not confirmed</p>
+            <button onclick="closeErrorModal()" class="w-full py-3 bg-slate-900 text-white rounded-xl font-medium hover:bg-slate-800">
+                Try Again
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let html5QrCode = null;
+        let isScanning = false;
+        let allTickets = [];
+        let currentFilter = 'all';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchStats();
+            fetchTickets();
+            setInterval(fetchStats, 10000);
+        });
+
+        async function fetchStats() {
+            try {
+                const res = await fetch('/api/tickets/checkins/stats');
+                const data = await res.json();
+                document.getElementById('checkedInCount').textContent = data.checked_in;
+                document.getElementById('totalCount').textContent = data.total_tickets;
+            } catch (err) {
+                console.error('Failed to fetch stats:', err);
+            }
+        }
+
+        async function fetchTickets() {
+            try {
+                const res = await fetch('/api/tickets');
+                const data = await res.json();
+                allTickets = data.tickets || [];
+                renderAttendees();
+            } catch (err) {
+                console.error('Failed to fetch tickets:', err);
+            }
+        }
+
+        function renderAttendees() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            let filtered = allTickets;
+
+            if (currentFilter === 'checked') {
+                filtered = filtered.filter(t => t.checked_in);
+            } else if (currentFilter === 'pending') {
+                filtered = filtered.filter(t => !t.checked_in);
+            }
+
+            if (search) {
+                filtered = filtered.filter(t => 
+                    t.full_name.toLowerCase().includes(search) ||
+                    t.email.toLowerCase().includes(search) ||
+                    t.ticket_code.toLowerCase().includes(search) ||
+                    (t.firm_name && t.firm_name.toLowerCase().includes(search))
+                );
+            }
+
+            const tbody = document.getElementById('attendeesList');
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400">No attendees found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(t => `
+                <tr class="hover:bg-slate-50 ${t.checked_in ? 'bg-emerald-50/30' : ''}">
+                    <td class="px-6 py-4">
+                        <div>
+                            <p class="font-medium text-slate-900">${escapeHtml(t.full_name)}</p>
+                            <p class="text-sm text-slate-500">${escapeHtml(t.firm_name || t.email)}</p>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="font-mono text-sm text-slate-600">${t.ticket_code}</span>
+                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full ${t.ticket_type === 'Access Code' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}">${t.ticket_type}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        ${t.checked_in 
+                            ? `<span class="inline-flex items-center gap-1 text-emerald-600 text-sm font-medium">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                Checked In
+                               </span>
+                               <p class="text-xs text-slate-400 mt-0.5">${formatTime(t.checked_in_at)}</p>`
+                            : '<span class="text-slate-400 text-sm">Pending</span>'
+                        }
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        ${!t.checked_in 
+                            ? `<button onclick="checkInByCode('${t.ticket_code}')" class="px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition-colors">Check In</button>`
+                            : '<span class="text-slate-300 text-sm">—</span>'
+                        }
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterAttendance(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.className = 'filter-btn px-3 py-1.5 text-sm rounded-lg bg-slate-900 text-white';
+                } else {
+                    btn.className = 'filter-btn px-3 py-1.5 text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+                }
+            });
+            renderAttendees();
+        }
+
+        function searchAttendees() {
+            renderAttendees();
+        }
+
+        // QR Scanner
+        document.getElementById('toggleScanner').addEventListener('click', toggleScanner);
+
+        async function toggleScanner() {
+            const btn = document.getElementById('toggleScanner');
+            const placeholder = document.getElementById('scannerPlaceholder');
+            
+            if (isScanning) {
+                await html5QrCode.stop();
+                isScanning = false;
+                btn.textContent = 'Start Scanner';
+                placeholder.style.display = 'block';
+            } else {
+                placeholder.style.display = 'none';
+                html5QrCode = new Html5Qrcode("reader");
+                
+                try {
+                    await html5QrCode.start(
+                        { facingMode: "environment" },
+                        { fps: 10, qrbox: { width: 250, height: 250 } },
+                        onScanSuccess,
+                        onScanFailure
+                    );
+                    isScanning = true;
+                    btn.textContent = 'Stop Scanner';
+                } catch (err) {
+                    console.error('Failed to start scanner:', err);
+                    alert('Could not access camera. Please check permissions.');
+                    placeholder.style.display = 'block';
+                }
+            }
+        }
+
+        function onScanSuccess(decodedText) {
+            // Pause scanning while processing
+            if (html5QrCode) {
+                html5QrCode.pause();
+            }
+            
+            // Try to parse as JSON (QR data format)
+            let ticketCode = decodedText;
+            try {
+                const qrData = JSON.parse(decodedText);
+                ticketCode = qrData.ticketCode || decodedText;
+            } catch (e) {
+                // Not JSON, use as-is
+            }
+            
+            checkInByCode(ticketCode);
+        }
+
+        function onScanFailure(error) {
+            // Ignore scan failures (no QR in frame)
+        }
+
+        async function verifyTicket() {
+            const code = document.getElementById('ticketCodeInput').value.trim();
+            if (!code) return;
+            
+            await checkInByCode(code);
+            document.getElementById('ticketCodeInput').value = '';
+        }
+
+        async function checkInByCode(ticketCode) {
+            try {
+                const res = await fetch('/api/tickets/checkin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ticket_code: ticketCode })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    if (data.success) {
+                        // Get ticket details for modal
+                        const ticketRes = await fetch(`/api/tickets/${ticketCode}`);
+                        const ticketData = await ticketRes.json();
+                        
+                        showSuccessModal(ticketData);
+                        fetchStats();
+                        fetchTickets();
+                    } else {
+                        // Already checked in
+                        const ticketRes = await fetch(`/api/tickets/${ticketCode}`);
+                        const ticketData = await ticketRes.json();
+                        showAlreadyCheckedModal(ticketData, data.checked_in_at);
+                    }
+                } else {
+                    showErrorModal(data.detail || 'Ticket not found');
+                }
+            } catch (err) {
+                console.error('Check-in error:', err);
+                showErrorModal('Failed to process check-in');
+            }
+            
+            // Resume scanner
+            if (html5QrCode && isScanning) {
+                setTimeout(() => html5QrCode.resume(), 2000);
+            }
+        }
+
+        function showSuccessModal(ticket) {
+            document.getElementById('modalName').textContent = ticket.full_name;
+            document.getElementById('modalOrg').textContent = ticket.firm_name || ticket.email;
+            document.getElementById('modalTicket').textContent = ticket.ticket_code;
+            document.getElementById('successModal').classList.remove('hidden');
+            document.getElementById('successModal').classList.add('flex');
+            
+            // Play success sound
+            try {
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2Onp2ZlI2Ff3Z1eYGKkpWTjYV9dnR3f4mTmZqXkYqCe3d2eYCJkZaXlZCJgXt3dnh/iJCVlpSPiIF7d3d5gIiQlZaUj4iBe3d3eYCIkJWWlI+IgXt3d3mAiJCVlpSPiIF7d3d5gIiQlZaUj4iBe3d3eYCIkJWWlI+IgXt3d3mAiJCVlpSPiIF7d3d5gIiQlZaUj4iBe3d3eYCIkJWWlI+IgQ==');
+                audio.play();
+            } catch (e) {}
+        }
+
+        function showAlreadyCheckedModal(ticket, checkedInAt) {
+            document.getElementById('alreadyModalName').textContent = ticket.full_name;
+            document.getElementById('alreadyModalOrg').textContent = ticket.firm_name || ticket.email;
+            document.getElementById('alreadyModalTicket').textContent = ticket.ticket_code;
+            document.getElementById('alreadyModalTime').textContent = 'at ' + formatTime(checkedInAt);
+            document.getElementById('alreadyCheckedModal').classList.remove('hidden');
+            document.getElementById('alreadyCheckedModal').classList.add('flex');
+        }
+
+        function showErrorModal(message) {
+            document.getElementById('errorMessage').textContent = message;
+            document.getElementById('errorModal').classList.remove('hidden');
+            document.getElementById('errorModal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('successModal').classList.add('hidden');
+            document.getElementById('successModal').classList.remove('flex');
+        }
+
+        function closeAlreadyModal() {
+            document.getElementById('alreadyCheckedModal').classList.add('hidden');
+            document.getElementById('alreadyCheckedModal').classList.remove('flex');
+        }
+
+        function closeErrorModal() {
+            document.getElementById('errorModal').classList.add('hidden');
+            document.getElementById('errorModal').classList.remove('flex');
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(isoString) {
+            if (!isoString) return '';
+            const date = new Date(isoString);
+            return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        }
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeAlreadyModal();
+                closeErrorModal();
+            }
+        });
+    </script>
+</body>
+</html>

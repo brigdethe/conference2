@@ -43,15 +43,15 @@
                         <div class="space-y-3 text-sm flex-grow">
                             <div class="flex justify-between items-center bg-white/5 rounded-xl px-4 py-3 border border-white/10">
                                 <span class="text-slate-400">Merchant Code</span>
-                                <span class="font-mono font-bold text-yellow-400 text-xl">123456</span>
+                                <span class="font-mono font-bold text-yellow-400 text-xl"><%= settings.merchant_code %></span>
                             </div>
                             <div class="flex justify-between items-center bg-white/5 rounded-xl px-4 py-3 border border-white/10">
                                 <span class="text-slate-400">Merchant Name</span>
-                                <span class="font-semibold text-white">CMC Conference</span>
+                                <span class="font-semibold text-white"><%= settings.merchant_name %></span>
                             </div>
                             <div class="flex justify-between items-center bg-white/5 rounded-xl px-4 py-3 border border-white/10">
                                 <span class="text-slate-400">Amount</span>
-                                <span class="font-bold text-yellow-400 text-lg">GHS 150.00</span>
+                                <span class="font-bold text-yellow-400 text-lg">GHS <%= settings.ticket_price %>.00</span>
                             </div>
                             <div class="flex justify-between items-center bg-white/5 rounded-xl px-4 py-3 border border-white/10">
                                 <span class="text-slate-400">Reference</span>
@@ -79,7 +79,7 @@
                     <div class="border-t border-slate-100 my-4"></div>
                     <div class="flex justify-between items-center mb-6">
                         <span class="font-semibold text-slate-700">Total</span>
-                        <span class="text-3xl font-bold text-slate-900">GHS 150.00</span>
+                        <span class="text-3xl font-bold text-slate-900">GHS <%= settings.ticket_price %>.00</span>
                     </div>
                     <button id="confirmPaymentBtn" class="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-900 font-bold py-4 px-6 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg hover:scale-[1.02] active:scale-[0.98]">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -128,7 +128,7 @@
                     <div class="border-t border-slate-100 my-5"></div>
                     <div class="flex justify-between items-center mb-6">
                         <span class="font-semibold text-slate-700">Amount</span>
-                        <span class="text-2xl font-bold text-slate-900">GHS 150.00</span>
+                        <span class="text-2xl font-bold text-slate-900">GHS <%= settings.ticket_price %>.00</span>
                     </div>
                     <div class="border-t border-slate-100 my-5"></div>
                     <h4 class="text-xs font-semibold text-slate-400 uppercase mb-4">What happens next?</h4>
