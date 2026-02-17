@@ -65,7 +65,7 @@ export interface DashboardInvitedGuestsOverviewDetail {
   pending: number;
 }
 
-export type FirmRegistrationStatus = 'confirmed' | 'pending_payment';
+export type FirmRegistrationStatus = 'confirmed' | 'pending_payment' | 'awaiting_verification';
 
 export interface FirmRegistrationDetail {
   id: number;

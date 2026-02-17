@@ -122,6 +122,9 @@ export async function fetchUsers(query: UsersQuery = {}, signal?: AbortSignal): 
     const payload = await response.json();
     return normalizePayload(payload);
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw error;
+    }
     console.warn('API fetch failed, falling back to mock data', error);
     return {
       users: mockUsers,

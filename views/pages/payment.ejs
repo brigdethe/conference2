@@ -7,93 +7,173 @@
     <title>Complete Payment | Ghana Competition Law Seminar</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .momo-yellow { background-color: #FFCC00; }
+        .momo-yellow-hover:hover { background-color: #E6B800; }
+    </style>
 </head>
 
-<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
+    <div id="paymentView" class="max-w-md w-full">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="bg-slate-900 p-6 text-center">
+                <img src="https://ik.imagekit.io/dr5fryhth/conference/imglogo?updatedAt=1769778325875" alt="Conference Logo" class="h-12 mx-auto mb-3">
+                <h1 class="text-xl font-bold text-white mb-1">Ghana Competition Law Seminar</h1>
+                <p class="text-slate-400 text-sm">Complete Your Registration</p>
+            </div>
 
-    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl overflow-hidden">
-        <div class="bg-slate-900 p-6 text-center">
-            <h1 class="text-xl font-bold text-white mb-2">Complete Verification</h1>
-            <p class="text-slate-400 text-sm">Secure Payment Gateway</p>
-        </div>
-
-        <div class="p-8">
-            <div class="flex flex-col items-center mb-8">
-                <div class="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-lock text-orange-600 text-2xl"></i>
+            <div class="p-6">
+                <div class="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-100">
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Attendee</span>
+                            <span class="font-medium text-slate-900"><%= registration.fullName %></span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Email</span>
+                            <span class="font-medium text-slate-900"><%= registration.email %></span>
+                        </div>
+                        <% if (registration.firmName) { %>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Law Firm</span>
+                            <span class="font-medium text-slate-900"><%= registration.firmName %></span>
+                        </div>
+                        <% } %>
+                        <div class="flex justify-between">
+                            <span class="text-slate-500">Ticket Type</span>
+                            <span class="font-medium text-slate-900">Paid Registration</span>
+                        </div>
+                    </div>
+                    <div class="border-t border-slate-200 my-3"></div>
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-slate-800">Amount Due</span>
+                        <span class="font-bold text-2xl text-slate-900">GHS 150.00</span>
+                    </div>
                 </div>
-                <h2 class="text-2xl font-bold text-slate-800 text-center">Payment Required</h2>
-                <p class="text-slate-500 text-center mt-2">
-                    The free guest limit for <span class="font-semibold text-slate-700">
-                        <%= registration.lawFirm %>
-                    </span> has been reached.
+
+                <div class="bg-slate-900 rounded-xl p-5 mb-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <img src="/images/mtn-momo.png" alt="MTN MoMo" class="w-10 h-10 rounded-lg object-contain">
+                        <div>
+                            <p class="font-bold text-white">MTN Mobile Money</p>
+                            <p class="text-xs text-slate-400">Send payment to merchant</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between items-center bg-slate-800 rounded-lg px-4 py-3">
+                            <span class="text-slate-400">Merchant Code</span>
+                            <span class="font-mono font-bold text-white text-lg">123456</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-800 rounded-lg px-4 py-3">
+                            <span class="text-slate-400">Merchant Name</span>
+                            <span class="font-medium text-white">CMC Conference</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-800 rounded-lg px-4 py-3">
+                            <span class="text-slate-400">Amount</span>
+                            <span class="font-bold text-yellow-400">GHS 150.00</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-slate-800 rounded-lg px-4 py-3">
+                            <span class="text-slate-400">Reference</span>
+                            <span class="font-mono text-white">REG-<%= registration.id %></span>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-4 text-center">
+                        Dial *170# and select "Pay Merchant" or use the MTN MoMo app
+                    </p>
+                </div>
+
+                <button id="confirmPaymentBtn"
+                    class="w-full momo-yellow momo-yellow-hover text-slate-900 font-bold py-3.5 px-4 rounded-xl transition-colors flex items-center justify-center gap-2">
+                    <i class="fas fa-check-circle"></i>
+                    <span>I Have Made Payment</span>
+                </button>
+
+                <p class="text-xs text-center text-slate-400 mt-4">
+                    Click the button above after completing your MTN MoMo payment
                 </p>
             </div>
+        </div>
+    </div>
 
-            <div class="bg-slate-50 rounded-xl p-4 mb-6 border border-slate-100">
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-slate-500 text-sm">Attendee</span>
-                    <span class="font-medium text-slate-900">
-                        <%= registration.fullName %>
-                    </span>
+    <div id="pendingView" class="max-w-md w-full hidden">
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div class="bg-amber-500 p-6 text-center">
+                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-clock text-amber-500 text-3xl"></i>
                 </div>
-                <div class="flex justify-between items-center mb-2">
-                    <span class="text-slate-500 text-sm">Ticket Type</span>
-                    <span class="font-medium text-slate-900">Standard Access</span>
-                </div>
-                <div class="border-t border-slate-200 my-2"></div>
-                <div class="flex justify-between items-center">
-                    <span class="font-bold text-slate-800">Total</span>
-                    <span class="font-bold text-2xl text-orange-600">GHS 150.00</span>
-                </div>
+                <h1 class="text-xl font-bold text-white mb-1">Payment Submitted</h1>
+                <p class="text-amber-100 text-sm">Awaiting verification</p>
             </div>
 
-            <button id="payBtn"
-                class="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2">
-                <i class="fas fa-credit-card"></i>
-                <span>Pay GHS 150.00</span>
-            </button>
+            <div class="p-6">
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
+                    <p class="text-sm text-amber-800 text-center">
+                        <strong>Your payment is being verified.</strong><br>
+                        This usually takes <strong>5-10 minutes</strong>.
+                    </p>
+                </div>
 
-            <p class="text-xs text-center text-slate-400 mt-6">
-                This is a secure 256-bit SSL encrypted payment.
-            </p>
+                <div class="bg-slate-50 rounded-xl p-4 mb-5 border border-slate-100">
+                    <p class="text-sm text-slate-600 text-center mb-3">You will receive confirmation via:</p>
+                    <div class="flex justify-center gap-6">
+                        <div class="text-center">
+                            <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-1">
+                                <i class="fas fa-envelope text-slate-600"></i>
+                            </div>
+                            <p class="text-xs text-slate-500">Email</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-10 h-10 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-1">
+                                <i class="fas fa-sms text-slate-600"></i>
+                            </div>
+                            <p class="text-xs text-slate-500">SMS</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-5">
+                    <p class="text-xs text-blue-700 text-center">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Your ticket with QR code will be sent to <strong><%= registration.email %></strong> once payment is confirmed.
+                    </p>
+                </div>
+
+                <a href="/"
+                    class="block w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 px-4 rounded-xl transition-colors text-center">
+                    Return to Home
+                </a>
+            </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('payBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('payBtn');
+        const registrationId = '<%= registration.id %>';
+
+        document.getElementById('confirmPaymentBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('confirmPaymentBtn');
             const originalContent = btn.innerHTML;
 
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
 
             try {
-                // Simulate network delay
-                await new Promise(r => setTimeout(r, 1500));
+                await new Promise(r => setTimeout(r, 1000));
 
-                const res = await fetch('/api/pay', {
+                // Mark as awaiting payment verification (don't confirm yet)
+                const res = await fetch('/api/payment-submitted', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ registrationId: '<%= registration.id %>' })
+                    body: JSON.stringify({ registrationId: registrationId })
                 });
 
-                if (res.ok) {
-                    btn.classList.remove('bg-orange-500', 'hover:bg-orange-600');
-                    btn.classList.add('bg-green-500', 'hover:bg-green-600');
-                    btn.innerHTML = '<i class="fas fa-check"></i> Payment Successful';
-
-                    setTimeout(() => {
-                        window.location.href = '/?status=payment_success';
-                    }, 1000);
-                } else {
-                    throw new Error('Payment failed');
-                }
+                // Show pending view regardless - admin will verify
+                document.getElementById('paymentView').classList.add('hidden');
+                document.getElementById('pendingView').classList.remove('hidden');
             } catch (err) {
                 console.error(err);
                 btn.disabled = false;
                 btn.innerHTML = originalContent;
-                alert('Payment processing failed. Please try again.');
+                alert('An error occurred. Please try again.');
             }
         });
     </script>

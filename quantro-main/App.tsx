@@ -8,12 +8,13 @@ import { UserTable } from './components/UserTable';
 import { useDashboard } from './hooks/useDashboard';
 import { InvitedFirmsList } from './components/overview/InvitedFirmsList';
 import { MetricsList } from './components/overview/MetricsList';
-import { InquiriesTab } from './components/inquiries/InquiriesTab';
+import { FirmsTab } from './components/firms/FirmsTab';
+import { TicketsTab } from './components/tickets/TicketsTab';
+import { SettingsTab } from './components/settings/SettingsTab';
 import { TabOption } from './types';
 import type { DashboardSidebarContent } from './data/dashboard';
 import type { FirmActivityDetail } from './data/dashboard';
 import type { User } from './data/users';
-import { INQUIRIES } from './data/inquiries';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabOption>(TabOption.Overview);
@@ -83,8 +84,12 @@ export default function App() {
         return 'Total Revenue';
       case TabOption.Overview:
         return 'Time until Seminar';
-      case TabOption.Inquiries:
-        return 'Total Inquiries';
+      case TabOption.Firms:
+        return 'Total Firms';
+      case TabOption.Tickets:
+        return 'Active Tickets';
+      case TabOption.Settings:
+        return 'Configuration';
       default:
         return 'Registered Users';
     }
@@ -96,8 +101,12 @@ export default function App() {
         return `GHS ${dashboard.totalRevenue.toLocaleString()}`;
       case TabOption.Overview:
         return `${days}d ${hours}h`;
-      case TabOption.Inquiries:
-        return INQUIRIES.length.toLocaleString();
+      case TabOption.Firms:
+        return invitedFirms.length.toLocaleString();
+      case TabOption.Tickets:
+        return dashboard.registeredUsers.toLocaleString();
+      case TabOption.Settings:
+        return '';
       default:
         return dashboard.registeredUsers.toLocaleString();
     }
@@ -191,9 +200,21 @@ export default function App() {
               </section>
             )}
 
-            {activeTab === TabOption.Inquiries && (
+            {activeTab === TabOption.Firms && (
               <section className="mb-8">
-                <InquiriesTab onSelect={(inquiry) => setActiveDetail({ kind: 'inquiry', inquiry })} />
+                <FirmsTab onFirmCreated={fetchInvitedFirms} />
+              </section>
+            )}
+
+            {activeTab === TabOption.Tickets && (
+              <section className="mb-8">
+                <TicketsTab />
+              </section>
+            )}
+
+            {activeTab === TabOption.Settings && (
+              <section className="mb-8">
+                <SettingsTab />
               </section>
             )}
           </main>

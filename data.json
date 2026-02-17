@@ -73,6 +73,18 @@
       "email": "owusuomaribright@gmail.com",
       "status": "confirmed",
       "ticketType": "Access Code"
+    },
+    {
+      "id": 6,
+      "registeredAt": "2026-02-16T20:47:46.102Z",
+      "fullName": "fred",
+      "companyName": "agyare",
+      "jobTitle": "lawyer",
+      "lawFirm": "Clyde and Company Kumasi",
+      "phoneNumber": "0241293754",
+      "email": "agyarefred@gmail.com",
+      "status": "confirmed",
+      "ticketType": "Paid"
     }
   ]
 }

@@ -172,17 +172,36 @@ function SidebarContent({ detail }: { detail: DashboardSidebarContent }) {
         registration.ticketType === 'Paid'
     );
     const pendingRegistrations = firm.registrations.filter(
-      (registration) => registration.status === 'pending_payment'
+      (registration) => registration.status === 'pending_payment' || registration.status === 'awaiting_verification'
     );
+
+    const handleVerifyPayment = async (registrationId: number) => {
+      try {
+        const res = await fetch(`/api/registrations/${registrationId}/verify-payment`, {
+          method: 'POST',
+        });
+        if (res.ok) {
+          alert('Payment verified! Confirmation email sent.');
+          window.location.reload();
+        } else {
+          alert('Failed to verify payment');
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Error verifying payment');
+      }
+    };
 
     const RegistrationList = ({
       title,
       rows,
       tone,
+      showVerifyButton = false,
     }: {
       title: string;
       rows: typeof firm.registrations;
       tone: string;
+      showVerifyButton?: boolean;
     }) => (
       <div>
         <h4 className="mb-2 text-sm font-semibold text-slate-800">{title}</h4>
@@ -195,12 +214,25 @@ function SidebarContent({ detail }: { detail: DashboardSidebarContent }) {
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-slate-800">{registration.fullName}</span>
                   <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone}`}>
-                    {registration.ticketType}
+                    {registration.status === 'awaiting_verification' ? 'Awaiting Verification' : registration.ticketType}
                   </span>
                 </div>
                 <div className="text-xs text-slate-500">{registration.email}</div>
                 {registration.registeredAt && (
                   <div className="text-xs text-slate-500">{formatDate(registration.registeredAt)}</div>
+                )}
+                {showVerifyButton && registration.status === 'awaiting_verification' && (
+                  <button
+                    onClick={() => handleVerifyPayment(registration.id)}
+                    className="mt-2 w-full px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 transition-colors"
+                  >
+                    ✓ Verify Payment
+                  </button>
+                )}
+                {showVerifyButton && registration.status === 'pending_payment' && (
+                  <div className="mt-2 text-xs text-slate-400 text-center">
+                    User has not submitted payment yet
+                  </div>
                 )}
               </div>
             ))
@@ -239,6 +271,7 @@ function SidebarContent({ detail }: { detail: DashboardSidebarContent }) {
           title="Payment In Progress"
           rows={pendingRegistrations}
           tone="bg-amber-50 text-amber-700"
+          showVerifyButton={true}
         />
       </div>
     );

@@ -48,6 +48,9 @@ export function useUsers(query: UsersQuery = {}): UseUsersResult {
         setSource(result.source);
       } catch (err) {
         if (cancelled) return;
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
+        }
         const message = err instanceof Error ? err.message : 'Unable to fetch users';
         setUsers([]);
         setTotal(0);

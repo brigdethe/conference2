@@ -140,7 +140,7 @@ export const GuestTypeChart: React.FC<GuestTypeChartProps> = ({ dashboard }) => 
             </div>
 
             <div className="flex flex-grow items-end justify-around gap-2 pb-4 sm:gap-4 md:gap-8">
-                <AnimatePresence mode="wait">
+                <AnimatePresence>
                     {chartConfig.data.map((item, index) => (
                         <motion.div
                             key={`${view}-${index}`}

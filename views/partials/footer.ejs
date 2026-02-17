@@ -443,37 +443,21 @@
                 aria-label="Close registration modal">&times;</button>
         </div>
         <form class="tickets-modal__form">
-            <input class="tickets-modal__input" type="text" name="accessCode"
-                placeholder="Firm Access Code (Optional)" />
+            <div style="position: relative;">
+                <input class="tickets-modal__input" type="text" name="accessCode" id="ticketsAccessCodeInput"
+                    placeholder="Firm Access Code (Optional)" autocomplete="off" />
+                <div id="ticketsCodeValidation" style="margin-top: 4px; font-size: 0.8rem; min-height: 1.2em;"></div>
+            </div>
             <input class="tickets-modal__input" type="text" name="fullName" placeholder="Full Name" required />
-            <input class="tickets-modal__input" type="text" name="companyName" placeholder="Company Name" required />
             <input class="tickets-modal__input" type="text" name="jobTitle" placeholder="Job Title" required />
-            <select class="tickets-modal__input" name="lawFirm" required>
-                <option value="" selected disabled>Law Firm</option>
-                <option value="Bentsi Enchill Letsa and Ankomah">Bentsi Enchill Letsa and Ankomah</option>
-                <option value="AB and David Law Firm Ghana">AB and David Law Firm Ghana</option>
-                <option value="N. Dowuona and Company">N. Dowuona and Company</option>
-                <option value="WTS Nobisfields">WTS Nobisfields</option>
-                <option value="Kulendi at Law">Kulendi at Law</option>
-                <option value="Africa Legal Associates">Africa Legal Associates</option>
-                <option value="ENS Ghana">ENS Ghana</option>
-                <option value="Minkah Premo Osei Bonsu Bruce Cathline and Partners">Minkah Premo Osei Bonsu Bruce
-                    Cathline and Partners</option>
-                <option value="B and P Associates Lawyers Consultants and Notaries Public">B and P Associates Lawyers
-                    Consultants and Notaries Public</option>
-                <option value="Axis Legal">Axis Legal</option>
-                <option value="Zoe Akyea and Company">Zoe Akyea and Company</option>
-                <option value="Griffin Legal">Griffin Legal</option>
-                <option value="Ntrakwah and Company">Ntrakwah and Company</option>
-                <option value="Beyuo and Company">Beyuo and Company</option>
-                <option value="Legal Ink Lawyers and Notaries">Legal Ink Lawyers and Notaries</option>
-                <option value="Legalstone Solicitors">Legalstone Solicitors</option>
-                <option value="Legal Ink Lawyers">Legal Ink Lawyers</option>
-                <option value="Clyde and Company Kumasi">Clyde and Company Kumasi</option>
-                <option value="Koffie and Partners Law">Koffie and Partners Law</option>
-                <option value="Conclave Lawyers">Conclave Lawyers</option>
-                <option value="Amoah and Associates Law Firm">Amoah and Associates Law Firm</option>
-            </select>
+            <div id="ticketsCompanyWrapper">
+                <input class="tickets-modal__input" type="text" name="companyName" id="ticketsCompanyInput" placeholder="Company / Organization" />
+            </div>
+            <div id="ticketsLawFirmWrapper" style="display: none;">
+                <select class="tickets-modal__input" name="lawFirm" id="ticketsLawFirmSelect">
+                    <option value="" selected disabled>Law Firm (Select or enter code above)</option>
+                </select>
+            </div>
             <input class="tickets-modal__input" type="tel" name="phoneNumber" placeholder="Phone Number" required />
             <input class="tickets-modal__input" type="email" name="email" placeholder="Email" required />
             <button type="submit" class="tickets-modal__submit">Register</button>
@@ -494,10 +478,20 @@
     </div>
 </div>
 <div id="ticketsCelebrationModal" class="tickets-celebration-overlay" style="display: none;" aria-hidden="true">
-    <div class="tickets-celebration-content" role="dialog" aria-modal="true" aria-labelledby="ticketsCelebrationTitle">
-        <h3 class="tickets-celebration-title" id="ticketsCelebrationTitle">Registration Complete</h3>
-        <p class="tickets-celebration-text">Thank you for registering. We look forward to your participation.</p>
-        <button type="button" id="ticketsCelebrationCloseBtn" class="tickets-celebration-btn secondary">Close</button>
+    <div class="tickets-celebration-content" role="dialog" aria-modal="true" aria-labelledby="ticketsCelebrationTitle" style="max-width: 400px;">
+        <h3 class="tickets-celebration-title" id="ticketsCelebrationTitle">Your Conference Ticket</h3>
+        <p class="tickets-celebration-text" style="margin-bottom: 1rem;">Present this ticket at check-in</p>
+        <div id="ticketDisplayArea" style="background: #f8f2e8; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #eadfce;">
+            <p style="font-size: 0.8rem; color: #7b6a5e; margin: 0 0 0.5rem;">Ticket Code</p>
+            <p id="ticketCodeText" style="font-size: 2.5rem; font-family: monospace; font-weight: bold; color: #5b3426; letter-spacing: 0.15em; margin: 0;">----</p>
+        </div>
+        <div id="ticketQrArea" style="display: none; margin-bottom: 1.5rem; text-align: center;">
+            <img id="ticketQrImage" src="" alt="QR Code" style="width: 150px; height: 150px; border-radius: 8px; border: 1px solid #eadfce;" />
+        </div>
+        <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+            <button type="button" id="ticketPrintBtn" class="tickets-celebration-btn" style="background: #5b3426;">Print Ticket</button>
+            <button type="button" id="ticketsCelebrationCloseBtn" class="tickets-celebration-btn secondary">Close</button>
+        </div>
     </div>
 </div>
 <script>
@@ -550,13 +544,24 @@
         });
 
         var ticketsForm = modal.querySelector('.tickets-modal__form');
-        var ticketsAccessCode = ticketsForm && ticketsForm.querySelector('input[name="accessCode"]');
-        var ticketsLawFirm = ticketsForm && ticketsForm.querySelector('select[name="lawFirm"]');
+        var ticketsAccessCode = document.getElementById('ticketsAccessCodeInput');
+        var ticketsLawFirm = document.getElementById('ticketsLawFirmSelect');
+        var ticketsCodeValidation = document.getElementById('ticketsCodeValidation');
+        var ticketsCompanyWrapper = document.getElementById('ticketsCompanyWrapper');
+        var ticketsLawFirmWrapper = document.getElementById('ticketsLawFirmWrapper');
+        var ticketsCompanyInput = document.getElementById('ticketsCompanyInput');
         var ticketsFeedback = ticketsForm && ticketsForm.querySelector('.tickets-modal__feedback');
         var ticketsConfirmationModal = document.getElementById('ticketsConfirmationModal');
         var ticketsCelebrationModal = document.getElementById('ticketsCelebrationModal');
         var ticketsConfirmModalBtn = document.getElementById('ticketsConfirmModalBtn');
         var ticketsCelebrationCloseBtn = document.getElementById('ticketsCelebrationCloseBtn');
+        var ticketPrintBtn = document.getElementById('ticketPrintBtn');
+        var ticketCodeText = document.getElementById('ticketCodeText');
+        var ticketQrArea = document.getElementById('ticketQrArea');
+        var ticketQrImage = document.getElementById('ticketQrImage');
+        
+        var currentTicketCode = '';
+        var currentQrImage = '';
 
         function clearTicketsFeedback() {
             if (!ticketsFeedback) return;
@@ -608,6 +613,14 @@
                     ticketsConfirmationModal.style.display = 'none';
                     ticketsConfirmationModal.setAttribute('aria-hidden', 'true');
                 }
+                
+                // Update ticket display
+                if (ticketCodeText) ticketCodeText.textContent = currentTicketCode || '----';
+                if (currentQrImage && ticketQrImage && ticketQrArea) {
+                    ticketQrImage.src = 'data:image/png;base64,' + currentQrImage;
+                    ticketQrArea.style.display = 'block';
+                }
+                
                 if (ticketsCelebrationModal) {
                     ticketsCelebrationModal.style.display = 'flex';
                     ticketsCelebrationModal.setAttribute('aria-hidden', 'false');
@@ -617,7 +630,47 @@
         }
 
         if (ticketsCelebrationCloseBtn) {
-            ticketsCelebrationCloseBtn.addEventListener('click', hideTicketsCelebrationOverlays);
+            ticketsCelebrationCloseBtn.addEventListener('click', function() {
+                // Refresh page to reset everything
+                window.location.reload();
+            });
+        }
+        
+        if (ticketPrintBtn) {
+            ticketPrintBtn.addEventListener('click', async function() {
+                // Generate and download PDF ticket
+                if (!currentTicketCode) return;
+                
+                // Create a simple HTML ticket and convert to downloadable
+                var ticketHtml = `
+                    <div style="font-family: Arial, sans-serif; padding: 40px; max-width: 400px; margin: 0 auto; text-align: center; border: 2px solid #5b3426; border-radius: 16px;">
+                        <h2 style="color: #5b3426; margin-bottom: 8px;">Ghana Competition Law Seminar</h2>
+                        <p style="color: #7b6a5e; font-size: 14px; margin-bottom: 24px;">Conference Ticket</p>
+                        <div style="background: #f8f2e8; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                            <p style="font-size: 12px; color: #7b6a5e; margin: 0 0 8px;">Ticket Code</p>
+                            <p style="font-size: 36px; font-family: monospace; font-weight: bold; color: #5b3426; letter-spacing: 4px; margin: 0;">${currentTicketCode}</p>
+                        </div>
+                        ${currentQrImage ? '<img src="data:image/png;base64,' + currentQrImage + '" style="width: 180px; height: 180px; margin-bottom: 20px;" />' : ''}
+                        <p style="font-size: 12px; color: #7b6a5e;">Present this ticket at check-in</p>
+                        <p style="font-size: 11px; color: #999; margin-top: 16px;">Mövenpick Ambassador Hotel, Accra</p>
+                    </div>
+                `;
+                
+                // Create blob and download
+                var blob = new Blob([`
+                    <!DOCTYPE html>
+                    <html>
+                    <head><title>Conference Ticket - ${currentTicketCode}</title></head>
+                    <body style="margin: 0; padding: 20px; background: #fff;">${ticketHtml}</body>
+                    </html>
+                `], { type: 'text/html' });
+                
+                var link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = 'ticket-' + currentTicketCode + '.html';
+                link.click();
+                URL.revokeObjectURL(link.href);
+            });
         }
 
         function selectTicketLawFirm(name) {
@@ -637,6 +690,38 @@
             ticketsLawFirm.value = name;
         }
 
+        function showTicketsCodeValidation(message, isValid, firmName) {
+            if (!ticketsCodeValidation) return;
+            if (!message) {
+                ticketsCodeValidation.innerHTML = '';
+                // No code - show company field, hide law firm
+                if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'block';
+                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'none';
+                if (ticketsCompanyInput) ticketsCompanyInput.required = true;
+                if (ticketsLawFirm) ticketsLawFirm.required = false;
+                return;
+            }
+            var color = isValid ? '#16a34a' : '#dc2626';
+            var icon = isValid ? '&#10003;' : '&#10007;';
+            var firmText = firmName ? '<strong>' + firmName + '</strong>' : '';
+            ticketsCodeValidation.innerHTML = '<span style="color: ' + color + ';">' + icon + ' ' + message + '</span> ' + firmText;
+            
+            // Toggle fields based on validity
+            if (isValid) {
+                // Valid code - hide company, show law firm (auto-selected)
+                if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'none';
+                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'block';
+                if (ticketsCompanyInput) ticketsCompanyInput.required = false;
+                if (ticketsLawFirm) ticketsLawFirm.required = true;
+            } else {
+                // Invalid code - show company field
+                if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'block';
+                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'none';
+                if (ticketsCompanyInput) ticketsCompanyInput.required = true;
+                if (ticketsLawFirm) ticketsLawFirm.required = false;
+            }
+        }
+
         async function setupTicketsAccessCodeAutofill() {
             if (!ticketsAccessCode || !ticketsLawFirm) return;
 
@@ -651,9 +736,29 @@
                 return;
             }
 
+            // Populate law firm dropdown from database
+            if (firms && firms.length > 0) {
+                firms.forEach(function(firm) {
+                    var option = document.createElement('option');
+                    option.value = firm.name;
+                    option.textContent = firm.name;
+                    option.setAttribute('data-code', firm.code);
+                    ticketsLawFirm.appendChild(option);
+                });
+            }
+
             function syncLawFirmFromCode(rawCode) {
                 var code = String(rawCode || '').trim().toUpperCase();
-                if (!code) return;
+                
+                if (!code) {
+                    showTicketsCodeValidation('', false);
+                    return;
+                }
+
+                if (code.length < 6) {
+                    showTicketsCodeValidation('Enter 6-character code', false);
+                    return;
+                }
 
                 var firm = firms.find(function (item) {
                     return String(item.code || '').trim().toUpperCase() === code;
@@ -661,6 +766,12 @@
 
                 if (firm && firm.name) {
                     selectTicketLawFirm(firm.name);
+                    var slotsText = firm.free_slots_remaining > 0 
+                        ? '(' + firm.free_slots_remaining + ' free slots remaining)' 
+                        : '(Payment required)';
+                    showTicketsCodeValidation('Valid code - ' + slotsText, true, firm.name);
+                } else {
+                    showTicketsCodeValidation('Invalid access code', false);
                 }
             }
 
@@ -708,8 +819,32 @@
                 }
 
                 if (result.status === 'pending_payment' && result.registration && result.registration.id) {
-                    window.location.href = '/payment?id=' + result.registration.id;
+                    // Close modal smoothly before redirect
+                    closeModal();
+                    // Small delay for smooth transition
+                    setTimeout(function() {
+                        window.location.href = '/payment?id=' + result.registration.id;
+                    }, 100);
                     return;
+                }
+
+                // Get ticket code from registration response
+                currentTicketCode = result.registration?.ticket_code || '----';
+                currentQrImage = '';
+                
+                // Fetch ticket with QR code
+                var regId = result.registration?.id;
+                if (regId) {
+                    try {
+                        var ticketRes = await fetch('/api/registration/' + regId + '/ticket');
+                        if (ticketRes.ok) {
+                            var ticketData = await ticketRes.json();
+                            currentTicketCode = ticketData.ticket_code || currentTicketCode;
+                            currentQrImage = ticketData.qr_image || '';
+                        }
+                    } catch (e) {
+                        console.error('Error fetching ticket:', e);
+                    }
                 }
 
                 if (ticketsConfirmationModal && ticketsCelebrationModal) {
@@ -719,8 +854,6 @@
                 } else {
                     showTicketsFeedback(result.message || 'Registration confirmed! Welcome to the seminar.', 'success');
                 }
-
-                ticketsForm.reset();
             } catch (error) {
                 console.error('Tickets registration error:', error);
                 showTicketsFeedback('An error occurred. Please try again.', 'error');

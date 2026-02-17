@@ -439,57 +439,24 @@
                                     </div>
                                     <form class="footer-mirror-register__form" id="registrationForm">
                                         <div class="footer-mirror-register__fields">
-                                            <input class="footer-mirror-register__input" type="text" name="accessCode"
-                                                placeholder="Firm Access Code (Optional)" />
+                                            <div style="position: relative;">
+                                                <input class="footer-mirror-register__input" type="text" name="accessCode"
+                                                    placeholder="Firm Access Code (Optional)" id="accessCodeInput" autocomplete="off" />
+                                                <div id="codeValidation" style="margin-top: 4px; font-size: 0.85rem; min-height: 1.2em;"></div>
+                                            </div>
                                             <input class="footer-mirror-register__input" type="text" name="fullName"
                                                 placeholder="Full Name" required />
-                                            <input class="footer-mirror-register__input" type="text" name="companyName"
-                                                placeholder="Company Name" required />
                                             <input class="footer-mirror-register__input" type="text" name="jobTitle"
                                                 placeholder="Job Title" required />
-
-                                            <!-- Law Firm Select - Removed hardcoded options to rely on API or free text if needed, 
-                                                 but for now let's keep it simple or maybe fetch? 
-                                                 Actually, if Access Code is used, Law Firm is auto-derived. 
-                                                 But user might not have code. 
-                                                 Let's keep the select but maybe we can populate it dynamically later? 
-                                                 For this iteration, let's keep it as is but maybe make it optional if code is present?
-                                                 The prompt says: "Administrator selects from an existing list... or creates new".
-                                                 The public form has a list. 
-                                                 Let's leave the list as is for now for visual consistency, but the backend overrides it if code is valid.
-                                            -->
-                                            <select class="footer-mirror-register__input" name="lawFirm" required>
-                                                <option value="" selected disabled>Law Firm</option>
-                                                <option value="Bentsi Enchill Letsa and Ankomah">Bentsi Enchill Letsa
-                                                    and Ankomah</option>
-                                                <option value="AB and David Law Firm Ghana">AB and David Law Firm Ghana
-                                                </option>
-                                                <option value="N. Dowuona and Company">N. Dowuona and Company</option>
-                                                <option value="WTS Nobisfields">WTS Nobisfields</option>
-                                                <option value="Kulendi at Law">Kulendi at Law</option>
-                                                <option value="Africa Legal Associates">Africa Legal Associates</option>
-                                                <option value="ENS Ghana">ENS Ghana</option>
-                                                <option value="Minkah Premo Osei Bonsu Bruce Cathline and Partners">
-                                                    Minkah Premo Osei Bonsu Bruce Cathline and Partners</option>
-                                                <option
-                                                    value="B and P Associates Lawyers Consultants and Notaries Public">B
-                                                    and P Associates Lawyers Consultants and Notaries Public</option>
-                                                <option value="Axis Legal">Axis Legal</option>
-                                                <option value="Zoe Akyea and Company">Zoe Akyea and Company</option>
-                                                <option value="Griffin Legal">Griffin Legal</option>
-                                                <option value="Ntrakwah and Company">Ntrakwah and Company</option>
-                                                <option value="Beyuo and Company">Beyuo and Company</option>
-                                                <option value="Legal Ink Lawyers and Notaries">Legal Ink Lawyers and
-                                                    Notaries</option>
-                                                <option value="Legalstone Solicitors">Legalstone Solicitors</option>
-                                                <option value="Legal Ink Lawyers">Legal Ink Lawyers</option>
-                                                <option value="Clyde and Company Kumasi">Clyde and Company Kumasi
-                                                </option>
-                                                <option value="Koffie and Partners Law">Koffie and Partners Law</option>
-                                                <option value="Conclave Lawyers">Conclave Lawyers</option>
-                                                <option value="Amoah and Associates Law Firm">Amoah and Associates Law
-                                                    Firm</option>
-                                            </select>
+                                            <div id="companyWrapper">
+                                                <input class="footer-mirror-register__input" type="text" name="companyName"
+                                                    id="companyInput" placeholder="Company / Organization" />
+                                            </div>
+                                            <div id="lawFirmWrapper" style="display: none;">
+                                                <select class="footer-mirror-register__input" name="lawFirm" id="lawFirmSelect">
+                                                    <option value="" selected disabled>Law Firm</option>
+                                                </select>
+                                            </div>
 
 
                                             <input class="footer-mirror-register__input" type="tel" name="phoneNumber"
@@ -529,6 +496,25 @@
 
                                                 if (result.success) {
                                                     if (result.status === 'confirmed') {
+                                                        const regId = result.registration?.id;
+                                                        
+                                                        // Fetch ticket info
+                                                        let ticketCode = result.registration?.ticket_code || '----';
+                                                        let qrImage = '';
+                                                        
+                                                        if (regId) {
+                                                            try {
+                                                                const ticketRes = await fetch(`/api/registration/${regId}/ticket`);
+                                                                if (ticketRes.ok) {
+                                                                    const ticketData = await ticketRes.json();
+                                                                    ticketCode = ticketData.ticket_code || ticketCode;
+                                                                    qrImage = ticketData.qr_image || '';
+                                                                }
+                                                            } catch (e) {
+                                                                console.error('Error fetching ticket:', e);
+                                                            }
+                                                        }
+
                                                         // Show Confirmation Modal
                                                         const confModal = document.getElementById('confirmationModal');
                                                         const celModal = document.getElementById('celebrationModal');
@@ -538,6 +524,7 @@
                                                         // Setup button handlers (once)
                                                         const confirmBtn = document.getElementById('modalConfirmBtn');
                                                         const closeBtn = document.getElementById('modalCloseBtn');
+                                                        const printBtn = document.getElementById('printTicketBtn');
 
                                                         // Clone to remove old listeners if any
                                                         const newConfirmBtn = confirmBtn.cloneNode(true);
@@ -546,8 +533,20 @@
                                                         const newCloseBtn = closeBtn.cloneNode(true);
                                                         closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
 
+                                                        const newPrintBtn = printBtn.cloneNode(true);
+                                                        printBtn.parentNode.replaceChild(newPrintBtn, printBtn);
+
                                                         newConfirmBtn.addEventListener('click', () => {
                                                             confModal.style.display = 'none';
+                                                            
+                                                            // Update ticket display
+                                                            document.getElementById('ticketCodeDisplay').textContent = ticketCode;
+                                                            
+                                                            if (qrImage) {
+                                                                document.getElementById('qrCodeImage').src = 'data:image/png;base64,' + qrImage;
+                                                                document.getElementById('qrCodeContainer').style.display = 'block';
+                                                            }
+                                                            
                                                             celModal.style.display = 'flex';
 
                                                             // Fire Confetti
@@ -567,7 +566,6 @@
                                                                 }
 
                                                                 var particleCount = 50 * (timeLeft / duration);
-                                                                // since particles fall down, start a bit higher than random
                                                                 confetti({ ...defaults, particleCount, origin: { x: random(0.1, 0.3), y: Math.random() - 0.2 } });
                                                                 confetti({ ...defaults, particleCount, origin: { x: random(0.7, 0.9), y: Math.random() - 0.2 } });
                                                             }, 250);
@@ -575,6 +573,10 @@
 
                                                         newCloseBtn.addEventListener('click', () => {
                                                             celModal.style.display = 'none';
+                                                        });
+
+                                                        newPrintBtn.addEventListener('click', () => {
+                                                            window.print();
                                                         });
 
                                                     } else if (result.status === 'pending_payment') {
@@ -667,8 +669,23 @@
                                 if (!form) return;
 
                                 var codeInput = form.querySelector('input[name="accessCode"]');
-                                var firmSelect = form.querySelector('select[name="lawFirm"]');
+                                var firmSelect = document.getElementById('lawFirmSelect');
+                                var codeValidation = document.getElementById('codeValidation');
+                                var companyWrapper = document.getElementById('companyWrapper');
+                                var lawFirmWrapper = document.getElementById('lawFirmWrapper');
+                                var companyInput = document.getElementById('companyInput');
                                 if (!codeInput || !firmSelect) return;
+
+                                // Populate law firm dropdown from database
+                                if (firms && firms.length > 0) {
+                                    firms.forEach(function(firm) {
+                                        var option = document.createElement('option');
+                                        option.value = firm.name;
+                                        option.textContent = firm.name;
+                                        option.setAttribute('data-code', firm.code);
+                                        firmSelect.appendChild(option);
+                                    });
+                                }
 
                                 function selectFirm(name) {
                                     var option = Array.from(firmSelect.options).find(function (opt) {
@@ -686,9 +703,50 @@
                                     firmSelect.value = name;
                                 }
 
+                                function showValidation(message, isValid, firmName) {
+                                    if (!codeValidation) return;
+                                    if (!message) {
+                                        codeValidation.innerHTML = '';
+                                        // No code - show company field, hide law firm
+                                        if (companyWrapper) companyWrapper.style.display = 'block';
+                                        if (lawFirmWrapper) lawFirmWrapper.style.display = 'none';
+                                        if (companyInput) companyInput.required = true;
+                                        if (firmSelect) firmSelect.required = false;
+                                        return;
+                                    }
+                                    var color = isValid ? '#16a34a' : '#dc2626';
+                                    var icon = isValid ? '&#10003;' : '&#10007;';
+                                    var firmText = firmName ? '<strong>' + firmName + '</strong>' : '';
+                                    codeValidation.innerHTML = '<span style="color: ' + color + ';">' + icon + ' ' + message + '</span> ' + firmText;
+                                    
+                                    // Toggle fields based on validity
+                                    if (isValid) {
+                                        // Valid code - hide company, show law firm (auto-selected)
+                                        if (companyWrapper) companyWrapper.style.display = 'none';
+                                        if (lawFirmWrapper) lawFirmWrapper.style.display = 'block';
+                                        if (companyInput) companyInput.required = false;
+                                        if (firmSelect) firmSelect.required = true;
+                                    } else {
+                                        // Invalid code - show company field
+                                        if (companyWrapper) companyWrapper.style.display = 'block';
+                                        if (lawFirmWrapper) lawFirmWrapper.style.display = 'none';
+                                        if (companyInput) companyInput.required = true;
+                                        if (firmSelect) firmSelect.required = false;
+                                    }
+                                }
+
                                 function syncLawFirmFromCode(rawCode) {
                                     var code = String(rawCode || '').trim().toUpperCase();
-                                    if (!code) return;
+                                    
+                                    if (!code) {
+                                        showValidation('', false);
+                                        return;
+                                    }
+
+                                    if (code.length < 6) {
+                                        showValidation('Enter 6-character code', false);
+                                        return;
+                                    }
 
                                     var firm = firms.find(function (item) {
                                         return String(item.code || '').trim().toUpperCase() === code;
@@ -696,6 +754,12 @@
 
                                     if (firm && firm.name) {
                                         selectFirm(firm.name);
+                                        var slotsText = firm.free_slots_remaining > 0 
+                                            ? '(' + firm.free_slots_remaining + ' free slots remaining)' 
+                                            : '(Payment required)';
+                                        showValidation('Valid code - ' + slotsText, true, firm.name);
+                                    } else {
+                                        showValidation('Invalid access code', false);
                                     }
                                 }
 
@@ -735,15 +799,25 @@
         <div class="modal-content">
             <h3>Registration Confirmed</h3>
             <p>Your spot has been secured. We look forward to seeing you.</p>
-            <button id="modalConfirmBtn" class="modal-btn">Continue</button>
+            <button id="modalConfirmBtn" class="modal-btn">View Your Ticket</button>
         </div>
     </div>
 
     <div id="celebrationModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <h3>Registration Complete</h3>
-            <p>Thank you for registering. We look forward to your participation.</p>
-            <button id="modalCloseBtn" class="modal-btn secondary">Close</button>
+        <div class="modal-content" style="max-width: 450px;">
+            <h3>Your Conference Ticket</h3>
+            <p style="margin-bottom: 1rem;">Present this ticket at check-in</p>
+            <div id="ticketDisplay" style="background: #f8f2e8; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #eadfce;">
+                <p style="font-size: 0.85rem; color: #7b6a5e; margin: 0 0 0.5rem;">Ticket Code</p>
+                <p id="ticketCodeDisplay" style="font-size: 2.5rem; font-family: monospace; font-weight: bold; color: #5b3426; letter-spacing: 0.15em; margin: 0;">----</p>
+            </div>
+            <div id="qrCodeContainer" style="display: none; margin-bottom: 1.5rem;">
+                <img id="qrCodeImage" src="" alt="QR Code" style="width: 160px; height: 160px; border-radius: 8px; border: 1px solid #eadfce;" />
+            </div>
+            <div style="display: flex; gap: 0.75rem; justify-content: center;">
+                <button id="printTicketBtn" class="modal-btn" style="background: #5b3426;">Print Ticket</button>
+                <button id="modalCloseBtn" class="modal-btn secondary">Close</button>
+            </div>
         </div>
     </div>
 
