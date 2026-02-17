@@ -20,6 +20,8 @@ app.add_middleware(
         "http://127.0.0.1:3001",
         "http://127.0.0.1:5000",
         "http://167.71.143.67",
+        "https://cmcghana.duckdns.org",
+        "http://cmcghana.duckdns.org",
     ],
     allow_credentials=True,
     allow_methods=["*"],
