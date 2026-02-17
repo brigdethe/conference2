@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Check-In | Ghana Competition Law Seminar</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -12,94 +12,173 @@
         .slide-in { animation: slideIn 0.3s ease-out; }
         .pulse { animation: pulse 2s infinite; }
         #reader { width: 100%; }
-        #reader video { border-radius: 12px; }
+        #reader video { border-radius: 12px; width: 100% !important; }
+        #reader__scan_region { min-height: 280px; }
+        
+        /* Mobile optimizations */
+        @media (max-width: 768px) {
+            .mobile-scanner-fullwidth { margin: -1rem; margin-top: 0; width: calc(100% + 2rem); border-radius: 0; }
+            .mobile-hide { display: none !important; }
+            .mobile-stack { flex-direction: column; }
+            .mobile-full { width: 100%; }
+            .mobile-text-sm { font-size: 0.875rem; }
+            .mobile-p-3 { padding: 0.75rem; }
+            .mobile-gap-2 { gap: 0.5rem; }
+        }
+        
+        /* Bottom sheet for mobile */
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 1.5rem 1.5rem 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            z-index: 40;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .bottom-sheet.active { transform: translateY(0); }
+        .bottom-sheet-handle {
+            width: 40px;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 8px auto 16px;
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen">
-    <!-- Header -->
+    <!-- Header - Mobile Optimized -->
     <header class="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <img src="https://ik.imagekit.io/dr5fryhth/conference/imglogo?updatedAt=1769778325875" alt="Logo" class="h-10">
+        <div class="max-w-7xl mx-auto px-3 py-3 md:px-4 md:py-4 flex items-center justify-between">
+            <div class="flex items-center gap-2 md:gap-3">
+                <img src="https://ik.imagekit.io/dr5fryhth/conference/imglogo?updatedAt=1769778325875" alt="Logo" class="h-8 md:h-10">
                 <div>
-                    <h1 class="font-bold text-slate-900">Event Check-In</h1>
-                    <p class="text-xs text-slate-500">Ghana Competition Law Seminar</p>
+                    <h1 class="font-bold text-slate-900 text-sm md:text-base">Check-In</h1>
+                    <p class="text-xs text-slate-500 hidden md:block">Ghana Competition Law Seminar</p>
                 </div>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="text-right">
-                    <p class="text-2xl font-bold text-slate-900" id="checkedInCount">0</p>
-                    <p class="text-xs text-slate-500">Checked In</p>
+            <div class="flex items-center gap-3 md:gap-4">
+                <div class="text-center md:text-right">
+                    <p class="text-xl md:text-2xl font-bold text-slate-900" id="checkedInCount">0</p>
+                    <p class="text-xs text-slate-500">In</p>
                 </div>
-                <div class="w-px h-10 bg-slate-200"></div>
-                <div class="text-right">
-                    <p class="text-2xl font-bold text-emerald-600" id="totalCount">0</p>
-                    <p class="text-xs text-slate-500">Total Tickets</p>
+                <div class="w-px h-8 md:h-10 bg-slate-200"></div>
+                <div class="text-center md:text-right">
+                    <p class="text-xl md:text-2xl font-bold text-emerald-600" id="totalCount">0</p>
+                    <p class="text-xs text-slate-500">Total</p>
                 </div>
+                <button onclick="toggleAttendeeList()" class="md:hidden p-2 bg-slate-100 rounded-lg">
+                    <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
             </div>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-6">
-        <div class="grid lg:grid-cols-3 gap-6">
-            <!-- Left: Scanner & Input -->
-            <div class="lg:col-span-1 space-y-6">
-                <!-- QR Scanner -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="font-semibold text-slate-900">QR Scanner</h2>
-                        <button id="toggleScanner" class="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
-                            Start Scanner
-                        </button>
+    <main class="max-w-7xl mx-auto px-3 py-4 md:px-4 md:py-6">
+        <div class="grid lg:grid-cols-3 gap-4 md:gap-6">
+            <!-- Scanner Section - Mobile First -->
+            <div class="lg:col-span-1 space-y-4 md:space-y-6">
+                <!-- QR Scanner - Full width on mobile -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
+                    <!-- Scanner Status & Controls -->
+                    <div id="scannerControls" class="text-center">
+                        <div id="scannerPlaceholder" class="py-8">
+                            <div class="w-20 h-20 mx-auto mb-4 bg-emerald-100 rounded-full flex items-center justify-center">
+                                <svg class="w-10 h-10 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                </svg>
+                            </div>
+                            <p class="text-slate-600 font-medium mb-2">Scan QR Code</p>
+                            <p class="text-slate-400 text-sm mb-4">Tap the button below to start camera</p>
+                            <button id="toggleScanner" class="w-full py-4 bg-emerald-600 text-white rounded-xl font-semibold text-lg hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                </svg>
+                                <span id="scannerBtnText">Start Scanner</span>
+                            </button>
+                        </div>
                     </div>
-                    <div id="reader" class="rounded-xl overflow-hidden bg-slate-100 min-h-[250px] flex items-center justify-center">
-                        <p class="text-slate-400 text-sm" id="scannerPlaceholder">Click "Start Scanner" to begin</p>
+                    
+                    <!-- Camera View -->
+                    <div id="reader" class="rounded-xl overflow-hidden bg-slate-900 hidden"></div>
+                    
+                    <!-- Stop Scanner Button (shown when scanning) -->
+                    <button id="stopScannerBtn" class="hidden w-full mt-4 py-3 bg-red-500 text-white rounded-xl font-medium hover:bg-red-600 transition-colors">
+                        Stop Scanner
+                    </button>
+                    
+                    <!-- Permission Error Message -->
+                    <div id="permissionError" class="hidden text-center py-6">
+                        <div class="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                        </div>
+                        <p class="text-red-600 font-medium mb-2">Camera Access Required</p>
+                        <p class="text-slate-500 text-sm mb-4">Please allow camera access to scan QR codes</p>
+                        <div class="text-left bg-slate-50 rounded-xl p-4 text-sm text-slate-600 space-y-2">
+                            <p class="font-medium">How to enable:</p>
+                            <ol class="list-decimal list-inside space-y-1 text-xs">
+                                <li>Tap the lock/info icon in browser address bar</li>
+                                <li>Find "Camera" permission</li>
+                                <li>Change to "Allow"</li>
+                                <li>Refresh the page</li>
+                            </ol>
+                        </div>
+                        <button onclick="retryCamera()" class="mt-4 w-full py-3 bg-slate-900 text-white rounded-xl font-medium">
+                            Try Again
+                        </button>
                     </div>
                 </div>
 
-                <!-- Manual Entry -->
-                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
-                    <h2 class="font-semibold text-slate-900 mb-4">Manual Entry</h2>
+                <!-- Manual Entry - Compact on mobile -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-4 md:p-6 shadow-sm">
+                    <h2 class="font-semibold text-slate-900 mb-3 text-sm md:text-base">Or Enter Code Manually</h2>
                     <div class="flex gap-2">
                         <input 
                             type="text" 
                             id="ticketCodeInput" 
-                            placeholder="Enter ticket code (e.g., GCL-ABC123)"
-                            class="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent uppercase"
+                            placeholder="Ticket code"
+                            class="flex-1 px-3 py-3 border border-slate-200 rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent uppercase"
                             onkeydown="if(event.key === 'Enter') verifyTicket()"
+                            autocomplete="off"
+                            autocapitalize="characters"
                         >
                         <button 
                             onclick="verifyTicket()"
-                            class="px-6 py-3 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors"
+                            class="px-5 py-3 bg-slate-900 text-white rounded-xl text-sm font-medium hover:bg-slate-800 transition-colors"
                         >
-                            Verify
+                            Go
                         </button>
                     </div>
                 </div>
-
-                <!-- Result Card -->
-                <div id="resultCard" class="hidden">
-                    <!-- Will be populated dynamically -->
-                </div>
             </div>
 
-            <!-- Right: Attendance List -->
-            <div class="lg:col-span-2">
+            <!-- Right: Attendance List - Hidden on mobile, shown in bottom sheet -->
+            <div class="lg:col-span-2 hidden md:block">
                 <div class="bg-white rounded-2xl border border-slate-200 shadow-sm">
-                    <div class="p-6 border-b border-slate-100">
-                        <div class="flex items-center justify-between mb-4">
+                    <div class="p-4 md:p-6 border-b border-slate-100">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                             <h2 class="font-semibold text-slate-900">Attendance</h2>
-                            <div class="flex gap-2">
-                                <button onclick="filterAttendance('all')" class="filter-btn px-3 py-1.5 text-sm rounded-lg bg-slate-900 text-white" data-filter="all">All</button>
-                                <button onclick="filterAttendance('checked')" class="filter-btn px-3 py-1.5 text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200" data-filter="checked">Checked In</button>
-                                <button onclick="filterAttendance('pending')" class="filter-btn px-3 py-1.5 text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200" data-filter="pending">Pending</button>
+                            <div class="flex gap-1 md:gap-2">
+                                <button onclick="filterAttendance('all')" class="filter-btn px-2 md:px-3 py-1.5 text-xs md:text-sm rounded-lg bg-slate-900 text-white" data-filter="all">All</button>
+                                <button onclick="filterAttendance('checked')" class="filter-btn px-2 md:px-3 py-1.5 text-xs md:text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200" data-filter="checked">In</button>
+                                <button onclick="filterAttendance('pending')" class="filter-btn px-2 md:px-3 py-1.5 text-xs md:text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200" data-filter="pending">Pending</button>
                             </div>
                         </div>
                         <input 
                             type="text" 
                             id="searchInput" 
-                            placeholder="Search by name, email, or ticket code..."
-                            class="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            placeholder="Search..."
+                            class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                             oninput="searchAttendees()"
                         >
                     </div>
@@ -107,10 +186,10 @@
                         <table class="w-full">
                             <thead class="bg-slate-50 sticky top-0">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Attendee</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Ticket</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
-                                    <th class="px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Action</th>
+                                    <th class="px-3 md:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Attendee</th>
+                                    <th class="px-3 md:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase hidden md:table-cell">Ticket</th>
+                                    <th class="px-3 md:px-6 py-3 text-left text-xs font-semibold text-slate-500 uppercase">Status</th>
+                                    <th class="px-3 md:px-6 py-3 text-right text-xs font-semibold text-slate-500 uppercase">Action</th>
                                 </tr>
                             </thead>
                             <tbody id="attendeesList" class="divide-y divide-slate-100">
@@ -122,6 +201,37 @@
             </div>
         </div>
     </main>
+
+    <!-- Mobile Bottom Sheet for Attendee List -->
+    <div id="attendeeSheet" class="bottom-sheet md:hidden">
+        <div class="bottom-sheet-handle"></div>
+        <div class="px-4 pb-4">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="font-semibold text-slate-900">Attendees</h2>
+                <button onclick="toggleAttendeeList()" class="p-2 text-slate-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="flex gap-2 mb-3">
+                <button onclick="filterAttendance('all')" class="filter-btn-mobile flex-1 py-2 text-xs rounded-lg bg-slate-900 text-white" data-filter="all">All</button>
+                <button onclick="filterAttendance('checked')" class="filter-btn-mobile flex-1 py-2 text-xs rounded-lg bg-slate-100 text-slate-600" data-filter="checked">Checked In</button>
+                <button onclick="filterAttendance('pending')" class="filter-btn-mobile flex-1 py-2 text-xs rounded-lg bg-slate-100 text-slate-600" data-filter="pending">Pending</button>
+            </div>
+            <input 
+                type="text" 
+                id="searchInputMobile" 
+                placeholder="Search attendees..."
+                class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 mb-3"
+                oninput="searchAttendees()"
+            >
+            <div id="attendeesListMobile" class="space-y-2 max-h-[50vh] overflow-y-auto">
+                <!-- Mobile attendee cards -->
+            </div>
+        </div>
+    </div>
+    <div id="sheetOverlay" class="fixed inset-0 bg-black/30 hidden z-30 md:hidden" onclick="toggleAttendeeList()"></div>
 
     <!-- Success Modal -->
     <div id="successModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
@@ -181,12 +291,17 @@
         let isScanning = false;
         let allTickets = [];
         let currentFilter = 'all';
+        let isSheetOpen = false;
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             fetchStats();
             fetchTickets();
             setInterval(fetchStats, 10000);
+            
+            // Setup scanner button
+            document.getElementById('toggleScanner').addEventListener('click', toggleScanner);
+            document.getElementById('stopScannerBtn').addEventListener('click', stopScanner);
         });
 
         async function fetchStats() {
@@ -212,7 +327,9 @@
         }
 
         function renderAttendees() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
+            const searchDesktop = document.getElementById('searchInput');
+            const searchMobile = document.getElementById('searchInputMobile');
+            const search = (searchDesktop?.value || searchMobile?.value || '').toLowerCase();
             let filtered = allTickets;
 
             if (currentFilter === 'checked') {
@@ -230,52 +347,89 @@
                 );
             }
 
+            // Desktop table
             const tbody = document.getElementById('attendeesList');
-            
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400">No attendees found</td></tr>';
-                return;
+            if (tbody) {
+                if (filtered.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-12 text-center text-slate-400">No attendees found</td></tr>';
+                } else {
+                    tbody.innerHTML = filtered.map(t => `
+                        <tr class="hover:bg-slate-50 ${t.checked_in ? 'bg-emerald-50/30' : ''}">
+                            <td class="px-3 md:px-6 py-3 md:py-4">
+                                <div>
+                                    <p class="font-medium text-slate-900 text-sm md:text-base">${escapeHtml(t.full_name)}</p>
+                                    <p class="text-xs md:text-sm text-slate-500">${escapeHtml(t.firm_name || t.email)}</p>
+                                </div>
+                            </td>
+                            <td class="px-3 md:px-6 py-3 md:py-4 hidden md:table-cell">
+                                <span class="font-mono text-sm text-slate-600">${t.ticket_code}</span>
+                            </td>
+                            <td class="px-3 md:px-6 py-3 md:py-4">
+                                ${t.checked_in 
+                                    ? `<span class="inline-flex items-center gap-1 text-emerald-600 text-xs md:text-sm font-medium">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                        In
+                                       </span>`
+                                    : '<span class="text-slate-400 text-xs md:text-sm">—</span>'
+                                }
+                            </td>
+                            <td class="px-3 md:px-6 py-3 md:py-4 text-right">
+                                ${!t.checked_in 
+                                    ? `<button onclick="checkInByCode('${t.ticket_code}')" class="px-3 md:px-4 py-1.5 md:py-2 bg-emerald-600 text-white text-xs md:text-sm rounded-lg hover:bg-emerald-700 transition-colors">Check In</button>`
+                                    : ''
+                                }
+                            </td>
+                        </tr>
+                    `).join('');
+                }
             }
 
-            tbody.innerHTML = filtered.map(t => `
-                <tr class="hover:bg-slate-50 ${t.checked_in ? 'bg-emerald-50/30' : ''}">
-                    <td class="px-6 py-4">
-                        <div>
-                            <p class="font-medium text-slate-900">${escapeHtml(t.full_name)}</p>
-                            <p class="text-sm text-slate-500">${escapeHtml(t.firm_name || t.email)}</p>
+            // Mobile cards
+            const mobileList = document.getElementById('attendeesListMobile');
+            if (mobileList) {
+                if (filtered.length === 0) {
+                    mobileList.innerHTML = '<p class="text-center text-slate-400 py-8">No attendees found</p>';
+                } else {
+                    mobileList.innerHTML = filtered.map(t => `
+                        <div class="bg-slate-50 rounded-xl p-3 ${t.checked_in ? 'border-l-4 border-emerald-500' : ''}">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-medium text-slate-900 text-sm truncate">${escapeHtml(t.full_name)}</p>
+                                    <p class="text-xs text-slate-500 truncate">${escapeHtml(t.firm_name || '')}</p>
+                                    <p class="text-xs text-slate-400 font-mono mt-1">${t.ticket_code}</p>
+                                </div>
+                                <div class="ml-3 flex-shrink-0">
+                                    ${t.checked_in 
+                                        ? `<span class="inline-flex items-center gap-1 text-emerald-600 text-xs font-medium bg-emerald-100 px-2 py-1 rounded-full">
+                                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                            In
+                                           </span>`
+                                        : `<button onclick="checkInByCode('${t.ticket_code}')" class="px-3 py-1.5 bg-emerald-600 text-white text-xs rounded-lg">Check In</button>`
+                                    }
+                                </div>
+                            </div>
                         </div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <span class="font-mono text-sm text-slate-600">${t.ticket_code}</span>
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full ${t.ticket_type === 'Access Code' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}">${t.ticket_type}</span>
-                    </td>
-                    <td class="px-6 py-4">
-                        ${t.checked_in 
-                            ? `<span class="inline-flex items-center gap-1 text-emerald-600 text-sm font-medium">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
-                                Checked In
-                               </span>
-                               <p class="text-xs text-slate-400 mt-0.5">${formatTime(t.checked_in_at)}</p>`
-                            : '<span class="text-slate-400 text-sm">Pending</span>'
-                        }
-                    </td>
-                    <td class="px-6 py-4 text-right">
-                        ${!t.checked_in 
-                            ? `<button onclick="checkInByCode('${t.ticket_code}')" class="px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition-colors">Check In</button>`
-                            : '<span class="text-slate-300 text-sm">—</span>'
-                        }
-                    </td>
-                </tr>
-            `).join('');
+                    `).join('');
+                }
+            }
         }
 
         function filterAttendance(filter) {
             currentFilter = filter;
+            // Desktop buttons
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 if (btn.dataset.filter === filter) {
-                    btn.className = 'filter-btn px-3 py-1.5 text-sm rounded-lg bg-slate-900 text-white';
+                    btn.className = 'filter-btn px-2 md:px-3 py-1.5 text-xs md:text-sm rounded-lg bg-slate-900 text-white';
                 } else {
-                    btn.className = 'filter-btn px-3 py-1.5 text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+                    btn.className = 'filter-btn px-2 md:px-3 py-1.5 text-xs md:text-sm rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+                }
+            });
+            // Mobile buttons
+            document.querySelectorAll('.filter-btn-mobile').forEach(btn => {
+                if (btn.dataset.filter === filter) {
+                    btn.className = 'filter-btn-mobile flex-1 py-2 text-xs rounded-lg bg-slate-900 text-white';
+                } else {
+                    btn.className = 'filter-btn-mobile flex-1 py-2 text-xs rounded-lg bg-slate-100 text-slate-600';
                 }
             });
             renderAttendees();
@@ -285,37 +439,99 @@
             renderAttendees();
         }
 
-        // QR Scanner
-        document.getElementById('toggleScanner').addEventListener('click', toggleScanner);
-
-        async function toggleScanner() {
-            const btn = document.getElementById('toggleScanner');
-            const placeholder = document.getElementById('scannerPlaceholder');
+        function toggleAttendeeList() {
+            const sheet = document.getElementById('attendeeSheet');
+            const overlay = document.getElementById('sheetOverlay');
+            isSheetOpen = !isSheetOpen;
             
-            if (isScanning) {
-                await html5QrCode.stop();
-                isScanning = false;
-                btn.textContent = 'Start Scanner';
-                placeholder.style.display = 'block';
+            if (isSheetOpen) {
+                sheet.classList.add('active');
+                overlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
             } else {
-                placeholder.style.display = 'none';
-                html5QrCode = new Html5Qrcode("reader");
+                sheet.classList.remove('active');
+                overlay.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        }
+
+        // QR Scanner with better permission handling
+        async function toggleScanner() {
+            if (isScanning) {
+                await stopScanner();
+                return;
+            }
+            
+            const placeholder = document.getElementById('scannerPlaceholder');
+            const reader = document.getElementById('reader');
+            const stopBtn = document.getElementById('stopScannerBtn');
+            const permError = document.getElementById('permissionError');
+            
+            // Hide placeholder, show reader
+            placeholder.classList.add('hidden');
+            permError.classList.add('hidden');
+            reader.classList.remove('hidden');
+            
+            html5QrCode = new Html5Qrcode("reader");
+            
+            try {
+                // First check if we have camera permission
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" } 
+                });
+                // Stop the test stream
+                stream.getTracks().forEach(track => track.stop());
                 
-                try {
-                    await html5QrCode.start(
-                        { facingMode: "environment" },
-                        { fps: 10, qrbox: { width: 250, height: 250 } },
-                        onScanSuccess,
-                        onScanFailure
-                    );
-                    isScanning = true;
-                    btn.textContent = 'Stop Scanner';
-                } catch (err) {
-                    console.error('Failed to start scanner:', err);
-                    alert('Could not access camera. Please check permissions.');
-                    placeholder.style.display = 'block';
+                // Now start the QR scanner
+                const qrboxSize = Math.min(window.innerWidth - 60, 280);
+                await html5QrCode.start(
+                    { facingMode: "environment" },
+                    { 
+                        fps: 10, 
+                        qrbox: { width: qrboxSize, height: qrboxSize },
+                        aspectRatio: 1.0
+                    },
+                    onScanSuccess,
+                    onScanFailure
+                );
+                isScanning = true;
+                stopBtn.classList.remove('hidden');
+                
+            } catch (err) {
+                console.error('Camera error:', err);
+                reader.classList.add('hidden');
+                stopBtn.classList.add('hidden');
+                
+                // Show appropriate error
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    permError.classList.remove('hidden');
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    permError.classList.remove('hidden');
+                    permError.querySelector('p.text-red-600').textContent = 'No Camera Found';
+                    permError.querySelector('p.text-slate-500').textContent = 'This device does not have a camera';
+                } else {
+                    placeholder.classList.remove('hidden');
+                    alert('Camera error: ' + (err.message || 'Unknown error'));
                 }
             }
+        }
+
+        async function stopScanner() {
+            if (html5QrCode && isScanning) {
+                await html5QrCode.stop();
+            }
+            isScanning = false;
+            
+            document.getElementById('reader').classList.add('hidden');
+            document.getElementById('stopScannerBtn').classList.add('hidden');
+            document.getElementById('scannerPlaceholder').classList.remove('hidden');
+            document.getElementById('permissionError').classList.add('hidden');
+        }
+
+        function retryCamera() {
+            document.getElementById('permissionError').classList.add('hidden');
+            document.getElementById('scannerPlaceholder').classList.remove('hidden');
+            toggleScanner();
         }
 
         function onScanSuccess(decodedText) {
