@@ -134,6 +134,58 @@ def get_pending_approvals(db: Session = Depends(get_db)):
     return {"registrations": result, "total": len(result)}
 
 
+@router.get("/approved-registrations", response_model=dict)
+def get_approved_registrations(db: Session = Depends(get_db)):
+    """Get all approved registrations (pending_payment or confirmed)"""
+    registrations = db.query(Registration).filter(
+        Registration.status.in_(["pending_payment", "confirmed"])
+    ).order_by(Registration.approved_at.desc()).all()
+    
+    result = []
+    for r in registrations:
+        result.append({
+            "id": r.id,
+            "fullName": r.full_name,
+            "email": r.email,
+            "phone": r.phone,
+            "company": r.company,
+            "jobTitle": r.job_title,
+            "firmName": r.firm.name if r.firm else None,
+            "firmId": r.firm_id,
+            "status": r.status,
+            "reasonForAttending": r.reason_for_attending,
+            "registeredAt": r.created_at.isoformat() if r.created_at else None,
+            "approvedAt": r.approved_at.isoformat() if r.approved_at else None
+        })
+    
+    return {"registrations": result, "total": len(result)}
+
+
+@router.get("/rejected-registrations", response_model=dict)
+def get_rejected_registrations(db: Session = Depends(get_db)):
+    """Get all rejected registrations"""
+    registrations = db.query(Registration).filter(
+        Registration.status == "rejected"
+    ).order_by(Registration.created_at.desc()).all()
+    
+    result = []
+    for r in registrations:
+        result.append({
+            "id": r.id,
+            "fullName": r.full_name,
+            "email": r.email,
+            "phone": r.phone,
+            "company": r.company,
+            "jobTitle": r.job_title,
+            "firmName": r.firm.name if r.firm else None,
+            "firmId": r.firm_id,
+            "reasonForAttending": r.reason_for_attending,
+            "registeredAt": r.created_at.isoformat() if r.created_at else None
+        })
+    
+    return {"registrations": result, "total": len(result)}
+
+
 @router.post("", response_model=dict)
 async def create_registration(
     data: RegistrationCreate,
@@ -141,6 +193,15 @@ async def create_registration(
     db: Session = Depends(get_db)
 ):
     from routers.notifications import send_pending_approval_notification, send_admin_approval_needed_notification
+    
+    # Check if user was previously rejected - allow re-application by deleting old rejected record
+    existing_rejected = db.query(Registration).filter(
+        Registration.email == data.email,
+        Registration.status == "rejected"
+    ).first()
+    if existing_rejected:
+        db.delete(existing_rejected)
+        db.commit()
     
     firm = None
     status = "pending_approval"  # Default to pending approval

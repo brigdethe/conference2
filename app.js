@@ -373,6 +373,38 @@ app.post('/api/registrations/:id/reject', async (req, res) => {
   }
 });
 
+app.get('/api/registrations/approved-registrations', async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/registrations/approved-registrations');
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching approved registrations:', error);
+    res.status(500).json({ error: 'Failed to fetch approved registrations' });
+  }
+});
+
+app.get('/api/registrations/rejected-registrations', async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/registrations/rejected-registrations');
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching rejected registrations:', error);
+    res.status(500).json({ error: 'Failed to fetch rejected registrations' });
+  }
+});
+
 app.get('/api/users', async (req, res) => {
   try {
     const status = req.query.status || 'confirmed';
