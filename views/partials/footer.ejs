@@ -637,7 +637,14 @@
                 btn.disabled = true;
                 
                 var formData = new FormData(form);
-                var data = Object.fromEntries(formData.entries());
+                var entries = Object.fromEntries(formData.entries());
+                var data = {
+                    name: entries.name,
+                    email: entries.email,
+                    organization: entries.organization || '',
+                    inquiry_type: entries.inquiryType,
+                    message: entries.message
+                };
                 
                 try {
                     var response = await fetch('/api/inquiries', {
