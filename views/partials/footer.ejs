@@ -541,6 +541,11 @@
             </div>
             <input class="tickets-modal__input" type="tel" name="phoneNumber" placeholder="Phone Number" required />
             <input class="tickets-modal__input" type="email" name="email" placeholder="Email" required />
+            <div id="ticketsReasonWrapper" style="display: block;">
+                <textarea class="tickets-modal__input" name="reasonForAttending" id="ticketsReasonInput" 
+                    placeholder="Why do you want to attend this seminar? (Required for approval)" 
+                    rows="3" style="resize: vertical; min-height: 70px;"></textarea>
+            </div>
             <button type="submit" class="tickets-modal__submit">Register</button>
             <p class="tickets-modal__feedback" role="status" aria-live="polite"></p>
             <p class="tickets-modal__disclaimer">
@@ -549,6 +554,35 @@
                     href="/contact/">Contact &amp; Attendance Policy page</a>.
             </p>
         </form>
+    </div>
+</div>
+<div id="ticketsPendingApprovalModal" class="tickets-celebration-overlay" style="display: none;" aria-hidden="true">
+    <div class="tickets-celebration-content" role="dialog" aria-modal="true" aria-labelledby="ticketsPendingTitle" style="max-width: 480px;">
+        <div style="background: #fff8e1; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #ffcc80;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⏳</div>
+            <h3 style="color: #e65100; margin: 0 0 0.5rem; font-size: 1.25rem;" id="ticketsPendingTitle">Registration Pending Approval</h3>
+            <p style="color: #5d4037; margin: 0; font-size: 0.95rem;">Your registration request has been submitted and is awaiting approval from our team.</p>
+        </div>
+        <div style="background: #f5f5f5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <h4 style="color: #5b3426; margin: 0 0 0.75rem; font-size: 1rem;">What happens next?</h4>
+            <ol style="margin: 0; padding-left: 1.25rem; color: #666; font-size: 0.9rem; line-height: 1.6;">
+                <li>Our team will review your registration</li>
+                <li>You'll receive an email with the decision</li>
+                <li>If approved, you'll get a payment link (valid for 3 days)</li>
+                <li>Complete payment to confirm your spot</li>
+            </ol>
+        </div>
+        <div style="background: linear-gradient(135deg, #5b3426 0%, #8b5a3c 100%); border-radius: 12px; padding: 1.25rem; color: white; margin-bottom: 1.5rem;">
+            <p style="margin: 0 0 0.5rem; font-size: 0.85rem; opacity: 0.9;">📅 Event Date</p>
+            <p style="margin: 0; font-size: 1.1rem; font-weight: 600;">March 25, 2026 • 9:00 AM - 3:00 PM</p>
+            <p style="margin: 0.5rem 0 0; font-size: 0.9rem; opacity: 0.9;">📍 Mövenpick Ambassador Hotel, Accra</p>
+        </div>
+        <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Ghana%20Competition%20Law%20Seminar&dates=20260325T090000/20260325T150000&location=M%C3%B6venpick%20Ambassador%20Hotel%2C%20Accra&details=Competition%20%26%20Consumer%20Protection%20Law%20Seminar" 
+           target="_blank" class="tickets-celebration-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; text-decoration: none;">
+            <span>📆</span> Add to Calendar
+        </a>
+        <button type="button" id="ticketsPendingCloseBtn" class="tickets-celebration-btn secondary">Close</button>
+        <p style="color: #999; font-size: 0.8rem; margin-top: 1rem;">You will receive an email once your registration is reviewed.</p>
     </div>
 </div>
 <div id="ticketsConfirmationModal" class="tickets-celebration-overlay" style="display: none;" aria-hidden="true">
@@ -996,15 +1030,21 @@
             ticketsLawFirm.value = name;
         }
 
-        function showTicketsCodeValidation(message, isValid, firmName) {
+        function showTicketsCodeValidation(message, isValid, firmName, hasFreeSlots) {
+            var ticketsReasonWrapper = document.getElementById('ticketsReasonWrapper');
+            var ticketsReasonInput = document.getElementById('ticketsReasonInput');
+            
             if (!ticketsCodeValidation) return;
             if (!message) {
                 ticketsCodeValidation.innerHTML = '';
-                // No code - show company field, hide law firm
+                // No code - show company field, hide law firm, show reason field
                 if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'block';
                 if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'none';
                 if (ticketsCompanyInput) ticketsCompanyInput.required = true;
                 if (ticketsLawFirm) ticketsLawFirm.required = false;
+                // Show reason field when no code (needs approval)
+                if (ticketsReasonWrapper) ticketsReasonWrapper.style.display = 'block';
+                if (ticketsReasonInput) ticketsReasonInput.required = true;
                 return;
             }
             var color = isValid ? '#16a34a' : '#dc2626';
@@ -1013,18 +1053,33 @@
             ticketsCodeValidation.innerHTML = '<span style="color: ' + color + ';">' + icon + ' ' + message + '</span> ' + firmText;
             
             // Toggle fields based on validity
-            if (isValid) {
-                // Valid code - hide company, show law firm (auto-selected)
+            if (isValid && hasFreeSlots) {
+                // Valid code with free slots - hide company, show law firm, hide reason
                 if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'none';
                 if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'block';
                 if (ticketsCompanyInput) ticketsCompanyInput.required = false;
                 if (ticketsLawFirm) ticketsLawFirm.required = true;
+                // Hide reason field - will be auto-confirmed
+                if (ticketsReasonWrapper) ticketsReasonWrapper.style.display = 'none';
+                if (ticketsReasonInput) ticketsReasonInput.required = false;
+            } else if (isValid && !hasFreeSlots) {
+                // Valid code but no free slots - needs approval
+                if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'none';
+                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'block';
+                if (ticketsCompanyInput) ticketsCompanyInput.required = false;
+                if (ticketsLawFirm) ticketsLawFirm.required = true;
+                // Show reason field - needs approval
+                if (ticketsReasonWrapper) ticketsReasonWrapper.style.display = 'block';
+                if (ticketsReasonInput) ticketsReasonInput.required = true;
             } else {
-                // Invalid code - show company field
+                // Invalid code - show company field, show reason
                 if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'block';
                 if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'none';
                 if (ticketsCompanyInput) ticketsCompanyInput.required = true;
                 if (ticketsLawFirm) ticketsLawFirm.required = false;
+                // Show reason field - needs approval
+                if (ticketsReasonWrapper) ticketsReasonWrapper.style.display = 'block';
+                if (ticketsReasonInput) ticketsReasonInput.required = true;
             }
         }
 
@@ -1057,12 +1112,12 @@
                 var code = String(rawCode || '').trim().toUpperCase();
                 
                 if (!code) {
-                    showTicketsCodeValidation('', false);
+                    showTicketsCodeValidation('', false, null, false);
                     return;
                 }
 
                 if (code.length < 6) {
-                    showTicketsCodeValidation('Enter 6-character code', false);
+                    showTicketsCodeValidation('Enter 6-character code', false, null, false);
                     return;
                 }
 
@@ -1072,12 +1127,13 @@
 
                 if (firm && firm.name) {
                     selectTicketLawFirm(firm.name);
-                    var slotsText = firm.free_slots_remaining > 0 
+                    var hasFreeSlots = firm.free_slots_remaining > 0;
+                    var slotsText = hasFreeSlots 
                         ? '(' + firm.free_slots_remaining + ' free slots remaining)' 
-                        : '(Payment required)';
-                    showTicketsCodeValidation('Valid code - ' + slotsText, true, firm.name);
+                        : '(Approval required)';
+                    showTicketsCodeValidation('Valid code - ' + slotsText, true, firm.name, hasFreeSlots);
                 } else {
-                    showTicketsCodeValidation('Invalid access code', false);
+                    showTicketsCodeValidation('Invalid access code', false, null, false);
                 }
             }
 
@@ -1159,33 +1215,55 @@
                     return;
                 }
 
-                // Get ticket code from registration response
-                currentTicketCode = result.registration?.ticket_code || '----';
-                currentQrImage = '';
-                currentOrgLogo = '';
-                
-                // Fetch ticket with QR code
-                var regId = result.registration?.id;
-                if (regId) {
-                    try {
-                        var ticketRes = await fetch('/api/registration/' + regId + '/ticket');
-                        if (ticketRes.ok) {
-                            var ticketData = await ticketRes.json();
-                            currentTicketCode = ticketData.ticket_code || currentTicketCode;
-                            currentQrImage = ticketData.qr_image || '';
-                            currentOrgLogo = ticketData.firm_logo || '';
+                if (result.status === 'pending_approval') {
+                    // Show pending approval modal
+                    var ticketsPendingModal = document.getElementById('ticketsPendingApprovalModal');
+                    if (ticketsPendingModal) {
+                        closeModal();
+                        ticketsPendingModal.style.display = 'flex';
+                        ticketsPendingModal.setAttribute('aria-hidden', 'false');
+                        // Setup close button
+                        var pendingCloseBtn = document.getElementById('ticketsPendingCloseBtn');
+                        if (pendingCloseBtn) {
+                            pendingCloseBtn.onclick = function() {
+                                ticketsPendingModal.style.display = 'none';
+                                ticketsPendingModal.setAttribute('aria-hidden', 'true');
+                            };
                         }
-                    } catch (e) {
-                        console.error('Error fetching ticket:', e);
                     }
+                    ticketsForm.reset();
+                    return;
                 }
 
-                if (ticketsConfirmationModal && ticketsCelebrationModal) {
-                    closeModal();
-                    ticketsConfirmationModal.style.display = 'flex';
-                    ticketsConfirmationModal.setAttribute('aria-hidden', 'false');
-                } else {
-                    showTicketsFeedback(result.message || 'Registration confirmed! Welcome to the seminar.', 'success');
+                // Only fetch ticket for confirmed status
+                if (result.status === 'confirmed') {
+                    currentTicketCode = result.registration?.ticket_code || '----';
+                    currentQrImage = '';
+                    currentOrgLogo = '';
+                    
+                    // Fetch ticket with QR code
+                    var regId = result.registration?.id;
+                    if (regId) {
+                        try {
+                            var ticketRes = await fetch('/api/registration/' + regId + '/ticket');
+                            if (ticketRes.ok) {
+                                var ticketData = await ticketRes.json();
+                                currentTicketCode = ticketData.ticket_code || currentTicketCode;
+                                currentQrImage = ticketData.qr_image || '';
+                                currentOrgLogo = ticketData.firm_logo || '';
+                            }
+                        } catch (e) {
+                            console.error('Error fetching ticket:', e);
+                        }
+                    }
+
+                    if (ticketsConfirmationModal && ticketsCelebrationModal) {
+                        closeModal();
+                        ticketsConfirmationModal.style.display = 'flex';
+                        ticketsConfirmationModal.setAttribute('aria-hidden', 'false');
+                    } else {
+                        showTicketsFeedback(result.message || 'Registration confirmed! Welcome to the seminar.', 'success');
+                    }
                 }
             } catch (error) {
                 console.error('Tickets registration error:', error);
