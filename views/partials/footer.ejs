@@ -567,7 +567,7 @@
                 var data = Object.fromEntries(formData.entries());
                 
                 try {
-                    var response = await fetch('/api/inquiry', {
+                    var response = await fetch('/api/inquiries', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
