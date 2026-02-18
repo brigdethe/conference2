@@ -355,10 +355,46 @@ app.get('/api/registration/:id/ticket', async (req, res) => {
   }
 });
 
+// Ticket verification endpoint (proxy to backend)
+app.get('/api/tickets/verify/:ticketCode', async (req, res) => {
+  const { ticketCode } = req.params;
+  try {
+    const response = await fetchBackend(`/api/tickets/verify/${ticketCode}`);
+    const data = await response.json();
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+    res.json(data);
+  } catch (error) {
+    console.error('Error verifying ticket:', error);
+    res.status(500).json({ error: 'Failed to verify ticket' });
+  }
+});
+
+// Ticket check-in endpoint (proxy to backend)
+app.post('/api/tickets/checkin', async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/tickets/checkin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(req.body),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+    res.json(data);
+  } catch (error) {
+    console.error('Error checking in ticket:', error);
+    res.status(500).json({ error: 'Failed to check in' });
+  }
+});
+
 app.get('/', (_req, res) => res.render('pages/home'));
 app.get('/contact', (_req, res) => res.render('pages/contact'));
 app.get('/terminal', (_req, res) => res.render('pages/terminal'));
 app.get('/checkin', (_req, res) => res.render('pages/checkin'));
+app.get('/verify/:ticketCode', (req, res) => res.render('pages/verify', { ticketCode: req.params.ticketCode }));
 
 // Terminal logs storage
 let serverLogs = [];

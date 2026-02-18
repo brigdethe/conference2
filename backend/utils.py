@@ -23,16 +23,11 @@ def generate_qr_data(
     ticket_code: str,
     registration_id: int,
     full_name: str,
-    firm_name: str | None
+    firm_name: str | None,
+    base_url: str = "https://cmcghana.duckdns.org"
 ) -> str:
-    data = {
-        "ticketCode": ticket_code,
-        "registrationId": registration_id,
-        "fullName": full_name,
-        "firmName": firm_name or "",
-        "event": "Ghana Competition Law Seminar 2026"
-    }
-    return json.dumps(data)
+    # QR code now contains a verification URL that staff can scan with native camera
+    return f"{base_url}/verify/{ticket_code}"
 
 
 def generate_qr_image_base64(qr_data: str) -> str:

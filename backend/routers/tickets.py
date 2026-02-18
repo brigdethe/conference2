@@ -88,6 +88,36 @@ def get_ticket_qr(ticket_code: str, db: Session = Depends(get_db)):
     }
 
 
+@router.get("/verify/{ticket_code}")
+def verify_ticket_by_code(ticket_code: str, db: Session = Depends(get_db)):
+    """Verify a ticket by its code (used by QR scan verification page)"""
+    registration = db.query(Registration).filter(
+        Registration.ticket_code == ticket_code.upper().strip()
+    ).first()
+    
+    if not registration:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    if registration.status != "confirmed":
+        raise HTTPException(status_code=400, detail="Ticket not confirmed - payment may be pending")
+    
+    existing_checkin = db.query(CheckIn).filter(
+        CheckIn.registration_id == registration.id
+    ).first()
+    
+    return {
+        "valid": True,
+        "ticket_code": registration.ticket_code,
+        "full_name": registration.full_name,
+        "email": registration.email,
+        "company": registration.company,
+        "firm_name": registration.firm.name if registration.firm else None,
+        "ticket_type": registration.ticket_type,
+        "checked_in": existing_checkin is not None,
+        "checked_in_at": existing_checkin.checked_in_at.isoformat() if existing_checkin else None
+    }
+
+
 @router.post("/verify")
 def verify_ticket(data: CheckInCreate, db: Session = Depends(get_db)):
     registration = None
