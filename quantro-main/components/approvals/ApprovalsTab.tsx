@@ -9,6 +9,7 @@ interface PendingApproval {
     company: string | null;
     jobTitle: string | null;
     firmName: string | null;
+    firmId: number | null;
     reasonForAttending: string | null;
     registeredAt: string;
 }
@@ -19,6 +20,7 @@ export const ApprovalsTab: React.FC = () => {
     const [processing, setProcessing] = useState<number | null>(null);
     const [rejectModal, setRejectModal] = useState<{ id: number; name: string } | null>(null);
     const [rejectReason, setRejectReason] = useState('');
+    const [filterType, setFilterType] = useState<'all' | 'invited' | 'other'>('all');
 
     const fetchPendingApprovals = async () => {
         setLoading(true);
@@ -94,23 +96,56 @@ export const ApprovalsTab: React.FC = () => {
         });
     };
 
+    // Filter approvals based on filter type
+    const filteredApprovals = approvals.filter(a => {
+        if (filterType === 'all') return true;
+        if (filterType === 'invited') return a.firmId !== null; // Has a firm = invited
+        if (filterType === 'other') return a.firmId === null; // No firm = not invited
+        return true;
+    });
+
+    const invitedCount = approvals.filter(a => a.firmId !== null).length;
+    const otherCount = approvals.filter(a => a.firmId === null).length;
+
     return (
         <>
             <div className="bg-white rounded-3xl shadow-soft overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {/* Header */}
-                <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
                         <h2 className="text-lg font-bold text-slate-900">Pending Approvals</h2>
                         <p className="text-sm text-slate-500">Review and approve registration requests</p>
                     </div>
-                    <button
-                        onClick={fetchPendingApprovals}
-                        disabled={loading}
-                        className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-2"
-                    >
-                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                        Refresh
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <div className="flex bg-gray-100 p-1 rounded-lg">
+                            <button
+                                onClick={() => setFilterType('all')}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${filterType === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                All ({approvals.length})
+                            </button>
+                            <button
+                                onClick={() => setFilterType('invited')}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${filterType === 'invited' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                Invited Firms ({invitedCount})
+                            </button>
+                            <button
+                                onClick={() => setFilterType('other')}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${filterType === 'other' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                            >
+                                Other ({otherCount})
+                            </button>
+                        </div>
+                        <button
+                            onClick={fetchPendingApprovals}
+                            disabled={loading}
+                            className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-2"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </button>
+                    </div>
                 </div>
 
                 {/* Content */}
@@ -120,15 +155,15 @@ export const ApprovalsTab: React.FC = () => {
                             <RefreshCw className="w-8 h-8 animate-spin mb-3" />
                             <p>Loading pending approvals...</p>
                         </div>
-                    ) : approvals.length === 0 ? (
+                    ) : filteredApprovals.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-slate-400">
                             <CheckCircle className="w-12 h-12 mb-3 text-emerald-400" />
                             <p className="text-lg font-medium text-slate-600">All caught up!</p>
-                            <p className="text-sm">No pending approvals to review</p>
+                            <p className="text-sm">{approvals.length === 0 ? 'No pending approvals to review' : 'No approvals match this filter'}</p>
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {approvals.map((approval) => (
+                            {filteredApprovals.map((approval) => (
                                 <div
                                     key={approval.id}
                                     className="bg-gradient-to-r from-orange-50 to-white border border-orange-100 rounded-2xl p-5"

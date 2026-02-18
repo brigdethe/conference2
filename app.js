@@ -163,7 +163,7 @@ app.post('/api/admin/invite', async (req, res) => {
 });
 
 app.post('/api/register', async (req, res) => {
-  const { accessCode, fullName, companyName, jobTitle, lawFirm, phoneNumber, email } = req.body;
+  const { accessCode, fullName, companyName, jobTitle, lawFirm, phoneNumber, email, reasonForAttending } = req.body;
 
   try {
     const response = await fetchBackend('/api/registrations', {
@@ -176,6 +176,7 @@ app.post('/api/register', async (req, res) => {
         job_title: jobTitle,
         company: companyName,
         law_firm: lawFirm,
+        reason_for_attending: reasonForAttending,
       }),
     });
 

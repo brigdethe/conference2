@@ -109,6 +109,31 @@ def get_users(
     return {"users": users, "total": len(users)}
 
 
+@router.get("/pending-approvals", response_model=dict)
+def get_pending_approvals(db: Session = Depends(get_db)):
+    """Get all registrations pending approval"""
+    registrations = db.query(Registration).filter(
+        Registration.status == "pending_approval"
+    ).order_by(Registration.created_at.desc()).all()
+    
+    result = []
+    for r in registrations:
+        result.append({
+            "id": r.id,
+            "fullName": r.full_name,
+            "email": r.email,
+            "phone": r.phone,
+            "company": r.company,
+            "jobTitle": r.job_title,
+            "firmName": r.firm.name if r.firm else None,
+            "firmId": r.firm_id,
+            "reasonForAttending": r.reason_for_attending,
+            "registeredAt": r.created_at.isoformat() if r.created_at else None
+        })
+    
+    return {"registrations": result, "total": len(result)}
+
+
 @router.post("", response_model=dict)
 async def create_registration(
     data: RegistrationCreate,
@@ -415,30 +440,6 @@ def confirm_registration(registration_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"success": True}
-
-
-@router.get("/pending-approvals", response_model=dict)
-def get_pending_approvals(db: Session = Depends(get_db)):
-    """Get all registrations pending approval"""
-    registrations = db.query(Registration).filter(
-        Registration.status == "pending_approval"
-    ).order_by(Registration.created_at.desc()).all()
-    
-    result = []
-    for r in registrations:
-        result.append({
-            "id": r.id,
-            "fullName": r.full_name,
-            "email": r.email,
-            "phone": r.phone,
-            "company": r.company,
-            "jobTitle": r.job_title,
-            "firmName": r.firm.name if r.firm else None,
-            "reasonForAttending": r.reason_for_attending,
-            "registeredAt": r.created_at.isoformat() if r.created_at else None
-        })
-    
-    return {"registrations": result, "total": len(result)}
 
 
 @router.post("/{registration_id}/approve")

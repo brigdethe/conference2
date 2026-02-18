@@ -668,15 +668,21 @@
                                     firmSelect.value = name;
                                 }
 
-                                function showValidation(message, isValid, firmName) {
+                                function showValidation(message, isValid, firmName, hasFreeSlots) {
+                                    var reasonWrapper = document.getElementById('reasonWrapper');
+                                    var reasonInput = document.getElementById('reasonInput');
+                                    
                                     if (!codeValidation) return;
                                     if (!message) {
                                         codeValidation.innerHTML = '';
-                                        // No code - show company field, hide law firm
+                                        // No code - show company field, hide law firm, show reason field
                                         if (companyWrapper) companyWrapper.style.display = 'block';
                                         if (lawFirmWrapper) lawFirmWrapper.style.display = 'none';
                                         if (companyInput) companyInput.required = true;
                                         if (firmSelect) firmSelect.required = false;
+                                        // Show reason field when no code (needs approval)
+                                        if (reasonWrapper) reasonWrapper.style.display = 'block';
+                                        if (reasonInput) reasonInput.required = true;
                                         return;
                                     }
                                     var color = isValid ? '#16a34a' : '#dc2626';
@@ -685,18 +691,33 @@
                                     codeValidation.innerHTML = '<span style="color: ' + color + ';">' + icon + ' ' + message + '</span> ' + firmText;
                                     
                                     // Toggle fields based on validity
-                                    if (isValid) {
-                                        // Valid code - hide company, show law firm (auto-selected)
+                                    if (isValid && hasFreeSlots) {
+                                        // Valid code with free slots - hide company, show law firm, hide reason
                                         if (companyWrapper) companyWrapper.style.display = 'none';
                                         if (lawFirmWrapper) lawFirmWrapper.style.display = 'block';
                                         if (companyInput) companyInput.required = false;
                                         if (firmSelect) firmSelect.required = true;
+                                        // Hide reason field - will be auto-confirmed
+                                        if (reasonWrapper) reasonWrapper.style.display = 'none';
+                                        if (reasonInput) reasonInput.required = false;
+                                    } else if (isValid && !hasFreeSlots) {
+                                        // Valid code but no free slots - needs approval
+                                        if (companyWrapper) companyWrapper.style.display = 'none';
+                                        if (lawFirmWrapper) lawFirmWrapper.style.display = 'block';
+                                        if (companyInput) companyInput.required = false;
+                                        if (firmSelect) firmSelect.required = true;
+                                        // Show reason field - needs approval
+                                        if (reasonWrapper) reasonWrapper.style.display = 'block';
+                                        if (reasonInput) reasonInput.required = true;
                                     } else {
-                                        // Invalid code - show company field
+                                        // Invalid code - show company field, show reason
                                         if (companyWrapper) companyWrapper.style.display = 'block';
                                         if (lawFirmWrapper) lawFirmWrapper.style.display = 'none';
                                         if (companyInput) companyInput.required = true;
                                         if (firmSelect) firmSelect.required = false;
+                                        // Show reason field - needs approval
+                                        if (reasonWrapper) reasonWrapper.style.display = 'block';
+                                        if (reasonInput) reasonInput.required = true;
                                     }
                                 }
 
@@ -704,12 +725,12 @@
                                     var code = String(rawCode || '').trim().toUpperCase();
                                     
                                     if (!code) {
-                                        showValidation('', false);
+                                        showValidation('', false, null, false);
                                         return;
                                     }
 
                                     if (code.length < 6) {
-                                        showValidation('Enter 6-character code', false);
+                                        showValidation('Enter 6-character code', false, null, false);
                                         return;
                                     }
 
@@ -719,12 +740,13 @@
 
                                     if (firm && firm.name) {
                                         selectFirm(firm.name);
-                                        var slotsText = firm.free_slots_remaining > 0 
+                                        var hasFreeSlots = firm.free_slots_remaining > 0;
+                                        var slotsText = hasFreeSlots 
                                             ? '(' + firm.free_slots_remaining + ' free slots remaining)' 
-                                            : '(Payment required)';
-                                        showValidation('Valid code - ' + slotsText, true, firm.name);
+                                            : '(Approval required)';
+                                        showValidation('Valid code - ' + slotsText, true, firm.name, hasFreeSlots);
                                     } else {
-                                        showValidation('Invalid access code', false);
+                                        showValidation('Invalid access code', false, null, false);
                                     }
                                 }
 
