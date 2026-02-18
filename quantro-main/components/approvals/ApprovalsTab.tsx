@@ -268,26 +268,32 @@ export const ApprovalsTab: React.FC = () => {
                         <div className="space-y-3">
                             <div className="flex items-center gap-2">
                                 <User className="w-4 h-4 text-slate-400" />
+                                <span className="text-xs font-medium text-slate-500 mr-1">Full Name:</span>
                                 <span className="font-semibold text-slate-900">{viewModal.fullName}</span>
                             </div>
                             <div className="flex items-center gap-2">
                                 <Mail className="w-4 h-4 text-slate-400" />
+                                <span className="text-xs font-medium text-slate-500 mr-1">Email:</span>
                                 <span className="text-sm text-slate-600">{viewModal.email}</span>
                             </div>
                             {viewModal.phone && (
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm text-slate-600">📞 {viewModal.phone}</span>
+                                    <span className="text-slate-400">📞</span>
+                                    <span className="text-xs font-medium text-slate-500 mr-1">Phone:</span>
+                                    <span className="text-sm text-slate-600">{viewModal.phone}</span>
                                 </div>
                             )}
                             {(viewModal.firmName || viewModal.company) && (
                                 <div className="flex items-center gap-2">
                                     <Building className="w-4 h-4 text-slate-400" />
+                                    <span className="text-xs font-medium text-slate-500 mr-1">Organization:</span>
                                     <span className="text-sm text-slate-600">{viewModal.firmName || viewModal.company}</span>
                                 </div>
                             )}
                             {viewModal.jobTitle && (
                                 <div className="flex items-center gap-2">
                                     <Briefcase className="w-4 h-4 text-slate-400" />
+                                    <span className="text-xs font-medium text-slate-500 mr-1">Job Title:</span>
                                     <span className="text-sm text-slate-600">{viewModal.jobTitle}</span>
                                 </div>
                             )}
@@ -296,14 +302,16 @@ export const ApprovalsTab: React.FC = () => {
                                     <div className="flex items-start gap-2">
                                         <MessageSquare className="w-4 h-4 text-slate-400 mt-0.5" />
                                         <div>
-                                            <p className="text-xs font-semibold text-slate-500 mb-1">Reason for Attending</p>
+                                            <p className="text-xs font-semibold text-slate-500 mb-1">Reason for Attending:</p>
                                             <p className="text-sm text-slate-700">{viewModal.reasonForAttending}</p>
                                         </div>
                                     </div>
                                 </div>
                             )}
-                            <p className="text-xs text-slate-400 mt-3">Applied: {formatDate(viewModal.registeredAt)}</p>
-                            {viewModal.approvedAt && <p className="text-xs text-slate-400">Approved: {formatDate(viewModal.approvedAt)}</p>}
+                            <div className="pt-2 border-t border-slate-100 mt-3">
+                                <p className="text-xs text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> Applied: {formatDate(viewModal.registeredAt)}</p>
+                                {viewModal.approvedAt && <p className="text-xs text-slate-400 flex items-center gap-1 mt-1"><CheckCircle className="w-3 h-3" /> Approved: {formatDate(viewModal.approvedAt)}</p>}
+                            </div>
                         </div>
 
                         <button
