@@ -217,6 +217,62 @@
         }
     }
 
+    /* Toast notification styles */
+    .inquiry-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 24px;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 500;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .inquiry-toast--visible {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .inquiry-toast--success {
+        background: linear-gradient(135deg, #2e7d32, #388e3c);
+    }
+
+    .inquiry-toast--error {
+        background: linear-gradient(135deg, #c62828, #d32f2f);
+    }
+
+    .inquiry-toast__icon {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .inquiry-toast__message {
+        max-width: 300px;
+    }
+
+    @media screen and (max-width: 480px) {
+        .inquiry-toast {
+            left: 20px;
+            right: 20px;
+            top: auto;
+            bottom: 20px;
+            transform: translateY(100%);
+        }
+
+        .inquiry-toast--visible {
+            transform: translateY(0);
+        }
+    }
+
     .get-tickets-fab {
         position: fixed;
         right: 1.25rem;
@@ -553,6 +609,23 @@
             });
         });
         
+        // Toast notification helper
+        function showInquiryToast(message, type) {
+            var existingToast = document.querySelector('.inquiry-toast');
+            if (existingToast) existingToast.remove();
+            
+            var toast = document.createElement('div');
+            toast.className = 'inquiry-toast inquiry-toast--' + type;
+            toast.innerHTML = '<span class="inquiry-toast__icon">' + (type === 'success' ? '✓' : '✕') + '</span><span class="inquiry-toast__message">' + message + '</span>';
+            document.body.appendChild(toast);
+            
+            setTimeout(function() { toast.classList.add('inquiry-toast--visible'); }, 10);
+            setTimeout(function() {
+                toast.classList.remove('inquiry-toast--visible');
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 4000);
+        }
+        
         // Form submission
         var form = document.getElementById('footerInquiryForm');
         if (form) {
@@ -574,6 +647,7 @@
                     });
                     
                     if (response.ok) {
+                        showInquiryToast('Thank you! Your inquiry has been submitted. We will get back to you soon.', 'success');
                         btn.textContent = 'Submitted!';
                         btn.style.background = '#2e7d32';
                         form.reset();
@@ -586,6 +660,7 @@
                         throw new Error('Failed to submit');
                     }
                 } catch (err) {
+                    showInquiryToast('Failed to submit inquiry. Please try again.', 'error');
                     btn.textContent = 'Error - Try Again';
                     btn.style.background = '#c62828';
                     setTimeout(function() {
@@ -1128,52 +1203,5 @@
             });
         });
 
-        // Inquiry form submission
-        var inquiryForm = document.querySelector('.footer_inquiry-form');
-        if (inquiryForm) {
-            inquiryForm.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                
-                var submitBtn = inquiryForm.querySelector('.footer_inquiry-submit');
-                var originalText = submitBtn ? submitBtn.innerText : '';
-                
-                if (submitBtn) {
-                    submitBtn.innerText = 'Submitting...';
-                    submitBtn.disabled = true;
-                }
-                
-                var formData = new FormData(inquiryForm);
-                var payload = {
-                    name: formData.get('name'),
-                    email: formData.get('email'),
-                    organization: formData.get('organization'),
-                    inquiry_type: formData.get('inquiryType'),
-                    message: formData.get('message')
-                };
-                
-                try {
-                    var response = await fetch('/api/inquiries', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (response.ok) {
-                        alert('Thank you! Your inquiry has been submitted. We will get back to you soon.');
-                        inquiryForm.reset();
-                    } else {
-                        alert('Failed to submit inquiry. Please try again.');
-                    }
-                } catch (error) {
-                    console.error('Inquiry submission error:', error);
-                    alert('An error occurred. Please try again.');
-                } finally {
-                    if (submitBtn) {
-                        submitBtn.innerText = originalText;
-                        submitBtn.disabled = false;
-                    }
-                }
-            });
-        }
     })();
 </script>
