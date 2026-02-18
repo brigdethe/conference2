@@ -208,6 +208,15 @@ app.get('/payment', async (req, res) => {
       return res.redirect('/');
     }
 
+    // Check if payment link has expired (3 days from approval)
+    let isExpired = false;
+    if (registration.approved_at) {
+      const approvedAt = new Date(registration.approved_at);
+      const now = new Date();
+      const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+      isExpired = (now - approvedAt) > threeDaysMs;
+    }
+
     // Fetch payment settings
     let settings = {
       ticket_price: '150',
@@ -239,9 +248,11 @@ app.get('/payment', async (req, res) => {
         company: registration.company,
         status: registration.status,
         ticketType: registration.ticket_type,
-        firmName: registration.firm_name
+        firmName: registration.firm_name,
+        approvedAt: registration.approved_at
       },
-      settings
+      settings,
+      isExpired
     });
   } catch (error) {
     console.error('Error fetching registration:', error);
@@ -304,6 +315,60 @@ app.post('/api/registrations/:id/verify-payment', async (req, res) => {
   } catch (error) {
     console.error('Error verifying payment:', error);
     res.status(500).json({ error: 'Failed to verify payment' });
+  }
+});
+
+app.get('/api/registrations/pending-approvals', async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/registrations/pending-approvals');
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching pending approvals:', error);
+    res.status(500).json({ error: 'Failed to fetch pending approvals' });
+  }
+});
+
+app.post('/api/registrations/:id/approve', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const response = await fetchBackend(`/api/registrations/${id}/approve`, {
+      method: 'POST',
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error approving registration:', error);
+    res.status(500).json({ error: 'Failed to approve registration' });
+  }
+});
+
+app.post('/api/registrations/:id/reject', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const response = await fetchBackend(`/api/registrations/${id}/reject`, {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error rejecting registration:', error);
+    res.status(500).json({ error: 'Failed to reject registration' });
   }
 });
 
@@ -395,6 +460,7 @@ app.get('/contact', (_req, res) => res.render('pages/contact'));
 app.get('/terminal', (_req, res) => res.render('pages/terminal'));
 app.get('/checkin', (_req, res) => res.render('pages/checkin'));
 app.get('/verify/:ticketCode', (req, res) => res.render('pages/verify', { ticketCode: req.params.ticketCode }));
+app.get('/pending-approval', (_req, res) => res.render('pages/pending-approval'));
 
 // Terminal logs storage
 let serverLogs = [];

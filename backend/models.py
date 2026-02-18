@@ -33,6 +33,8 @@ class Registration(Base):
     ticket_type = Column(String(50), default="Paid")
     ticket_code = Column(String(4), nullable=True)
     qr_data = Column(Text, nullable=True)
+    reason_for_attending = Column(Text, nullable=True)
+    approved_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     firm = relationship("LawFirm", back_populates="registrations")

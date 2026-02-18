@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from pydantic import BaseModel
 
 from database import get_db
 from models import LawFirm, Registration, Settings
@@ -114,8 +115,10 @@ async def create_registration(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
+    from routers.notifications import send_pending_approval_notification, send_admin_approval_needed_notification
+    
     firm = None
-    status = "pending_payment"
+    status = "pending_approval"  # Default to pending approval
     ticket_type = "Paid"
     
     if data.access_code:
@@ -134,6 +137,9 @@ async def create_registration(
         if confirmed_count < 2:
             status = "confirmed"
             ticket_type = "Access Code"
+        else:
+            # Code limit reached - requires approval
+            status = "pending_approval"
     
     registration = Registration(
         firm_id=firm.id if firm else None,
@@ -143,7 +149,8 @@ async def create_registration(
         job_title=data.job_title,
         company=data.company,
         status=status,
-        ticket_type=ticket_type
+        ticket_type=ticket_type,
+        reason_for_attending=data.reason_for_attending
     )
     
     db.add(registration)
@@ -181,11 +188,22 @@ async def create_registration(
         )
     
     message = "Registration successful"
-    if status == "pending_payment":
-        if firm:
-            message = "Free registration limit reached. Payment required."
-        else:
-            message = "Payment required for public registration."
+    if status == "pending_approval":
+        message = "Your registration is pending approval. You will receive an email once approved."
+        # Send notifications for pending approval
+        await send_pending_approval_notification(
+            db=db,
+            email=registration.email,
+            full_name=registration.full_name
+        )
+        await send_admin_approval_needed_notification(
+            db=db,
+            full_name=registration.full_name,
+            email=registration.email,
+            phone=registration.phone,
+            org_name=registration.company,
+            reason=registration.reason_for_attending
+        )
     
     return {
         "success": True,
@@ -202,6 +220,8 @@ async def create_registration(
             ticket_type=registration.ticket_type,
             ticket_code=registration.ticket_code,
             qr_data=registration.qr_data,
+            reason_for_attending=registration.reason_for_attending,
+            approved_at=registration.approved_at,
             created_at=registration.created_at,
             firm_name=firm.name if firm else None
         )
@@ -395,3 +415,103 @@ def confirm_registration(registration_id: int, db: Session = Depends(get_db)):
     db.commit()
     
     return {"success": True}
+
+
+@router.get("/pending-approvals", response_model=dict)
+def get_pending_approvals(db: Session = Depends(get_db)):
+    """Get all registrations pending approval"""
+    registrations = db.query(Registration).filter(
+        Registration.status == "pending_approval"
+    ).order_by(Registration.created_at.desc()).all()
+    
+    result = []
+    for r in registrations:
+        result.append({
+            "id": r.id,
+            "fullName": r.full_name,
+            "email": r.email,
+            "phone": r.phone,
+            "company": r.company,
+            "jobTitle": r.job_title,
+            "firmName": r.firm.name if r.firm else None,
+            "reasonForAttending": r.reason_for_attending,
+            "registeredAt": r.created_at.isoformat() if r.created_at else None
+        })
+    
+    return {"registrations": result, "total": len(result)}
+
+
+@router.post("/{registration_id}/approve")
+async def approve_registration(registration_id: int, db: Session = Depends(get_db)):
+    """Approve a pending registration and send payment link"""
+    from routers.notifications import send_approval_with_payment_link
+    from datetime import datetime
+    
+    registration = db.query(Registration).filter(
+        Registration.id == registration_id
+    ).first()
+    if not registration:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    
+    if registration.status != "pending_approval":
+        raise HTTPException(status_code=400, detail="Registration is not pending approval")
+    
+    # Update status and set approved_at timestamp
+    registration.status = "pending_payment"
+    registration.approved_at = datetime.utcnow()
+    db.commit()
+    
+    # Send payment link notification
+    await send_approval_with_payment_link(
+        db=db,
+        email=registration.email,
+        phone=registration.phone,
+        full_name=registration.full_name,
+        registration_id=registration.id
+    )
+    
+    return {
+        "success": True,
+        "message": "Registration approved. Payment link sent to user."
+    }
+
+
+class RejectRequest(BaseModel):
+    reason: Optional[str] = None
+
+
+@router.post("/{registration_id}/reject")
+async def reject_registration(
+    registration_id: int,
+    data: RejectRequest = None,
+    db: Session = Depends(get_db)
+):
+    """Reject a pending registration"""
+    from routers.notifications import send_rejection_notification
+    
+    registration = db.query(Registration).filter(
+        Registration.id == registration_id
+    ).first()
+    if not registration:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    
+    if registration.status != "pending_approval":
+        raise HTTPException(status_code=400, detail="Registration is not pending approval")
+    
+    # Update status to rejected
+    registration.status = "rejected"
+    db.commit()
+    
+    # Send rejection notification
+    rejection_reason = data.reason if data else None
+    await send_rejection_notification(
+        db=db,
+        email=registration.email,
+        full_name=registration.full_name,
+        reason=rejection_reason
+    )
+    
+    return {
+        "success": True,
+        "message": "Registration rejected. User has been notified."
+    }

@@ -300,6 +300,201 @@ async def send_admin_payment_notification(
             await send_sms_internal(db, admin_phone, sms_message)
 
 
+async def send_pending_approval_notification(
+    db: Session,
+    email: str,
+    full_name: str
+):
+    """Send email to user that their registration is pending approval"""
+    email_enabled = get_setting(db, "notifications_email_enabled", "true") == "true"
+    
+    if email_enabled and email:
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #5b3426; text-align: center;">Ghana Competition Law Seminar</h2>
+            <p style="text-align: center; color: #666;">Registration Received</p>
+            
+            <div style="background: #fff8e1; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; border: 1px solid #ffcc80;">
+                <p style="font-size: 18px; font-weight: bold; color: #e65100; margin: 0 0 8px;">Pending Approval</p>
+                <p style="color: #666; margin: 0;">Your registration is being reviewed by our team.</p>
+            </div>
+            
+            <p style="text-align: center; color: #666; font-size: 14px;">
+                Dear {full_name},<br><br>
+                Thank you for your interest in the Ghana Competition Law Seminar.<br><br>
+                Your registration has been received and is currently pending approval. 
+                Once approved, you will receive an email with a payment link to complete your registration.<br><br>
+                <strong>Event Details:</strong><br>
+                📅 March 25, 2026 | 9:00 AM - 3:00 PM<br>
+                📍 Mövenpick Ambassador Hotel, Accra
+            </p>
+            
+            <p style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
+                We will notify you once your registration has been reviewed.
+            </p>
+        </div>
+        """
+        
+        await send_email_internal(
+            db, email,
+            "Registration Received - Pending Approval",
+            html_body
+        )
+
+
+async def send_admin_approval_needed_notification(
+    db: Session,
+    full_name: str,
+    email: str,
+    phone: str,
+    org_name: str,
+    reason: str
+):
+    """Notify admins when a new registration needs approval"""
+    email_enabled = get_setting(db, "notifications_email_enabled", "true") == "true"
+    sms_enabled = get_setting(db, "notifications_sms_enabled", "true") == "true"
+    
+    # Get admin recipients
+    recipients = db.query(AdminNotificationRecipient).filter(
+        AdminNotificationRecipient.enabled == 1
+    ).all()
+    
+    admin_emails = [r.value for r in recipients if r.recipient_type == "email"]
+    admin_phones = [r.value for r in recipients if r.recipient_type == "phone"]
+    
+    # Email to admins
+    if email_enabled and admin_emails:
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #5b3426;">New Registration Needs Approval</h2>
+            <p>A new registration has been submitted and requires your approval.</p>
+            
+            <div style="background: #f5f5f5; border-radius: 8px; padding: 15px; margin: 15px 0;">
+                <p><strong>Name:</strong> {full_name}</p>
+                <p><strong>Email:</strong> {email}</p>
+                <p><strong>Phone:</strong> {phone or 'N/A'}</p>
+                <p><strong>Organization:</strong> {org_name or 'N/A'}</p>
+                <p><strong>Reason for Attending:</strong></p>
+                <p style="background: #fff; padding: 10px; border-radius: 4px; font-style: italic;">{reason or 'Not provided'}</p>
+            </div>
+            
+            <p>Please log in to the admin panel to approve or reject this registration.</p>
+        </div>
+        """
+        
+        for admin_email in admin_emails:
+            await send_email_internal(
+                db, admin_email,
+                f"Approval Needed - {full_name}",
+                html_body
+            )
+    
+    # SMS to admins
+    if sms_enabled and admin_phones:
+        sms_message = f"New registration needs approval: {full_name} ({org_name or 'Public'}). Check admin panel."
+        for admin_phone in admin_phones:
+            await send_sms_internal(db, admin_phone, sms_message)
+
+
+async def send_approval_with_payment_link(
+    db: Session,
+    email: str,
+    phone: str,
+    full_name: str,
+    registration_id: int
+):
+    """Send approval notification with payment link to user"""
+    email_enabled = get_setting(db, "notifications_email_enabled", "true") == "true"
+    sms_enabled = get_setting(db, "notifications_sms_enabled", "true") == "true"
+    
+    base_url = get_setting(db, "base_url", "https://seminar.cmc-ghana.com")
+    payment_link = f"{base_url}/payment?id={registration_id}"
+    
+    if email_enabled and email:
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #5b3426; text-align: center;">Ghana Competition Law Seminar</h2>
+            <p style="text-align: center; color: #666;">Registration Approved!</p>
+            
+            <div style="background: #e8f5e9; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; border: 1px solid #a5d6a7;">
+                <p style="font-size: 18px; font-weight: bold; color: #2e7d32; margin: 0 0 8px;">✓ Approved</p>
+                <p style="color: #666; margin: 0;">Your registration has been approved!</p>
+            </div>
+            
+            <p style="text-align: center; color: #666; font-size: 14px;">
+                Dear {full_name},<br><br>
+                Great news! Your registration for the Ghana Competition Law Seminar has been approved.<br><br>
+                Please complete your payment within <strong>3 days</strong> to secure your spot.
+            </p>
+            
+            <div style="text-align: center; margin: 25px 0;">
+                <a href="{payment_link}" style="display: inline-block; background: #e78745; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                    Complete Payment
+                </a>
+            </div>
+            
+            <p style="text-align: center; color: #999; font-size: 12px;">
+                <strong>Event Details:</strong><br>
+                📅 March 25, 2026 | 9:00 AM - 3:00 PM<br>
+                📍 Mövenpick Ambassador Hotel, Accra<br><br>
+                ⚠️ This payment link expires in 3 days.
+            </p>
+        </div>
+        """
+        
+        await send_email_internal(
+            db, email,
+            "Registration Approved - Complete Your Payment",
+            html_body
+        )
+    
+    if sms_enabled and phone:
+        sms_message = f"Good news {full_name}! Your registration for Ghana Competition Law Seminar is approved. Pay within 3 days: {payment_link}"
+        await send_sms_internal(db, phone, sms_message)
+
+
+async def send_rejection_notification(
+    db: Session,
+    email: str,
+    full_name: str,
+    reason: str = None
+):
+    """Send rejection notification to user"""
+    email_enabled = get_setting(db, "notifications_email_enabled", "true") == "true"
+    
+    if email_enabled and email:
+        reason_text = f"<p style='background: #fff; padding: 10px; border-radius: 4px;'><strong>Reason:</strong> {reason}</p>" if reason else ""
+        
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
+            <h2 style="color: #5b3426; text-align: center;">Ghana Competition Law Seminar</h2>
+            <p style="text-align: center; color: #666;">Registration Update</p>
+            
+            <div style="background: #ffebee; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; border: 1px solid #ef9a9a;">
+                <p style="font-size: 18px; font-weight: bold; color: #c62828; margin: 0 0 8px;">Registration Not Approved</p>
+            </div>
+            
+            <p style="text-align: center; color: #666; font-size: 14px;">
+                Dear {full_name},<br><br>
+                Thank you for your interest in the Ghana Competition Law Seminar.<br><br>
+                Unfortunately, we are unable to approve your registration at this time.
+            </p>
+            
+            {reason_text}
+            
+            <p style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
+                If you have any questions, please contact us.
+            </p>
+        </div>
+        """
+        
+        await send_email_internal(
+            db, email,
+            "Registration Update - Ghana Competition Law Seminar",
+            html_body
+        )
+
+
 class EmailRequest(BaseModel):
     to: str
     subject: str

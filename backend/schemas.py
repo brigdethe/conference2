@@ -36,6 +36,7 @@ class RegistrationCreate(BaseModel):
     company: Optional[str] = None
     access_code: Optional[str] = None
     law_firm: Optional[str] = None
+    reason_for_attending: Optional[str] = None
 
 
 class RegistrationResponse(BaseModel):
@@ -49,6 +50,8 @@ class RegistrationResponse(BaseModel):
     ticket_type: str
     ticket_code: Optional[str]
     qr_data: Optional[str]
+    reason_for_attending: Optional[str] = None
+    approved_at: Optional[datetime] = None
     created_at: datetime
     firm_name: Optional[str] = None
 

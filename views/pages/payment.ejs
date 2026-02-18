@@ -16,6 +16,29 @@
 </head>
 <body class="bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen flex items-center justify-center p-4">
     
+    <% if (isExpired) { %>
+    <!-- Expired View -->
+    <div class="max-w-md w-full slide-up">
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 p-8 text-center">
+            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-slate-900 mb-3">Payment Link Expired</h2>
+            <p class="text-slate-500 mb-6">This payment link has expired. Payment links are valid for 3 days after approval.</p>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                <p class="text-amber-700 text-sm">To attend the seminar, please register again with a new application.</p>
+            </div>
+            <a href="/contact" class="block w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-4 px-6 rounded-xl transition-colors">
+                Register Again
+            </a>
+            <a href="/" class="block text-slate-500 hover:text-slate-700 text-sm mt-4">
+                ← Back to Home
+            </a>
+        </div>
+    </div>
+    <% } else { %>
     <!-- Payment View - Horizontal Layout -->
     <div id="paymentView" class="max-w-4xl w-full slide-up">
         <div class="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
@@ -204,5 +227,6 @@
             }
         });
     </script>
+    <% } %>
 </body>
 </html>

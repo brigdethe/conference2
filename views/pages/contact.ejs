@@ -435,6 +435,11 @@
                                                 placeholder="Phone Number" required />
                                             <input class="footer-mirror-register__input" type="email" name="email"
                                                 placeholder="Email" required />
+                                            <div id="reasonWrapper" style="grid-column: 1 / -1;">
+                                                <textarea class="footer-mirror-register__input" name="reasonForAttending" 
+                                                    id="reasonInput" placeholder="Why do you want to attend this seminar? (Required for approval)" 
+                                                    rows="3" style="resize: vertical; min-height: 80px;"></textarea>
+                                            </div>
 
                                         </div>
                                         <button class="footer-mirror-register__submit" type="submit"
@@ -554,6 +559,12 @@
                                                     } else if (result.status === 'pending_payment') {
                                                         // Redirect to payment page
                                                         window.location.href = `/payment?id=${result.registration.id}`;
+                                                    } else if (result.status === 'pending_approval') {
+                                                        // Show pending approval modal
+                                                        const pendingModal = document.getElementById('pendingApprovalModal');
+                                                        if (pendingModal) {
+                                                            pendingModal.style.display = 'flex';
+                                                        }
                                                     }
                                                     this.reset();
                                                 } else {
@@ -774,6 +785,70 @@
             </div>
         </div>
     </div>
+
+    <!-- Pending Approval Modal -->
+    <div id="pendingApprovalModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 480px;">
+            <div style="background: #fff8e1; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #ffcc80;">
+                <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⏳</div>
+                <h3 style="color: #e65100; margin: 0 0 0.5rem;">Pending Approval</h3>
+                <p style="color: #666; margin: 0; font-size: 0.95rem;">We will let you know when your registration is approved.</p>
+            </div>
+            
+            <div style="background: #f8f2e8; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; text-align: left;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                    <span style="font-size: 1.25rem;">📅</span>
+                    <div>
+                        <p style="font-weight: 600; color: #5b3426; margin: 0;">Wednesday, 25 March 2026</p>
+                        <p style="color: #7b6a5e; margin: 0; font-size: 0.9rem;">9:00 AM - 3:00 PM</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.25rem;">📍</span>
+                    <div>
+                        <p style="font-weight: 600; color: #5b3426; margin: 0;">Mövenpick Ambassador Hotel</p>
+                        <p style="color: #7b6a5e; margin: 0; font-size: 0.9rem;">Accra, Ghana</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="countdownDisplay" style="background: linear-gradient(135deg, #5b3426, #7b4a32); color: white; border-radius: 12px; padding: 1rem; margin-bottom: 1.5rem;">
+                <p style="font-size: 0.85rem; margin: 0 0 0.25rem; opacity: 0.8;">Event starts in</p>
+                <p id="countdownTimer" style="font-size: 1.5rem; font-weight: bold; margin: 0;">-- days -- hours</p>
+            </div>
+
+            <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Ghana%20Competition%20Law%20Seminar&dates=20260325T090000/20260325T150000&location=M%C3%B6venpick%20Ambassador%20Hotel%2C%20Accra%2C%20Ghana&details=Ghana%20Competition%20%26%20Policy%20Law%20Seminar%20-%20Laying%20a%20Sound%20Foundation%20for%20a%20New%20Era" 
+               target="_blank" 
+               class="modal-btn" 
+               style="display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none; margin-bottom: 1rem;">
+                <span>📆</span> Add to Calendar
+            </a>
+
+            <button id="pendingModalCloseBtn" class="modal-btn secondary" onclick="document.getElementById('pendingApprovalModal').style.display='none'">Close</button>
+            
+            <p style="color: #999; font-size: 0.8rem; margin-top: 1rem;">You will receive an email once your registration is reviewed.</p>
+        </div>
+    </div>
+
+    <script>
+        // Countdown timer for pending approval modal
+        (function() {
+            const eventDate = new Date('2026-03-25T09:00:00');
+            function updateCountdown() {
+                const now = new Date();
+                const diff = eventDate - now;
+                if (diff <= 0) {
+                    document.getElementById('countdownTimer').textContent = 'Event has started!';
+                    return;
+                }
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                document.getElementById('countdownTimer').textContent = days + ' days ' + hours + ' hours';
+            }
+            updateCountdown();
+            setInterval(updateCountdown, 60000);
+        })();
+    </script>
 
     <style>
         .modal-overlay {

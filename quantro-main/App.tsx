@@ -13,6 +13,7 @@ import { TicketsTab } from './components/tickets/TicketsTab';
 import { SettingsTab } from './components/settings/SettingsTab';
 import { InquiriesTab } from './components/inquiries/InquiriesTab';
 import { PaymentsTab } from './components/payments/PaymentsTab';
+import { ApprovalsTab } from './components/approvals/ApprovalsTab';
 import { TabOption } from './types';
 import type { DashboardSidebarContent } from './data/dashboard';
 import type { FirmActivityDetail } from './data/dashboard';
@@ -90,6 +91,8 @@ export default function App() {
         return 'Total Firms';
       case TabOption.Tickets:
         return 'Active Tickets';
+      case TabOption.Approvals:
+        return 'Pending Approvals';
       case TabOption.Payments:
         return 'Pending Payments';
       case TabOption.Inquiries:
@@ -113,6 +116,8 @@ export default function App() {
         return invitedFirms.length.toLocaleString();
       case TabOption.Tickets:
         return dashboard.registeredUsers.toLocaleString();
+      case TabOption.Approvals:
+        return '';
       case TabOption.Payments:
         return '';
       case TabOption.Inquiries:
@@ -226,13 +231,18 @@ export default function App() {
               </section>
             )}
 
+            {activeTab === TabOption.Approvals && (
+              <section className="mb-8">
+                <ApprovalsTab />
+              </section>
+            )}
+
             {activeTab === TabOption.Payments && (
               <section className="mb-8">
                 <PaymentsTab />
               </section>
             )}
 
-            
             {activeTab === TabOption.Inquiries && (
               <section className="mb-8">
                 <InquiriesTab onSelect={(inquiry) => setActiveDetail({ kind: 'inquiry', inquiry })} />
