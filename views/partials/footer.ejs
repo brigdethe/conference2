@@ -1036,8 +1036,6 @@
             var ticketsReasonWrapper = document.getElementById('ticketsReasonWrapper');
             var ticketsReasonInput = document.getElementById('ticketsReasonInput');
             
-            console.log('showTicketsCodeValidation called:', { message, isValid, firmName, hasFreeSlots, ticketsReasonWrapper: !!ticketsReasonWrapper });
-            
             if (!ticketsCodeValidation) return;
             if (!message) {
                 ticketsCodeValidation.innerHTML = '';
