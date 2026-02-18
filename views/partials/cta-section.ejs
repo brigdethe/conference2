@@ -5,7 +5,7 @@
                 <div data-fade-in="" class="icon-tag w-embed"><svg width="100%" height="100%" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg">
 <circle cx="5" cy="5.5" r="5" fill="currentColor"></circle>
 </svg></div>
-                <div data-fade-in="" class="detail text-color-pop w-variant-7985c73d-1e82-af57-9c51-575953b1f642">Contact Quinn Global Tax Law</div>
+                <div data-fade-in="" class="detail text-color-pop w-variant-7985c73d-1e82-af57-9c51-575953b1f642">Contact Us</div>
             </div>
             <h2 data-fade-in="" class="text-color-clay">Laying a Sound Foundation for a New Era.</h2>
         </div>
@@ -36,8 +36,22 @@
     <div class="cta_right">
         <div class="cta-image_wrapper"><img src="https://cdn.prod.website-files.com/68eee3b7aa1d9628fd1f8ee0/69091d8fee23b123d8f5fdf7_Brown-Grain-LG.avif" loading="lazy" width="800" alt="" class="cta-image" />
             <div class="cta-lottie">
-                <div data-w-id="ef4ee1bc-8325-aa3d-60fe-d6927eab83fe" data-animation-type="lottie" data-src="https://cdn.prod.website-files.com/68eee3b7aa1d9628fd1f8ee0/69091dd27d9be5deec6f31ec_square-quinn-lines_opt.json" data-loop="1" data-direction="1" data-autoplay="1" data-is-ix2-target="0" data-renderer="svg" data-default-duration="0" data-duration="16.733333333333334"></div>
+                <div id="ctaLottie" data-w-id="ef4ee1bc-8325-aa3d-60fe-d6927eab83fe" data-animation-type="lottie" data-src="https://cdn.prod.website-files.com/68eee3b7aa1d9628fd1f8ee0/69091dd27d9be5deec6f31ec_square-quinn-lines_opt.json" data-loop="1" data-direction="1" data-autoplay="1" data-is-ix2-target="0" data-renderer="svg" data-default-duration="0" data-duration="16.733333333333334"></div>
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var ctaLottieContainer = document.getElementById('ctaLottie');
+            if (ctaLottieContainer && window.lottie) {
+                lottie.loadAnimation({
+                    container: ctaLottieContainer,
+                    renderer: 'svg',
+                    loop: true,
+                    autoplay: true,
+                    path: 'https://cdn.prod.website-files.com/68eee3b7aa1d9628fd1f8ee0/69091dd27d9be5deec6f31ec_square-quinn-lines_opt.json'
+                });
+            }
+        });
+    </script>
 </section>

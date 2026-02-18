@@ -3,10 +3,9 @@
         <div class="footer_container-wrapper">
             <div class="container-four-col footer-left">
                 <div data-heading-animation="" class="footer-text">
-                    Submit Seminar Questions
+                    Ask a Question
                     <span class="footer-text-note">
-                        Have a question you want answered at the seminar? Select <strong>Seminar Question</strong> in
-                        <strong>Inquiry Type</strong> when submitting your inquiry.
+                        Submit questions you'd like our speakers to address during the seminar.
                     </span>
                 </div>
                 <a href="#" class="footer_logo-link w-nav-brand">
@@ -20,32 +19,28 @@
                 <div data-no-fade-tablet="" data-fade-in="" class="footer_menu-card">
                     <div class="footer_inquiry-wrapper">
                         <div class="footer_inquiry-header">
-                            <div class="detail">Conference Inquiries</div>
-                            <h3 class="footer_inquiry-title">Send an Inquiry</h3>
+                            <div class="detail">Have a Question?</div>
+                            <h3 class="footer_inquiry-title">Submit Your Question</h3>
                         </div>
-                        <form class="footer_inquiry-form">
+                        <div class="footer_inquiry-tabs" id="inquiryTabs">
+                            <button type="button" class="footer_inquiry-tab active" data-tab="question">Seminar Question</button>
+                            <button type="button" class="footer_inquiry-tab" data-tab="inquiry">General Inquiry</button>
+                        </div>
+                        <form class="footer_inquiry-form" id="footerInquiryForm">
+                            <input type="hidden" name="inquiryType" id="inquiryTypeHidden" value="Seminar Question" />
                             <input class="footer_inquiry-input" type="text" name="name" placeholder="Full Name"
                                 required />
                             <input class="footer_inquiry-input" type="email" name="email" placeholder="Email Address"
                                 required />
                             <input class="footer_inquiry-input" type="text" name="organization"
-                                placeholder="Company / Law Firm" required />
-                            <select class="footer_inquiry-input" name="inquiryType" required>
-                                <option value="" selected disabled>Inquiry Type</option>
-                                <option value="General Inquiry">General Inquiry</option>
-                                <option value="Conference Registration">Conference Registration</option>
-                                <option value="Seminar Question">Seminar Question</option>
-                                <option value="Sponsorship">Sponsorship</option>
-                                <option value="Speaking Request">Speaking Request</option>
-                                <option value="Media / Press">Media / Press</option>
-                            </select>
+                                placeholder="Company / Law Firm (Optional)" />
                             <textarea class="footer_inquiry-input footer_inquiry-textarea" name="message" rows="4"
-                                placeholder="How can we help?" required></textarea>
-                            <button class="footer_inquiry-submit" type="submit">Submit Inquiry</button>
+                                placeholder="What question would you like addressed at the seminar?" required id="messageTextarea"></textarea>
+                            <button class="footer_inquiry-submit" type="submit" id="footerSubmitBtn">Submit Question</button>
                         </form>
                     </div>
                     <div class="footer_legal-wrapper">
-                        <div class="detail">© 2025 Competition & Marketing Center Ltd.</div>
+                        <div class="detail">© 2026 Competition & Marketing Center Ltd.</div>
                         <div class="detail">
                             <a href="https://fredrickagyare.is-a.dev/" target="_blank">Site by Agyare Fredrick</a>
                         </div>
@@ -118,6 +113,36 @@
         line-height: 1.1;
         color: #f8f2e8;
         font-weight: 500;
+    }
+
+    .footer_inquiry-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .footer_inquiry-tab {
+        flex: 1;
+        padding: 0.6rem 1rem;
+        border: 1px solid rgba(248, 242, 232, 0.3);
+        background: transparent;
+        color: rgba(248, 242, 232, 0.6);
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .footer_inquiry-tab:hover {
+        border-color: rgba(248, 242, 232, 0.5);
+        color: rgba(248, 242, 232, 0.8);
+    }
+
+    .footer_inquiry-tab.active {
+        background: #e78745;
+        border-color: #e78745;
+        color: #fff;
     }
 
     .footer_inquiry-form {
@@ -497,6 +522,82 @@
         </div>
     </div>
 </div>
+<script>
+    // Footer inquiry tabs functionality
+    (function() {
+        var tabs = document.querySelectorAll('.footer_inquiry-tab');
+        var hiddenInput = document.getElementById('inquiryTypeHidden');
+        var messageTextarea = document.getElementById('messageTextarea');
+        var submitBtn = document.getElementById('footerSubmitBtn');
+        var titleEl = document.querySelector('.footer_inquiry-title');
+        
+        if (!tabs.length) return;
+        
+        tabs.forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                tabs.forEach(function(t) { t.classList.remove('active'); });
+                tab.classList.add('active');
+                
+                var tabType = tab.getAttribute('data-tab');
+                if (tabType === 'question') {
+                    hiddenInput.value = 'Seminar Question';
+                    messageTextarea.placeholder = 'What question would you like addressed at the seminar?';
+                    submitBtn.textContent = 'Submit Question';
+                    if (titleEl) titleEl.textContent = 'Submit Your Question';
+                } else {
+                    hiddenInput.value = 'General Inquiry';
+                    messageTextarea.placeholder = 'How can we help you?';
+                    submitBtn.textContent = 'Submit Inquiry';
+                    if (titleEl) titleEl.textContent = 'Send an Inquiry';
+                }
+            });
+        });
+        
+        // Form submission
+        var form = document.getElementById('footerInquiryForm');
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                var btn = document.getElementById('footerSubmitBtn');
+                var originalText = btn.textContent;
+                btn.textContent = 'Sending...';
+                btn.disabled = true;
+                
+                var formData = new FormData(form);
+                var data = Object.fromEntries(formData.entries());
+                
+                try {
+                    var response = await fetch('/api/inquiry', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (response.ok) {
+                        btn.textContent = 'Submitted!';
+                        btn.style.background = '#2e7d32';
+                        form.reset();
+                        setTimeout(function() {
+                            btn.textContent = originalText;
+                            btn.style.background = '';
+                            btn.disabled = false;
+                        }, 3000);
+                    } else {
+                        throw new Error('Failed to submit');
+                    }
+                } catch (err) {
+                    btn.textContent = 'Error - Try Again';
+                    btn.style.background = '#c62828';
+                    setTimeout(function() {
+                        btn.textContent = originalText;
+                        btn.style.background = '';
+                        btn.disabled = false;
+                    }, 3000);
+                }
+            });
+        }
+    })();
+</script>
 <script>
     (function () {
         var openBtn = document.getElementById('openTicketsModal');
