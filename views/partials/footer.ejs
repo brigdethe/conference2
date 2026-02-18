@@ -1056,25 +1056,25 @@
             
             // Toggle fields based on validity
             if (isValid && hasFreeSlots) {
-                // Valid code with free slots - hide company, show law firm, hide reason
+                // Valid code with free slots - hide company, hide law firm dropdown (locked), hide reason
                 if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'none';
-                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'block';
+                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'none';
                 if (ticketsCompanyInput) ticketsCompanyInput.required = false;
-                if (ticketsLawFirm) ticketsLawFirm.required = true;
+                if (ticketsLawFirm) ticketsLawFirm.required = false;
                 // Hide reason field - will be auto-confirmed
                 if (ticketsReasonWrapper) ticketsReasonWrapper.style.display = 'none';
                 if (ticketsReasonInput) ticketsReasonInput.required = false;
             } else if (isValid && !hasFreeSlots) {
-                // Valid code but no free slots - needs approval
+                // Valid code but no free slots - hide company, hide law firm dropdown (locked), show reason
                 if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'none';
-                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'block';
+                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'none';
                 if (ticketsCompanyInput) ticketsCompanyInput.required = false;
-                if (ticketsLawFirm) ticketsLawFirm.required = true;
+                if (ticketsLawFirm) ticketsLawFirm.required = false;
                 // Show reason field - needs approval
                 if (ticketsReasonWrapper) ticketsReasonWrapper.style.display = 'block';
                 if (ticketsReasonInput) ticketsReasonInput.required = true;
             } else {
-                // Invalid code - show company field, show reason
+                // Invalid code - show company field, hide law firm, show reason
                 if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'block';
                 if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'none';
                 if (ticketsCompanyInput) ticketsCompanyInput.required = true;

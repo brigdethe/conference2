@@ -696,25 +696,25 @@
                                     
                                     // Toggle fields based on validity
                                     if (isValid && hasFreeSlots) {
-                                        // Valid code with free slots - hide company, show law firm, hide reason
+                                        // Valid code with free slots - hide company, hide law firm (locked), hide reason
                                         if (companyWrapper) companyWrapper.style.display = 'none';
-                                        if (lawFirmWrapper) lawFirmWrapper.style.display = 'block';
+                                        if (lawFirmWrapper) lawFirmWrapper.style.display = 'none';
                                         if (companyInput) companyInput.required = false;
-                                        if (firmSelect) firmSelect.required = true;
+                                        if (firmSelect) firmSelect.required = false;
                                         // Hide reason field - will be auto-confirmed
                                         if (reasonWrapper) reasonWrapper.style.display = 'none';
                                         if (reasonInput) reasonInput.required = false;
                                     } else if (isValid && !hasFreeSlots) {
-                                        // Valid code but no free slots - needs approval
+                                        // Valid code but no free slots - hide company, hide law firm (locked), show reason
                                         if (companyWrapper) companyWrapper.style.display = 'none';
-                                        if (lawFirmWrapper) lawFirmWrapper.style.display = 'block';
+                                        if (lawFirmWrapper) lawFirmWrapper.style.display = 'none';
                                         if (companyInput) companyInput.required = false;
-                                        if (firmSelect) firmSelect.required = true;
+                                        if (firmSelect) firmSelect.required = false;
                                         // Show reason field - needs approval
                                         if (reasonWrapper) reasonWrapper.style.display = 'block';
                                         if (reasonInput) reasonInput.required = true;
                                     } else {
-                                        // Invalid code - show company field, show reason
+                                        // Invalid code - show company field, hide law firm, show reason
                                         if (companyWrapper) companyWrapper.style.display = 'block';
                                         if (lawFirmWrapper) lawFirmWrapper.style.display = 'none';
                                         if (companyInput) companyInput.required = true;
