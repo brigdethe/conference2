@@ -24,7 +24,7 @@ def generate_qr_data(
     registration_id: int,
     full_name: str,
     firm_name: str | None,
-    base_url: str = "https://cmcghana.duckdns.org"
+    base_url: str = "https://seminar.cmc-ghana.com"
 ) -> str:
     # QR code now contains a verification URL that staff can scan with native camera
     return f"{base_url}/verify/{ticket_code}"

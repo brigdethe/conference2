@@ -22,6 +22,8 @@ app.add_middleware(
         "http://167.71.143.67",
         "https://cmcghana.duckdns.org",
         "http://cmcghana.duckdns.org",
+        "https://seminar.cmc-ghana.com",
+        "http://seminar.cmc-ghana.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
