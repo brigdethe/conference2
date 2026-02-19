@@ -290,6 +290,15 @@ export const SettingsTab: React.FC = () => {
               <p className="text-xs text-slate-500">Gmail SMTP configuration</p>
             </div>
           </div>
+          <div className="mb-4 rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+            <p className="font-medium text-slate-700 mb-1">Setup Instructions:</p>
+            <ol className="list-decimal list-inside space-y-0.5">
+              <li>Go to <span className="font-medium">myaccount.google.com</span></li>
+              <li>Security &gt; 2-Step Verification (enable if not already)</li>
+              <li>Search "App passwords" &gt; Create new app password</li>
+              <li>Copy the 16-character password and paste below</li>
+            </ol>
+          </div>
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -326,12 +335,9 @@ export const SettingsTab: React.FC = () => {
                 type="password"
                 value={settings.smtp_password}
                 onChange={(e) => updateSetting('smtp_password', e.target.value)}
-                placeholder="Gmail app password"
+                placeholder="16-character app password"
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
               />
-              <p className="mt-1 text-xs text-slate-400">
-                Use an app-specific password from Google Account settings
-              </p>
             </div>
             <button
               onClick={testEmailConnection}

@@ -703,6 +703,18 @@ app.post('/api/terminal/reset-db', requireAdmin, async (req, res) => {
     
     console.log('Starting database reset...');
     
+    // First, backup the settings before reset
+    let savedSettings = [];
+    try {
+      const settingsRes = await fetchBackend('/api/settings');
+      if (settingsRes.ok) {
+        savedSettings = await settingsRes.json();
+        console.log('Settings backed up:', savedSettings.length, 'items');
+      }
+    } catch (e) {
+      console.log('Could not backup settings:', e.message);
+    }
+    
     // Stop the backend service temporarily
     await execPromise('systemctl stop conference-backend || true');
     
@@ -727,9 +739,32 @@ app.post('/api/terminal/reset-db', requireAdmin, async (req, res) => {
       console.log('Seed script completed');
     }
     
+    // Restore important settings (SMTP, Arkesel, etc.)
+    if (savedSettings.length > 0) {
+      const settingsToRestore = savedSettings.filter(s => 
+        s.value && s.value.trim() !== '' && [
+          'smtp_email', 'smtp_password', 'smtp_sender_name',
+          'arkesel_api_key', 'arkesel_sender_id',
+          'merchant_code', 'merchant_name', 'ticket_price', 'max_capacity'
+        ].includes(s.key)
+      );
+      
+      if (settingsToRestore.length > 0) {
+        try {
+          await fetchBackend('/api/settings', {
+            method: 'PUT',
+            body: JSON.stringify({ settings: settingsToRestore.map(s => ({ key: s.key, value: s.value })) })
+          });
+          console.log('Settings restored:', settingsToRestore.length, 'items');
+        } catch (e) {
+          console.error('Failed to restore settings:', e.message);
+        }
+      }
+    }
+    
     res.json({ 
       success: true, 
-      message: seed ? `Database reset and seeded. ${seedMessage}` : 'Database cleared successfully.'
+      message: seed ? `Database reset and seeded. Settings preserved. ${seedMessage}` : 'Database cleared successfully. Settings preserved.'
     });
   } catch (error) {
     console.error('Database reset error:', error);
