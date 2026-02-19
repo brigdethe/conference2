@@ -1,6 +1,5 @@
 #!/bin/bash
-# DigitalOcean Droplet Initial Setup Script
-# Run this script on a fresh Ubuntu 22.04/24.04 droplet
+
 
 set -e
 

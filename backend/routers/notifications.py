@@ -156,29 +156,76 @@ async def send_ticket_notification(
     # Email with QR attachment
     if email_enabled and email:
         html_body = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #5b3426; text-align: center;">Ghana Competition Law Seminar</h2>
-            <p style="text-align: center; color: #666;">Your Conference Ticket</p>
-            
-            <div style="background: #f8f2e8; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center;">
-                <p style="font-size: 12px; color: #7b6a5e; margin: 0 0 8px;">Ticket Code</p>
-                <p style="font-size: 32px; font-family: monospace; font-weight: bold; color: #5b3426; letter-spacing: 4px; margin: 0;">{ticket_code}</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <!-- Header -->
+                <div style="background-color: #1a365d; padding: 30px 20px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Ghana Competition Law Seminar</h1>
+                </div>
+                
+                <!-- Content -->
+                <div style="padding: 40px 30px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #1a365d; margin: 0 0 10px; font-size: 20px;">Registration Confirmed</h2>
+                        <p style="color: #666; font-size: 16px; margin: 0;">We look forward to hosting you.</p>
+                    </div>
+                    
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {full_name},</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Your registration for the Ghana Competition Law Seminar has been successfully confirmed. Below is your official ticket.</p>
+                    
+                    <!-- Ticket Card -->
+                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center;">
+                        <p style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 5px;">Ticket Code</p>
+                        <p style="color: #1a365d; font-size: 32px; font-weight: 700; letter-spacing: 2px; margin: 0 0 20px; font-family: monospace;">{ticket_code}</p>
+                        
+                        <div style="background-color: #fff; padding: 15px; display: inline-block; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <img src="cid:qrcode" alt="QR Code" style="width: 180px; height: 180px; display: block;" />
+                        </div>
+                        <p style="color: #64748b; font-size: 13px; margin-top: 15px;">Please present this QR code at check-in.</p>
+                    </div>
+                    
+                    <!-- Event Details -->
+                    <div style="border-top: 1px solid #edf2f7; padding-top: 25px; margin-top: 25px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding-bottom: 15px; width: 24px; vertical-align: top;">📅</td>
+                                <td style="padding-bottom: 15px; color: #444; font-weight: 500;">
+                                    <div style="font-size: 14px; color: #64748b;">Date</div>
+                                    Wednesday, March 25, 2026
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 15px; width: 24px; vertical-align: top;">⏰</td>
+                                <td style="padding-bottom: 15px; color: #444; font-weight: 500;">
+                                    <div style="font-size: 14px; color: #64748b;">Time</div>
+                                    9:00 AM - 3:00 PM
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 0; width: 24px; vertical-align: top;">📍</td>
+                                <td style="padding-bottom: 0; color: #444; font-weight: 500;">
+                                    <div style="font-size: 14px; color: #64748b;">Venue</div>
+                                    Mövenpick Ambassador Hotel, Accra
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    {f'<div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid #edf2f7; font-size: 14px; color: #666;"><strong>Organization:</strong> {org_name}</div>' if org_name else ''}
+                </div>
+                
+                <!-- Footer -->
+                <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0;">&copy; 2026 Ghana Competition Law Seminar. All rights reserved.</p>
+                </div>
             </div>
-            
-            <div style="text-align: center; margin: 20px 0;">
-                <img src="cid:qrcode" alt="QR Code" style="width: 180px; height: 180px;" />
-            </div>
-            
-            <p style="text-align: center; color: #666; font-size: 14px;">
-                Dear {full_name},<br><br>
-                Your registration is confirmed. Present this ticket at check-in.<br>
-                {f'Organization: {org_name}' if org_name else ''}
-            </p>
-            
-            <p style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
-                Mövenpick Ambassador Hotel, Accra
-            </p>
-        </div>
+        </body>
+        </html>
         """
         
         # Create inline image for email body
@@ -243,7 +290,7 @@ async def send_ticket_notification(
     
     # SMS
     if sms_enabled and phone:
-        sms_message = f"Registration Successful! Ghana Competition Law Seminar - Your ticket code: {ticket_code}. Venue: Movenpick Ambassador Hotel, Accra. Present this code at check-in. See you there!"
+        sms_message = f"GCLS 2026: Confirmed! Ticket: {ticket_code}. Venue: Movenpick Hotel, Accra. Mar 25, 9am. Present code at check-in."
         await send_sms_internal(db, phone, sms_message)
 
 
@@ -270,20 +317,49 @@ async def send_admin_payment_notification(
     # Email to admins
     if email_enabled and admin_emails:
         html_body = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #5b3426;">Payment Verification Required</h2>
-            <p>A new payment has been submitted and requires verification.</p>
-            
-            <div style="background: #f5f5f5; border-radius: 8px; padding: 15px; margin: 15px 0;">
-                <p><strong>Name:</strong> {full_name}</p>
-                <p><strong>Email:</strong> {email}</p>
-                <p><strong>Phone:</strong> {phone or 'N/A'}</p>
-                <p><strong>Organization:</strong> {org_name or 'N/A'}</p>
-                <p><strong>Amount:</strong> GHS {amount}</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <div style="background-color: #1a365d; padding: 20px; text-align: center;">
+                    <h2 style="color: #ffffff; margin: 0; font-size: 20px;">Admin Alert: Payment Received</h2>
+                </div>
+                <div style="padding: 30px;">
+                    <p style="font-size: 16px; color: #444;">A new payment has been submitted and requires verification.</p>
+                    
+                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 8px 0; color: #64748b; font-size: 14px; width: 100px;">Name</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{full_name}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Email</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{email}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Phone</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{phone or 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Organization</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{org_name or 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Amount</td>
+                                <td style="padding: 8px 0; color: #059669; font-weight: 600;">GHS {amount}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <p style="margin-top: 20px; font-size: 14px; color: #666;">Please log in to the admin panel to verify this payment.</p>
+                </div>
             </div>
-            
-            <p>Please log in to the admin panel to verify this payment.</p>
-        </div>
+        </body>
+        </html>
         """
         
         for admin_email in admin_emails:
@@ -295,7 +371,7 @@ async def send_admin_payment_notification(
     
     # SMS to admins
     if sms_enabled and admin_phones:
-        sms_message = f"Payment verification needed: {full_name} ({org_name or 'Public'}) - GHS {amount}. Check admin panel."
+        sms_message = f"GCLS Admin: Verify payment. {full_name} ({org_name or 'Public'}) - GHS {amount}."
         for admin_phone in admin_phones:
             await send_sms_internal(db, admin_phone, sms_message)
 
@@ -310,29 +386,41 @@ async def send_pending_approval_notification(
     
     if email_enabled and email:
         html_body = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #5b3426; text-align: center;">Ghana Competition Law Seminar</h2>
-            <p style="text-align: center; color: #666;">Registration Received</p>
-            
-            <div style="background: #fff8e1; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; border: 1px solid #ffcc80;">
-                <p style="font-size: 18px; font-weight: bold; color: #e65100; margin: 0 0 8px;">Pending Approval</p>
-                <p style="color: #666; margin: 0;">Your registration is being reviewed by our team.</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <div style="background-color: #1a365d; padding: 30px 20px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Ghana Competition Law Seminar</h1>
+                </div>
+                
+                <div style="padding: 40px 30px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #d97706; margin: 0 0 10px; font-size: 20px;">Registration Pending</h2>
+                    </div>
+                    
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {full_name},</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you for registering. Your application has been received and is currently under review.</p>
+                    
+                    <div style="background-color: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center;">
+                        <p style="color: #92400e; margin: 0;">Once approved, you will receive an email with payment instructions to secure your spot.</p>
+                    </div>
+                    
+                    <div style="border-top: 1px solid #edf2f7; padding-top: 25px; margin-top: 25px;">
+                        <p style="font-size: 14px; color: #64748b; margin-bottom: 5px;">Event Details:</p>
+                        <p style="font-weight: 500; color: #334155; margin: 0;">March 25, 2026 &bull; Mövenpick Ambassador Hotel, Accra</p>
+                    </div>
+                </div>
+                
+                <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0;">&copy; 2026 Ghana Competition Law Seminar. All rights reserved.</p>
+                </div>
             </div>
-            
-            <p style="text-align: center; color: #666; font-size: 14px;">
-                Dear {full_name},<br><br>
-                Thank you for your interest in the Ghana Competition Law Seminar.<br><br>
-                Your registration has been received and is currently pending approval. 
-                Once approved, you will receive an email with a payment link to complete your registration.<br><br>
-                <strong>Event Details:</strong><br>
-                📅 March 25, 2026 | 9:00 AM - 3:00 PM<br>
-                📍 Mövenpick Ambassador Hotel, Accra
-            </p>
-            
-            <p style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
-                We will notify you once your registration has been reviewed.
-            </p>
-        </div>
+        </body>
+        </html>
         """
         
         await send_email_internal(
@@ -365,21 +453,53 @@ async def send_admin_approval_needed_notification(
     # Email to admins
     if email_enabled and admin_emails:
         html_body = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #5b3426;">New Registration Needs Approval</h2>
-            <p>A new registration has been submitted and requires your approval.</p>
-            
-            <div style="background: #f5f5f5; border-radius: 8px; padding: 15px; margin: 15px 0;">
-                <p><strong>Name:</strong> {full_name}</p>
-                <p><strong>Email:</strong> {email}</p>
-                <p><strong>Phone:</strong> {phone or 'N/A'}</p>
-                <p><strong>Organization:</strong> {org_name or 'N/A'}</p>
-                <p><strong>Reason for Attending:</strong></p>
-                <p style="background: #fff; padding: 10px; border-radius: 4px; font-style: italic;">{reason or 'Not provided'}</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <div style="background-color: #1a365d; padding: 20px; text-align: center;">
+                    <h2 style="color: #ffffff; margin: 0; font-size: 20px;">Admin Alert: New Registration</h2>
+                </div>
+                
+                <div style="padding: 30px;">
+                    <p style="font-size: 16px; color: #444;">A new registration has been submitted and requires your approval.</p>
+                    
+                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 8px 0; color: #64748b; font-size: 14px; width: 100px;">Name</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{full_name}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Email</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{email}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Phone</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{phone or 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Organization</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{org_name or 'N/A'}</td>
+                            </tr>
+                        </table>
+                        
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                            <p style="color: #64748b; font-size: 14px; margin: 0 0 5px;">Reason for Attending:</p>
+                            <div style="background-color: #ffffff; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0; font-style: italic; color: #475569; font-size: 14px;">
+                                {reason or 'Not provided'}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p style="margin-top: 20px; font-size: 14px; color: #666;">Please log in to the admin panel to approve or reject this registration.</p>
+                </div>
             </div>
-            
-            <p>Please log in to the admin panel to approve or reject this registration.</p>
-        </div>
+        </body>
+        </html>
         """
         
         for admin_email in admin_emails:
@@ -391,7 +511,7 @@ async def send_admin_approval_needed_notification(
     
     # SMS to admins
     if sms_enabled and admin_phones:
-        sms_message = f"New registration needs approval: {full_name} ({org_name or 'Public'}). Check admin panel."
+        sms_message = f"GCLS Admin: New registration. {full_name} ({org_name or 'Public'}). Review needed."
         for admin_phone in admin_phones:
             await send_sms_internal(db, admin_phone, sms_message)
 
@@ -412,34 +532,45 @@ async def send_approval_with_payment_link(
     
     if email_enabled and email:
         html_body = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #5b3426; text-align: center;">Ghana Competition Law Seminar</h2>
-            <p style="text-align: center; color: #666;">Registration Approved!</p>
-            
-            <div style="background: #e8f5e9; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; border: 1px solid #a5d6a7;">
-                <p style="font-size: 18px; font-weight: bold; color: #2e7d32; margin: 0 0 8px;">✓ Approved</p>
-                <p style="color: #666; margin: 0;">Your registration has been approved!</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <div style="background-color: #1a365d; padding: 30px 20px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Ghana Competition Law Seminar</h1>
+                </div>
+                
+                <div style="padding: 40px 30px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #059669; margin: 0 0 10px; font-size: 20px;">Registration Approved</h2>
+                    </div>
+                    
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {full_name},</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Great news! Your registration for the Ghana Competition Law Seminar has been approved.</p>
+                    
+                    <div style="background-color: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 8px; padding: 25px; margin: 30px 0; text-align: center;">
+                        <p style="color: #065f46; margin: 0 0 15px; font-weight: 500;">Please complete your payment within <strong style="color: #047857;">3 days</strong> to secure your spot.</p>
+                        
+                        <a href="{payment_link}" style="display: inline-block; background-color: #059669; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; margin-top: 5px;">
+                            Complete Payment
+                        </a>
+                    </div>
+                    
+                    <div style="border-top: 1px solid #edf2f7; padding-top: 25px; margin-top: 25px;">
+                        <p style="font-size: 14px; color: #64748b; margin-bottom: 5px;">Event Details:</p>
+                        <p style="font-weight: 500; color: #334155; margin: 0;">March 25, 2026 &bull; Mövenpick Ambassador Hotel, Accra</p>
+                    </div>
+                </div>
+                
+                <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0;">&copy; 2026 Ghana Competition Law Seminar. All rights reserved.</p>
+                </div>
             </div>
-            
-            <p style="text-align: center; color: #666; font-size: 14px;">
-                Dear {full_name},<br><br>
-                Great news! Your registration for the Ghana Competition Law Seminar has been approved.<br><br>
-                Please complete your payment within <strong>3 days</strong> to secure your spot.
-            </p>
-            
-            <div style="text-align: center; margin: 25px 0;">
-                <a href="{payment_link}" style="display: inline-block; background: #e78745; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                    Complete Payment
-                </a>
-            </div>
-            
-            <p style="text-align: center; color: #999; font-size: 12px;">
-                <strong>Event Details:</strong><br>
-                📅 March 25, 2026 | 9:00 AM - 3:00 PM<br>
-                📍 Mövenpick Ambassador Hotel, Accra<br><br>
-                ⚠️ This payment link expires in 3 days.
-            </p>
-        </div>
+        </body>
+        </html>
         """
         
         await send_email_internal(
@@ -449,7 +580,7 @@ async def send_approval_with_payment_link(
         )
     
     if sms_enabled and phone:
-        sms_message = f"Good news {full_name}! Your registration for Ghana Competition Law Seminar is approved. Pay within 3 days: {payment_link}"
+        sms_message = f"GCLS 2026: Good news {full_name}! Registration approved. Pay here to secure spot: {payment_link}"
         await send_sms_internal(db, phone, sms_message)
 
 
@@ -463,29 +594,54 @@ async def send_rejection_notification(
     email_enabled = get_setting(db, "notifications_email_enabled", "true") == "true"
     
     if email_enabled and email:
-        reason_text = f"<p style='background: #fff; padding: 10px; border-radius: 4px;'><strong>Reason:</strong> {reason}</p>" if reason else ""
-        
-        html_body = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #5b3426; text-align: center;">Ghana Competition Law Seminar</h2>
-            <p style="text-align: center; color: #666;">Registration Update</p>
-            
-            <div style="background: #ffebee; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; border: 1px solid #ef9a9a;">
-                <p style="font-size: 18px; font-weight: bold; color: #c62828; margin: 0 0 8px;">Registration Not Approved</p>
+        reason_html = ""
+        if reason:
+            reason_html = f"""
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+                <p style="color: #64748b; font-size: 14px; margin: 0 0 5px;">Reason:</p>
+                <div style="background-color: #fef2f2; padding: 10px; border-radius: 4px; border: 1px solid #fecaca; color: #b91c1c; font-size: 14px;">
+                    {reason}
+                </div>
             </div>
+            """
             
-            <p style="text-align: center; color: #666; font-size: 14px;">
-                Dear {full_name},<br><br>
-                Thank you for your interest in the Ghana Competition Law Seminar.<br><br>
-                Unfortunately, we are unable to approve your registration at this time.
-            </p>
-            
-            {reason_text}
-            
-            <p style="text-align: center; color: #999; font-size: 12px; margin-top: 30px;">
-                If you have any questions, please contact us.
-            </p>
-        </div>
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <div style="background-color: #1a365d; padding: 30px 20px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Ghana Competition Law Seminar</h1>
+                </div>
+                
+                <div style="padding: 40px 30px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #dc2626; margin: 0 0 10px; font-size: 20px;">Registration Update</h2>
+                    </div>
+                    
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {full_name},</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you for your interest in the Ghana Competition Law Seminar.</p>
+                    
+                    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center;">
+                        <p style="color: #991b1b; margin: 0;">We regret to inform you that we are unable to approve your registration at this time.</p>
+                    </div>
+                    
+                    {reason_html}
+                    
+                    <p style="margin-top: 30px; font-size: 14px; color: #666; text-align: center;">
+                        If you have any questions or believe this is an error, please contact us.
+                    </p>
+                </div>
+                
+                <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0;">&copy; 2026 Ghana Competition Law Seminar. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
         """
         
         await send_email_internal(
@@ -607,11 +763,45 @@ async def test_email(data: Optional[TestEmailRequest] = None, db: Session = Depe
         message["From"] = formataddr((sender_name, smtp_email))
         message["To"] = test_to
         message["Subject"] = "Test Email - Ghana Competition Law Seminar"
-        message.attach(MIMEText(
-            "This is a test email from the Ghana Competition Law Seminar registration system.\n\n"
-            "Your email integration is working correctly!",
-            "plain"
-        ))
+        
+        html_body = """
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <div style="background-color: #1a365d; padding: 30px 20px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Ghana Competition Law Seminar</h1>
+                </div>
+                
+                <div style="padding: 40px 30px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #059669; margin: 0 0 10px; font-size: 20px;">Email System Operational</h2>
+                    </div>
+                    
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Hello,</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">This is a test email from the Ghana Competition Law Seminar registration system.</p>
+                    
+                    <div style="background-color: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center;">
+                        <p style="color: #065f46; margin: 0; font-weight: 500;">Your email integration is working correctly!</p>
+                    </div>
+                    
+                    <p style="font-size: 14px; color: #666; text-align: center;">
+                        You can now send notifications to attendees and admins.
+                    </p>
+                </div>
+                
+                <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0;">&copy; 2026 Ghana Competition Law Seminar. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        message.attach(MIMEText(html_body, "html"))
         
         # Try port 465 (SSL) first, then 587 (TLS)
         try:

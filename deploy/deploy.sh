@@ -1,5 +1,4 @@
 #!/bin/bash
-# Deployment script - run this after pulling changes
 # Usage: bash deploy/deploy.sh
 
 set -e
