@@ -733,7 +733,7 @@ app.post('/api/terminal/reset-db', requireAdmin, async (req, res) => {
     if (seed) {
       // Run the seed script
       console.log('Running seed script...');
-      const { stdout, stderr } = await execPromise('cd /var/www/conference2/backend && source venv/bin/activate && python seed_organizations.py');
+      const { stdout, stderr } = await execPromise('cd /var/www/conference2/backend && . venv/bin/activate && python seed_organizations.py');
       seedMessage = stdout || 'Seed completed';
       if (stderr) console.error('Seed stderr:', stderr);
       console.log('Seed script completed');
