@@ -20,7 +20,8 @@ DEFAULT_SETTINGS = {
     "arkesel_sender_id": "",
     "test_sms_phone": "0241293754",
     "notifications_email_enabled": "true",
-    "notifications_sms_enabled": "true"
+    "notifications_sms_enabled": "true",
+    "max_capacity": "500"
 }
 
 

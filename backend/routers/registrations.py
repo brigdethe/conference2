@@ -53,6 +53,14 @@ def get_registrations(
     return {"registrations": result, "total": len(result)}
 
 
+@router.get("/count")
+def get_registration_count(db: Session = Depends(get_db)):
+    count = db.query(Registration).filter(
+        Registration.status.in_(["confirmed", "pending_payment", "pending_approval", "awaiting_verification"])
+    ).count()
+    return {"count": count}
+
+
 @router.get("/pending-payments")
 def get_pending_payments(db: Session = Depends(get_db)):
     registrations = db.query(Registration).filter(

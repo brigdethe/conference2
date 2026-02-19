@@ -1,15 +1,101 @@
 ﻿const path = require('path');
 const express = require('express');
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
 
+const SESSION_SECRET = process.env.SESSION_SECRET || 'conf2026-secret-key-change-in-production';
+const ADMIN_USERNAME = 'admin';
+const ADMIN_PASSWORD = 'sem!9bli$$';
+
+app.use(cookieParser());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+
+app.set('trust proxy', 1);
+
+app.use(session({
+  secret: SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
+
+const registrationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many registration attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const paymentLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many payment attempts. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+const generalLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 100,
+  message: { error: 'Too many requests. Please slow down.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+app.use('/api/', generalLimiter);
+
+function generateCsrfToken(req) {
+  if (!req.session.csrfToken) {
+    req.session.csrfToken = crypto.randomBytes(32).toString('hex');
+  }
+  return req.session.csrfToken;
+}
+
+function validateCsrfToken(req, res, next) {
+  const token = req.body._csrf || req.headers['x-csrf-token'];
+  if (!token || token !== req.session.csrfToken) {
+    return res.status(403).json({ error: 'Invalid CSRF token' });
+  }
+  next();
+}
+
+function requireAdmin(req, res, next) {
+  if (req.session && req.session.isAdmin) {
+    return next();
+  }
+  return res.status(401).json({ error: 'Unauthorized. Please login.' });
+}
+
+function checkHoneypot(req, res, next) {
+  if (req.body.website && req.body.website.trim() !== '') {
+    return res.status(400).json({ error: 'Invalid submission detected.' });
+  }
+  next();
+}
 
 async function fetchBackend(endpoint, options = {}) {
   const url = `${BACKEND_URL}${endpoint}`;
@@ -23,6 +109,39 @@ async function fetchBackend(endpoint, options = {}) {
   return response;
 }
 
+app.post('/api/admin/login', loginLimiter, (req, res) => {
+  const { username, password } = req.body;
+  
+  if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+    req.session.isAdmin = true;
+    return res.json({ success: true, message: 'Login successful' });
+  }
+  
+  return res.status(401).json({ error: 'Invalid credentials' });
+});
+
+app.post('/api/admin/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ error: 'Failed to logout' });
+    }
+    res.clearCookie('connect.sid');
+    return res.json({ success: true, message: 'Logged out successfully' });
+  });
+});
+
+app.get('/api/admin/check', (req, res) => {
+  if (req.session && req.session.isAdmin) {
+    return res.json({ authenticated: true });
+  }
+  return res.json({ authenticated: false });
+});
+
+app.get('/api/csrf-token', (req, res) => {
+  const token = generateCsrfToken(req);
+  res.json({ csrfToken: token });
+});
+
 app.get('/api/firms', async (req, res) => {
   try {
     const response = await fetchBackend('/api/firms');
@@ -34,7 +153,7 @@ app.get('/api/firms', async (req, res) => {
   }
 });
 
-app.get('/api/firms/activity', async (req, res) => {
+app.get('/api/firms/activity', requireAdmin, async (req, res) => {
   try {
     const response = await fetchBackend('/api/firms/activity');
     const data = await response.json();
@@ -69,7 +188,7 @@ app.get('/api/registration/:id/status', async (req, res) => {
   }
 });
 
-app.get('/api/registrations/pending-payments', async (req, res) => {
+app.get('/api/registrations/pending-payments', requireAdmin, async (req, res) => {
   try {
     const response = await fetchBackend('/api/registrations/pending-payments');
     const data = await response.json();
@@ -80,7 +199,7 @@ app.get('/api/registrations/pending-payments', async (req, res) => {
   }
 });
 
-app.get('/api/inquiries', async (req, res) => {
+app.get('/api/inquiries', requireAdmin, async (req, res) => {
   try {
     const response = await fetchBackend('/api/inquiries');
     const data = await response.json();
@@ -105,7 +224,7 @@ app.post('/api/inquiries', async (req, res) => {
   }
 });
 
-app.post('/api/admin/invite', async (req, res) => {
+app.post('/api/admin/invite', requireAdmin, async (req, res) => {
   const { firmName, email } = req.body;
   if (!firmName || !email) {
     return res.status(400).json({ error: 'Firm name and email are required' });
@@ -124,37 +243,10 @@ app.post('/api/admin/invite', async (req, res) => {
 
     const firm = await response.json();
 
-    const inviteMessage = `
-  ======================================================
-  [INVITATION EMAIL SIMULATION]
-  To: ${email}
-  Subject: Invitation to Ghana Competition Law Seminar
-  ======================================================
-  
-  Dear Partner,
-
-  You are cordially invited to register for the Ghana Competition Law Seminar.
-  
-  **IMPORTANT REGISTRATION INSTRUCTIONS:**
-  
-  1. Go to the registration page: http://localhost:3001/contact
-  2. Use your unique Firm Access Code: **${firm.code}**
-  3. This code will automatically select your Law Firm.
-  
-  *Note: The first 2 registrations for your firm are COMPLIMENTARY. 
-  Any subsequent registrations will require payment.*
-  
-  We look forward to seeing you there.
-  ======================================================
-  `;
-
-    console.log(inviteMessage);
-
     res.json({
       success: true,
       firm,
-      message: 'Invitation sent successfully',
-      debugMessage: inviteMessage
+      message: 'Invitation sent successfully'
     });
   } catch (error) {
     console.error('Error creating firm:', error);
@@ -162,10 +254,27 @@ app.post('/api/admin/invite', async (req, res) => {
   }
 });
 
-app.post('/api/register', async (req, res) => {
+app.post('/api/register', registrationLimiter, checkHoneypot, async (req, res) => {
   const { accessCode, fullName, companyName, jobTitle, lawFirm, phoneNumber, email, reasonForAttending } = req.body;
 
   try {
+    let maxCapacity = 500;
+    try {
+      const settingsRes = await fetchBackend('/api/settings/max_capacity');
+      if (settingsRes.ok) {
+        const setting = await settingsRes.json();
+        maxCapacity = parseInt(setting.value) || 500;
+      }
+    } catch (e) {}
+
+    const countRes = await fetchBackend('/api/registrations/count');
+    if (countRes.ok) {
+      const countData = await countRes.json();
+      if (countData.count >= maxCapacity) {
+        return res.status(400).json({ error: 'Registration is closed. Maximum capacity has been reached.' });
+      }
+    }
+
     const response = await fetchBackend('/api/registrations', {
       method: 'POST',
       body: JSON.stringify({
@@ -261,7 +370,7 @@ app.get('/payment', async (req, res) => {
   }
 });
 
-app.post('/api/pay', async (req, res) => {
+app.post('/api/pay', paymentLimiter, async (req, res) => {
   const { registrationId } = req.body;
 
   try {
@@ -282,7 +391,7 @@ app.post('/api/pay', async (req, res) => {
   }
 });
 
-app.post('/api/payment-submitted', async (req, res) => {
+app.post('/api/payment-submitted', paymentLimiter, async (req, res) => {
   const { registrationId } = req.body;
 
   try {
@@ -298,7 +407,7 @@ app.post('/api/payment-submitted', async (req, res) => {
   }
 });
 
-app.post('/api/registrations/:id/verify-payment', async (req, res) => {
+app.post('/api/registrations/:id/verify-payment', requireAdmin, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -319,7 +428,7 @@ app.post('/api/registrations/:id/verify-payment', async (req, res) => {
   }
 });
 
-app.get('/api/registrations/pending-approvals', async (req, res) => {
+app.get('/api/registrations/pending-approvals', requireAdmin, async (req, res) => {
   try {
     const response = await fetchBackend('/api/registrations/pending-approvals');
     const data = await response.json();
@@ -330,7 +439,7 @@ app.get('/api/registrations/pending-approvals', async (req, res) => {
   }
 });
 
-app.post('/api/registrations/:id/approve', async (req, res) => {
+app.post('/api/registrations/:id/approve', requireAdmin, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -351,7 +460,7 @@ app.post('/api/registrations/:id/approve', async (req, res) => {
   }
 });
 
-app.post('/api/registrations/:id/reject', async (req, res) => {
+app.post('/api/registrations/:id/reject', requireAdmin, async (req, res) => {
   const { id } = req.params;
 
   try {
@@ -373,7 +482,7 @@ app.post('/api/registrations/:id/reject', async (req, res) => {
   }
 });
 
-app.get('/api/registrations/approved-registrations', async (req, res) => {
+app.get('/api/registrations/approved-registrations', requireAdmin, async (req, res) => {
   try {
     const response = await fetchBackend('/api/registrations/approved-registrations');
     const data = await response.json();
@@ -389,7 +498,7 @@ app.get('/api/registrations/approved-registrations', async (req, res) => {
   }
 });
 
-app.get('/api/registrations/rejected-registrations', async (req, res) => {
+app.get('/api/registrations/rejected-registrations', requireAdmin, async (req, res) => {
   try {
     const response = await fetchBackend('/api/registrations/rejected-registrations');
     const data = await response.json();
@@ -405,7 +514,7 @@ app.get('/api/registrations/rejected-registrations', async (req, res) => {
   }
 });
 
-app.get('/api/users', async (req, res) => {
+app.get('/api/users', requireAdmin, async (req, res) => {
   try {
     const status = req.query.status || 'confirmed';
     const response = await fetchBackend(`/api/registrations/users?status=${status}`);
@@ -533,7 +642,7 @@ console.warn = (...args) => {
 };
 
 // Terminal API endpoints
-app.get('/api/terminal/logs', async (_req, res) => {
+app.get('/api/terminal/logs', requireAdmin, async (_req, res) => {
   try {
     const { exec } = require('child_process');
     const util = require('util');
@@ -579,12 +688,12 @@ app.get('/api/terminal/logs', async (_req, res) => {
   }
 });
 
-app.post('/api/terminal/clear', (_req, res) => {
+app.post('/api/terminal/clear', requireAdmin, (_req, res) => {
   serverLogs = [];
   res.json({ success: true });
 });
 
-app.post('/api/terminal/reset-db', async (req, res) => {
+app.post('/api/terminal/reset-db', requireAdmin, async (req, res) => {
   const { seed } = req.body;
   
   try {

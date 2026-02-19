@@ -3,12 +3,16 @@ import { HeaderSearch } from './HeaderSearch';
 import { HeaderNotifications } from './HeaderNotifications';
 import { HeaderProfile } from './HeaderProfile';
 
-export const HeaderActions: React.FC = () => {
+interface HeaderActionsProps {
+    onLogout?: () => void;
+}
+
+export const HeaderActions: React.FC<HeaderActionsProps> = ({ onLogout }) => {
     return (
         <div className="flex items-center gap-4">
             {/* <HeaderSearch /> */}
             <HeaderNotifications />
-            <HeaderProfile />
+            <HeaderProfile onLogout={onLogout} />
         </div>
     );
 };

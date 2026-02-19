@@ -26,6 +26,7 @@ export const SettingsTab: React.FC = () => {
     test_sms_phone: '0241293754',
     notifications_email_enabled: 'true',
     notifications_sms_enabled: 'true',
+    max_capacity: '500',
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -260,6 +261,21 @@ export const SettingsTab: React.FC = () => {
                 placeholder="Enter merchant display name"
                 className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
               />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Max Capacity
+              </label>
+              <input
+                type="number"
+                value={settings.max_capacity}
+                onChange={(e) => updateSetting('max_capacity', e.target.value)}
+                placeholder="500"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
+              />
+              <p className="mt-1 text-xs text-slate-400">
+                Maximum number of attendees allowed to register
+              </p>
             </div>
           </div>
         </div>

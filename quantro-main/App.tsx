@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Controls, KPIHeader } from './components/Controls';
 import { RevenueHistory } from './components/revenue/RevenueHistory';
@@ -14,12 +14,14 @@ import { SettingsTab } from './components/settings/SettingsTab';
 import { InquiriesTab } from './components/inquiries/InquiriesTab';
 import { PaymentsTab } from './components/payments/PaymentsTab';
 import { ApprovalsTab } from './components/approvals/ApprovalsTab';
+import { Login } from './components/Login';
 import { TabOption } from './types';
 import type { DashboardSidebarContent } from './data/dashboard';
 import type { FirmActivityDetail } from './data/dashboard';
 import type { User } from './data/users';
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [activeTab, setActiveTab] = useState<TabOption>(TabOption.Overview);
   const [activeDetail, setActiveDetail] = useState<DashboardSidebarContent | null>(null);
   const { users, isLoading, error, refetch, dashboard } = useDashboard();
@@ -28,13 +30,54 @@ export default function App() {
   const [firmsLoading, setFirmsLoading] = useState(true);
   const [firmsError, setFirmsError] = useState<string | null>(null);
 
+  useEffect(() => {
+    const checkAuth = async () => {
+      const localAuth = localStorage.getItem('adminAuth');
+      if (!localAuth) {
+        setIsAuthenticated(false);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/admin/check', { credentials: 'include' });
+        const data = await res.json();
+        setIsAuthenticated(data.authenticated === true);
+        if (!data.authenticated) {
+          localStorage.removeItem('adminAuth');
+        }
+      } catch {
+        setIsAuthenticated(false);
+        localStorage.removeItem('adminAuth');
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
+    } catch {}
+    localStorage.removeItem('adminAuth');
+    setIsAuthenticated(false);
+  };
+
   const fetchInvitedFirms = React.useCallback(async () => {
     setFirmsLoading(true);
     setFirmsError(null);
 
     try {
-      const res = await fetch('/api/firms/activity');
+      const res = await fetch('/api/firms/activity', { credentials: 'include' });
       if (!res.ok) {
+        if (res.status === 401) {
+          setIsAuthenticated(false);
+          localStorage.removeItem('adminAuth');
+          return;
+        }
         throw new Error(`Failed to load firms: ${res.status}`);
       }
 
@@ -51,8 +94,10 @@ export default function App() {
   }, []);
 
   React.useEffect(() => {
-    fetchInvitedFirms();
-  }, [fetchInvitedFirms]);
+    if (isAuthenticated) {
+      fetchInvitedFirms();
+    }
+  }, [fetchInvitedFirms, isAuthenticated]);
 
   const firms = React.useMemo(() => {
     const names = new Set<string>();
@@ -137,11 +182,23 @@ export default function App() {
     setActiveDetail({ kind: 'user', user: selectedUser });
   };
 
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen bg-bgPrimary flex items-center justify-center">
+        <div className="text-textSecondary">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="min-h-screen bg-bgPrimary pb-12 font-sans selection:bg-slate-200">
       <div className="mx-auto max-w-[1280px] px-4 pt-6 sm:px-8">
         <div className="rounded-none bg-bgPrimary sm:rounded-3xl">
-          <Header />
+          <Header onLogout={handleLogout} />
 
           <main className="mt-8 px-2 sm:px-4">
             <Controls activeTab={activeTab} onTabChange={setActiveTab} />
