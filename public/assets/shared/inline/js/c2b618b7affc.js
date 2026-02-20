@@ -23,14 +23,12 @@ document.addEventListener("DOMContentLoaded", () => {
         body.style.removeProperty("top");
         body.setAttribute("data-menu-visible", "false");
         setExpandedState(false);
-        mobileMenu.style.display = "none";
     }
 
     function openMenu() {
         if (isMenuOpen()) return;
         body.setAttribute("data-menu-visible", "true");
         setExpandedState(true);
-        mobileMenu.style.display = "flex";
     }
 
     function closeMenu() {

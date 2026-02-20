@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Two Column Grid with Image</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="grid-container">
+        <div class="left-column">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Scan QR code</h2>
+                    <span class="close-icon">&times;</span>
+                </div>
+                <p class="card-subtitle">Scan this code to verify your account.</p>
+
+                <div class="qr-code-section">
+                    <div class="qr-frame">
+                        <div class="qr-corner top-left"></div>
+                        <div class="qr-corner top-right"></div>
+                        <div class="qr-corner bottom-left"></div>
+                        <div class="qr-corner bottom-right"></div>
+                        <!-- Placeholder for QR code pattern using CSS/gradient -->
+                        <div class="qr-code-placeholder"></div>
+                        <div class="scan-line"></div>
+                    </div>
+                </div>
+
+                <div class="divider">
+                    <span>or enter the code manually</span>
+                </div>
+
+                <div class="code-input-group">
+                    <input type="text" maxlength="1" class="code-input" placeholder="0">
+                    <input type="text" maxlength="1" class="code-input" placeholder="0">
+                    <input type="text" maxlength="1" class="code-input" placeholder="0">
+                    <span class="dash">-</span>
+                    <input type="text" maxlength="1" class="code-input" placeholder="0">
+                    <input type="text" maxlength="1" class="code-input" placeholder="0">
+                    <input type="text" maxlength="1" class="code-input" placeholder="0">
+                </div>
+
+                <button class="verify-btn">Verify account</button>
+            </div>
+        </div>
+        <div class="right-column">
+            <img src="hook.png" alt="Hook Image" class="hero-image">
+        </div>
+    </div>
+</body>
+
+</html>

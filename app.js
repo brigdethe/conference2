@@ -18,6 +18,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
+
+// Serve React Onboarding App
+app.use('/onboarding', express.static(path.join(__dirname, 'frontend-final', 'dist')));
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
@@ -111,12 +115,12 @@ async function fetchBackend(endpoint, options = {}) {
 
 app.post('/api/admin/login', loginLimiter, (req, res) => {
   const { username, password } = req.body;
-  
+
   if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
     req.session.isAdmin = true;
     return res.json({ success: true, message: 'Login successful' });
   }
-  
+
   return res.status(401).json({ error: 'Invalid credentials' });
 });
 
@@ -265,7 +269,7 @@ app.post('/api/register', registrationLimiter, checkHoneypot, async (req, res) =
         const setting = await settingsRes.json();
         maxCapacity = parseInt(setting.value) || 500;
       }
-    } catch (e) {}
+    } catch (e) { }
 
     const countRes = await fetchBackend('/api/registrations/count');
     if (countRes.ok) {
@@ -307,7 +311,7 @@ app.get('/payment', async (req, res) => {
 
   try {
     const response = await fetchBackend(`/api/registrations/${id}`);
-    
+
     if (!response.ok) {
       return res.redirect('/');
     }
@@ -333,7 +337,7 @@ app.get('/payment', async (req, res) => {
       merchant_code: '123456',
       merchant_name: 'CMC Conference'
     };
-    
+
     try {
       const settingsResponse = await fetchBackend('/api/settings');
       if (settingsResponse.ok) {
@@ -348,7 +352,7 @@ app.get('/payment', async (req, res) => {
       console.error('Error fetching settings:', e);
     }
 
-    res.render('pages/payment', { 
+    res.render('pages/payment', {
       registration: {
         id: registration.id,
         fullName: registration.full_name,
@@ -536,14 +540,14 @@ app.get('/api/registration/:id/ticket', async (req, res) => {
     }
 
     const registration = await regResponse.json();
-    
+
     if (!registration.ticket_code) {
       return res.status(400).json({ error: 'No ticket issued' });
     }
 
     const qrResponse = await fetchBackend(`/api/tickets/${registration.ticket_code}/qr`);
     let qrImage = '';
-    
+
     if (qrResponse.ok) {
       const qrData = await qrResponse.json();
       qrImage = qrData.qr_image || '';
@@ -604,6 +608,11 @@ app.get('/checkin', (_req, res) => res.render('pages/checkin'));
 app.get('/verify/:ticketCode', (req, res) => res.render('pages/verify', { ticketCode: req.params.ticketCode }));
 app.get('/pending-approval', (_req, res) => res.render('pages/pending-approval'));
 
+// Catch-all for Onboarding App React Router
+app.get(['/onboarding', '/onboarding/*'], (req, res) => {
+  res.sendFile(path.join(__dirname, 'frontend-final', 'dist', 'index.html'));
+});
+
 // Terminal logs storage
 let serverLogs = [];
 const MAX_LOGS = 1000;
@@ -647,7 +656,7 @@ app.get('/api/terminal/logs', requireAdmin, async (_req, res) => {
     const { exec } = require('child_process');
     const util = require('util');
     const execPromise = util.promisify(exec);
-    
+
     // Fetch backend logs
     try {
       const { stdout: backendLogs } = await execPromise('journalctl -u conference-backend -n 100 --no-pager --output=short-iso 2>/dev/null || echo ""');
@@ -658,8 +667,8 @@ app.get('/api/terminal/logs', requireAdmin, async (_req, res) => {
           addLog('backend', line, isError ? 'error' : 'info');
         }
       });
-    } catch (e) {}
-    
+    } catch (e) { }
+
     // Fetch nginx access logs
     try {
       const { stdout: nginxLogs } = await execPromise('tail -n 50 /var/log/nginx/access.log 2>/dev/null || echo ""');
@@ -669,8 +678,8 @@ app.get('/api/terminal/logs', requireAdmin, async (_req, res) => {
           addLog('nginx', line, 'info');
         }
       });
-    } catch (e) {}
-    
+    } catch (e) { }
+
     // Fetch nginx error logs
     try {
       const { stdout: nginxErrors } = await execPromise('tail -n 50 /var/log/nginx/error.log 2>/dev/null || echo ""');
@@ -680,8 +689,8 @@ app.get('/api/terminal/logs', requireAdmin, async (_req, res) => {
           addLog('nginx', line, 'error');
         }
       });
-    } catch (e) {}
-    
+    } catch (e) { }
+
     res.json({ logs: serverLogs.slice(-500) });
   } catch (error) {
     res.json({ logs: serverLogs.slice(-500) });
@@ -695,14 +704,14 @@ app.post('/api/terminal/clear', requireAdmin, (_req, res) => {
 
 app.post('/api/terminal/reset-db', requireAdmin, async (req, res) => {
   const { seed } = req.body;
-  
+
   try {
     const { exec } = require('child_process');
     const util = require('util');
     const execPromise = util.promisify(exec);
-    
+
     console.log('Starting database reset...');
-    
+
     // First, backup the settings before reset
     let savedSettings = [];
     try {
@@ -714,21 +723,21 @@ app.post('/api/terminal/reset-db', requireAdmin, async (req, res) => {
     } catch (e) {
       console.log('Could not backup settings:', e.message);
     }
-    
+
     // Stop the backend service temporarily
     await execPromise('systemctl stop conference-backend || true');
-    
+
     // Remove the database file
     await execPromise('rm -f /var/www/conference2/backend/conference.db');
     console.log('Database file removed');
-    
+
     // Restart the backend (this will recreate the tables)
     await execPromise('systemctl start conference-backend');
     console.log('Backend service restarted');
-    
+
     // Wait a moment for the service to start
     await new Promise(resolve => setTimeout(resolve, 2000));
-    
+
     let seedMessage = '';
     if (seed) {
       // Run the seed script
@@ -738,17 +747,17 @@ app.post('/api/terminal/reset-db', requireAdmin, async (req, res) => {
       if (stderr) console.error('Seed stderr:', stderr);
       console.log('Seed script completed');
     }
-    
+
     // Restore important settings (SMTP, Arkesel, etc.)
     if (savedSettings.length > 0) {
-      const settingsToRestore = savedSettings.filter(s => 
+      const settingsToRestore = savedSettings.filter(s =>
         s.value && s.value.trim() !== '' && [
           'smtp_email', 'smtp_password', 'smtp_sender_name',
           'arkesel_api_key', 'arkesel_sender_id',
           'merchant_code', 'merchant_name', 'ticket_price', 'max_capacity'
         ].includes(s.key)
       );
-      
+
       if (settingsToRestore.length > 0) {
         try {
           await fetchBackend('/api/settings', {
@@ -761,9 +770,9 @@ app.post('/api/terminal/reset-db', requireAdmin, async (req, res) => {
         }
       }
     }
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       message: seed ? `Database reset and seeded. Settings preserved. ${seedMessage}` : 'Database cleared successfully. Settings preserved.'
     });
   } catch (error) {

@@ -1,0 +1,319 @@
+/* Global Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    /* Modern font fallback */
+    background-color: #f3f4f6;
+    /* Light gray background for contrast */
+    color: #1f2937;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Grid Container */
+.grid-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    height: 100vh;
+    /* Full viewport height */
+    overflow: hidden;
+}
+
+/* Left Column */
+.left-column {
+    background-color: #f3f4f6;
+    /* Light background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem;
+}
+
+/* Card Styles */
+.card {
+    background-color: white;
+    padding: 2.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    position: relative;
+}
+
+.card-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+.card-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.close-icon {
+    position: absolute;
+    right: 0;
+    font-size: 1.5rem;
+    color: #9ca3af;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.card-subtitle {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin-bottom: 2rem;
+}
+
+/* QR Code Section */
+.qr-code-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.qr-frame {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-code-placeholder {
+    width: 160px;
+    height: 160px;
+    background-image: repeating-linear-gradient(45deg,
+            #111 0px,
+            #111 10px,
+            #fff 10px,
+            #fff 20px);
+    /* Simple pattern to simulate QR code look */
+    /* Add intricate pattern simulation */
+    background:
+        linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000),
+        linear-gradient(45deg, #000 25%, transparent 25%, transparent 75%, #000 75%, #000);
+    background-color: #fff;
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    opacity: 0.8;
+}
+
+/* Better fake QR code with nested boxes for finder patterns */
+.qr-code-placeholder::before,
+.qr-code-placeholder::after {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border: 5px solid black;
+    background-color: transparent;
+}
+
+.qr-code-placeholder::before {
+    top: 25px;
+    left: 25px;
+    box-shadow: 110px 0 0 -5px black;
+    /* Top right corner box */
+}
+
+.qr-code-placeholder::after {
+    bottom: 25px;
+    left: 25px;
+}
+
+.qr-corner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #3b82f6;
+    border-radius: 4px;
+}
+
+.top-left {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+}
+
+.top-right {
+    top: 0;
+    right: 0;
+    border-left: none;
+    border-bottom: none;
+}
+
+.bottom-left {
+    bottom: 0;
+    left: 0;
+    border-right: none;
+    border-top: none;
+}
+
+.bottom-right {
+    bottom: 0;
+    right: 0;
+    border-left: none;
+    border-top: none;
+}
+
+.scan-line {
+    position: absolute;
+    width: 100%;
+    height: 40px;
+    /* Thicker light beam */
+    background: linear-gradient(to bottom, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.6));
+    top: 40%;
+    animation: scan 2s infinite linear;
+    border-bottom: 2px solid #3b82f6;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+@keyframes scan {
+    0% {
+        top: 10%;
+        opacity: 0;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        top: 80%;
+        opacity: 0;
+    }
+}
+
+/* Divider */
+.divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    position: relative;
+    width: 100%;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.divider span {
+    padding: 0 1rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+/* Input Group */
+.code-input-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.code-input {
+    width: 48px;
+    height: 48px;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    text-align: center;
+    font-size: 1.25rem;
+    color: #374151;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.code-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.dash {
+    color: #9ca3af;
+    font-size: 1.5rem;
+    margin: 0 0.25rem;
+}
+
+/* Verify Button */
+.verify-btn {
+    width: 100%;
+    padding: 0.875rem;
+    background-color: #3b82f6;
+    /* Vibrant blue */
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+}
+
+.verify-btn:hover {
+    background-color: #2563eb;
+}
+
+/* Right Column */
+.right-column {
+    background-color: white;
+    /* Explicitly requested white background */
+    position: relative;
+    /* Ensure image starts from top edge */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    /* Center horizontally if image is smaller, or stretch */
+    overflow: hidden;
+    /* Hide overflow if image is too large */
+}
+
+.hero-image {
+    max-width: 40%;
+    max-height: 40vh;
+    /* Prevent image from being too tall while staying responsive */
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .grid-container {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .right-column {
+        order: -1;
+        /* Image column on top for mobile */
+        min-height: 300px;
+    }
+}

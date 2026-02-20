@@ -5,4 +5,14 @@ backend/*.db
 __pycache__
 *.pyc
 .env
-frontend-final
+
+# React Out
+frontend-final/dist
+frontend-final/dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
