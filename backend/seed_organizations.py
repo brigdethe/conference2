@@ -13,7 +13,7 @@ Base.metadata.create_all(bind=engine)
 def generate_code():
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-# Organizations data from the screenshot
+# Organizations data from Firms-Invite-List.csv (Feb 2026)
 ORGANIZATIONS = [
     # Companies/Organizations (is_law_firm=0)
     ("Hellios Towers", 1, 0),
@@ -35,6 +35,7 @@ ORGANIZATIONS = [
     ("Huawei", 1, 0),
     ("Public Utilities Regulatory Commission (PURC)", 2, 0),
     ("Economics Department University of Ghana", 1, 0),
+    ("Public Policy and Law Faculty of Ashesi University", 1, 0),
     ("IPSA Law Faculty", 2, 0),
     ("University of Ghana Law Faculty", 2, 0),
     ("CITI FM", 1, 0),
@@ -44,13 +45,18 @@ ORGANIZATIONS = [
     ("Judiciary", 5, 0),
     ("Tullow Oil", 2, 0),
     ("British Petroleum", 1, 0),
+    ("National Petroleum Authority (NPA)", 1, 0),
+    ("National Insurance Commission (NIC)", 1, 0),
+    ("Data Protection Authority", 1, 0),
+    ("Food and Drugs Authority", 1, 0),
     ("KPMG", 1, 0),
     ("Deloitte", 1, 0),
     ("United Kingdom-Ghana Chamber of Commerce (UKGCC)", 2, 0),
     ("America Chamber of Commerce", 2, 0),
     ("African Continental Free Trade Area", 2, 0),
     ("American Embassy", 2, 0),
-    ("Chamber of Oil Marketing Companies", 1, 0),
+    ("British High Commission", 1, 0),
+    ("DataBank Group", 1, 0),
     
     # Law Firms (is_law_firm=1)
     ("Kuenyehia & Nutsupkui", 1, 1),
@@ -61,45 +67,41 @@ ORGANIZATIONS = [
     ("Tony Forson (former Bar President)", 1, 1),
     ("Agbesi Dzakpasu (former Greater Accra Bar President)", 1, 1),
     ("Prof. Raymond Atuguba", 1, 1),
+    ("Chamber of Oil Marketing Companies", 1, 1),
 ]
 
 def seed_organizations():
     db = SessionLocal()
     try:
+        # Clear existing organizations first
+        deleted = db.query(LawFirm).delete()
+        db.commit()
+        print(f"Cleared {deleted} existing organizations")
+        
         added = 0
-        updated = 0
         
         for name, required_regs, is_law_firm in ORGANIZATIONS:
-            existing = db.query(LawFirm).filter(LawFirm.name == name).first()
-            
-            if existing:
-                # Update existing
-                existing.required_registrations = required_regs
-                existing.is_law_firm = is_law_firm
-                updated += 1
-            else:
-                # Create new
+            code = generate_code()
+            # Ensure unique code
+            while db.query(LawFirm).filter(LawFirm.code == code).first():
                 code = generate_code()
-                # Ensure unique code
-                while db.query(LawFirm).filter(LawFirm.code == code).first():
-                    code = generate_code()
-                
-                org = LawFirm(
-                    name=name,
-                    code=code,
-                    required_registrations=required_regs,
-                    is_law_firm=is_law_firm
-                )
-                db.add(org)
-                added += 1
+            
+            org = LawFirm(
+                name=name,
+                code=code,
+                required_registrations=required_regs,
+                is_law_firm=is_law_firm
+            )
+            db.add(org)
+            added += 1
         
         db.commit()
-        print(f"✓ Seeded organizations: {added} added, {updated} updated")
+        print(f"Seeded organizations: {added} added")
         print(f"  Total organizations: {len(ORGANIZATIONS)}")
         
     except Exception as e:
         db.rollback()
-        print(f"✗ Error seeding organizations: {e}")
+        print(f"Error seeding organizations: {e}")
     finally:
         db.close()
 
