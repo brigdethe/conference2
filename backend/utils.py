@@ -26,8 +26,9 @@ def generate_qr_data(
     firm_name: str | None,
     base_url: str = "https://seminar.cmc-ghana.com"
 ) -> str:
-    # QR code now contains a verification URL that staff can scan with native camera
-    return f"{base_url}/verify/{ticket_code}"
+    # QR code contains just the ticket code - standard approach for event tickets
+    # Staff scan with /checkin page, users can't click it since it's not a URL
+    return ticket_code
 
 
 def generate_qr_image_base64(qr_data: str) -> str:
