@@ -238,9 +238,10 @@ async def create_registration(
             Registration.ticket_type == "Access Code"
         ).count()
         
-        if confirmed_count < 2:
+        ticket_type = "Access Code"
+        allowed_slots = firm.required_registrations or 2
+        if confirmed_count < allowed_slots:
             status = "confirmed"
-            ticket_type = "Access Code"
         else:
             # Code limit reached - requires approval
             status = "pending_approval"

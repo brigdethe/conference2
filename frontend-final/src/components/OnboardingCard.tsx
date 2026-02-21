@@ -155,7 +155,7 @@ const OnboardingCard: React.FC = () => {
                 const tt = data.ticket_type || null;
                 setRegistrationStatus(s || null);
                 setTicketType(tt);
-                setActiveStep((prev) => (prev === 0 ? statusToStep(s || null, tt) : prev));
+                setActiveStep((prev) => (prev <= 1 ? statusToStep(s || null, tt) : prev));
             })
             .catch(() => {});
         return () => { cancelled = true; };
