@@ -187,7 +187,7 @@ body {
   position: absolute;
   width: 20px;
   height: 20px;
-  border: 2px solid #3b82f6;
+  border: 2px solid #f8efe6;
   border-radius: 4px;
 }
 
@@ -223,11 +223,11 @@ body {
   position: absolute;
   width: 100%;
   height: 40px;
-  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.6));
+  background: linear-gradient(to bottom, rgba(248, 239, 230, 0.2), rgba(248, 239, 230, 0.7));
   top: 40%;
   animation: scan 2s infinite linear;
-  border-bottom: 2px solid #3b82f6;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  border-bottom: 2px solid #f8efe6;
+  box-shadow: 0 0 10px rgba(248, 239, 230, 0.5);
 }
 
 @keyframes scan {
@@ -666,7 +666,18 @@ body {
   opacity: 1;
 }
 
-.onboarding-content>*:not(.content-bg) {
+.content-bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.onboarding-content>*:not(.content-bg):not(.content-bg-overlay) {
   position: relative;
   z-index: 2;
 }
@@ -720,6 +731,28 @@ body {
   box-shadow: 0 4px 6px -2px rgba(16, 24, 40, 0.03);
 }
 
+.content-wrapper.step-verify .onboarding-title,
+.content-wrapper.step-verify .onboarding-subtitle,
+.content-wrapper.step-verify .divider,
+.content-wrapper.step-verify .divider span {
+  color: #fff;
+}
+
+.content-wrapper.step-verify .scan-icon-wrapper {
+  color: #fff;
+}
+
+.content-wrapper.step-verify .divider::before,
+.content-wrapper.step-verify .divider::after {
+  border-bottom-color: rgba(255, 255, 255, 0.5);
+}
+
+.verify-error {
+  color: #fca5a5;
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
 .onboarding-title {
   font-family: var(--font-heading);
   font-size: 2.75rem;
@@ -739,6 +772,38 @@ body {
 }
 
 /* Manual Entry with Copy */
+.ticket-code-boxes {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ticket-code-box {
+  width: 3rem;
+  height: 3.5rem;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  outline: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.ticket-code-box:focus {
+  border-color: #f8efe6;
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 0 3px rgba(248, 239, 230, 0.2);
+}
+
+.content-wrapper.step-verify .ticket-code-box::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
 .manual-entry-group {
   display: flex;
   width: 100%;

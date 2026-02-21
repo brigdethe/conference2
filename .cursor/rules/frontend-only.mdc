@@ -1,0 +1,10 @@
+---
+description: Restrict edits to frontend only; do not change backend or DB
+alwaysApply: true
+---
+
+# Frontend-only edits
+
+- **Edit only:** Express app frontend (routes that serve pages, `views/`, `app.js` page/API wiring used by the frontend), `frontend-final/` (React onboarding), `quantro-main/` (React admin UI), and frontend assets (CSS, JS, static files).
+- **Do not edit:** `backend/` (Python FastAPI, routers, models, DB), database files, deployment/config that changes backend behavior.
+- **APIs:** You may call existing backend APIs from the frontend; do not add or change backend endpoints or logic. If a feature needs a new API, note that backend changes are out of scope.

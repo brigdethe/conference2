@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import QRCodeSection from './QRCodeSection'; // Reusing the QR code component
 
 const onboardingSteps = [
-    { id: 0, title: 'Your details', desc: 'Please provide your name and email', color: '#f8efe6', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg?updatedAt=1770793618312' },
+    { id: 0, title: 'Verify your ticket', desc: 'Enter your ticket code or scan your QR code', color: '#f8efe6', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg?updatedAt=1770793618312' },
     { id: 1, title: 'Scan QR code', desc: 'Verify at least one device with 2FA', color: '#b7dcc2', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
     { id: 2, title: 'Choose a password', desc: 'Must be at least 8 characters', color: '#ddd4cc', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
     { id: 3, title: 'Invite your team', desc: 'Start collaborating with your team', color: '#8f6248', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
@@ -11,6 +11,10 @@ const onboardingSteps = [
 
 const OnboardingCard: React.FC = () => {
     const [activeStep, setActiveStep] = useState(0);
+    const [ticketCode, setTicketCode] = useState('');
+    const ticketCodeRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+    const [verifyLoading, setVerifyLoading] = useState(false);
+    const [verifyError, setVerifyError] = useState<string | null>(null);
     const [prevColor, setPrevColor] = useState(onboardingSteps[0].color);
     const [isAnimating, setIsAnimating] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -182,8 +186,80 @@ const OnboardingCard: React.FC = () => {
                 {/* Background crossfade layers */}
                 <div className="content-bg" style={{ backgroundImage: `url('${prevBg}')` }}></div>
                 <div className={`content-bg content-bg-next ${bgFading ? 'fade-in' : ''}`} style={{ backgroundImage: `url('${activeBg}')` }}></div>
+                <div className="content-bg-overlay" aria-hidden="true" />
                 {activeStep === 0 && (
-                    <div className="content-wrapper hero-content">
+                    <div className="content-wrapper step-verify">
+                        <div className="scan-icon-wrapper">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                                <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                                <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                                <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                            </svg>
+                        </div>
+                        <h2 className="onboarding-title">Verify your ticket</h2>
+                        <p className="onboarding-subtitle">Enter your 4-character ticket code below or scan your QR code to continue.</p>
+                        <div className="onboarding-qr-wrapper">
+                            <QRCodeSection />
+                        </div>
+                        <div className="divider">
+                            <span>or enter ticket code</span>
+                        </div>
+                        <div className="ticket-code-boxes">
+                            {[0, 1, 2, 3].map((i) => (
+                                <input
+                                    key={i}
+                                    ref={(el) => { ticketCodeRefs.current[i] = el; }}
+                                    type="text"
+                                    className="ticket-code-box"
+                                    maxLength={1}
+                                    value={ticketCode[i] ?? ''}
+                                    onChange={(e) => {
+                                        const char = (e.target.value.slice(-1) || '').toUpperCase().replace(/[^A-Z0-9]/, '');
+                                        const next = (ticketCode.slice(0, i) + char + ticketCode.slice(i + 1)).slice(0, 4);
+                                        setTicketCode(next);
+                                        if (char && i < 3) ticketCodeRefs.current[i + 1]?.focus();
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Backspace' && !ticketCode[i] && i > 0) {
+                                            setTicketCode(ticketCode.slice(0, i - 1) + ticketCode.slice(i));
+                                            ticketCodeRefs.current[i - 1]?.focus();
+                                        }
+                                    }}
+                                    inputMode="text"
+                                    autoComplete="one-time-code"
+                                    aria-label={`Ticket code character ${i + 1}`}
+                                />
+                            ))}
+                        </div>
+                        {verifyError && (
+                            <p className="verify-error" role="alert">{verifyError}</p>
+                        )}
+                        <button
+                            className="continue-btn"
+                            onClick={async () => {
+                                if (ticketCode.length !== 4) return;
+                                setVerifyError(null);
+                                setVerifyLoading(true);
+                                try {
+                                    const res = await fetch(`/api/tickets/verify/${encodeURIComponent(ticketCode)}`, { credentials: 'include' });
+                                    const data = await res.json().catch(() => ({}));
+                                    if (!res.ok) {
+                                        setVerifyError(data.detail || data.error || 'Verification failed');
+                                        return;
+                                    }
+                                    setVerifyError(null);
+                                    setActiveStep(1);
+                                } catch {
+                                    setVerifyError('Unable to verify ticket. Please try again.');
+                                } finally {
+                                    setVerifyLoading(false);
+                                }
+                            }}
+                            disabled={ticketCode.length !== 4 || verifyLoading}
+                        >
+                            {verifyLoading ? 'Verifying…' : 'Verify'}
+                        </button>
                     </div>
                 )}
 
@@ -197,35 +273,8 @@ const OnboardingCard: React.FC = () => {
 
                 {activeStep === 2 && (
                     <div className="content-wrapper">
-                        <div className="scan-icon-wrapper">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
-                                <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
-                                <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
-                                <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
-                            </svg>
-                        </div>
                         <h2 className="onboarding-title">Choose a password</h2>
-                        <p className="onboarding-subtitle">Please scan the QR code to verify your identity.</p>
-
-                        <div className="onboarding-qr-wrapper">
-                            <QRCodeSection />
-                        </div>
-
-                        <div className="divider">
-                            <span>or enter the code manually</span>
-                        </div>
-
-                        <div className="manual-entry-group">
-                            <input type="text" className="manual-input" value="HLA8G4L1B9ZX4" readOnly />
-                            <button className="copy-btn" title="Copy code">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                            </button>
-                        </div>
-
+                        <p className="onboarding-subtitle">Placeholder for next step.</p>
                         <button className="continue-btn" onClick={() => setActiveStep(3)}>Continue</button>
                     </div>
                 )}
