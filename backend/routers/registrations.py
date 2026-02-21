@@ -14,7 +14,7 @@ def _log_registration_status(registration_id: int, from_status: str, to_status: 
         "registration_status_change registration_id=%s from_status=%s to_status=%s email=%s",
         registration_id, from_status, to_status, email or ""
     )
-from models import LawFirm, Registration, Settings
+from models import LawFirm, Registration, Settings, CheckIn
 from schemas import RegistrationCreate, RegistrationResponse
 from utils import generate_ticket_code, generate_qr_data
 from routers.notifications import send_ticket_notification, send_admin_payment_notification

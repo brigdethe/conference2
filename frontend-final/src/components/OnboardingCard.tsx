@@ -683,7 +683,14 @@ const OnboardingCard: React.FC = () => {
                         )}
                         {!paymentLoading && paymentData && !paymentData.isExpired && !paymentSubmitted && !paymentConfirming && (
                             <div className="payment-card">
-                                <h2 className="payment-card__title">Pay with Mobile Money</h2>
+                                <div className="payment-card__header">
+                                    <svg className="payment-card__momo-icon" viewBox="0 0 48 48" width="48" height="48">
+                                        <circle cx="24" cy="24" r="24" fill="#FFCC00"/>
+                                        <text x="24" y="20" textAnchor="middle" fontSize="8" fontWeight="bold" fill="#000">MTN</text>
+                                        <text x="24" y="30" textAnchor="middle" fontSize="6" fontWeight="bold" fill="#000">MoMo</text>
+                                    </svg>
+                                    <h2 className="payment-card__title">Pay with Mobile Money</h2>
+                                </div>
                                 <div className="payment-card__momo">
                                     <div className="payment-card__row">
                                         <span className="payment-card__label">Merchant code</span>

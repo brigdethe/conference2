@@ -991,11 +991,23 @@ body {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
+.payment-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.payment-card__momo-icon {
+  flex-shrink: 0;
+}
+
 .payment-card__title {
   font-size: 1.25rem;
   font-weight: 700;
   color: #0f172a;
-  margin: 0 0 1rem 0;
+  margin: 0;
   text-align: center;
 }
 
