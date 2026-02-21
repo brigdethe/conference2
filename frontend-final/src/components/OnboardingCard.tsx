@@ -155,7 +155,12 @@ const OnboardingCard: React.FC = () => {
                 const tt = data.ticket_type || null;
                 setRegistrationStatus(s || null);
                 setTicketType(tt);
-                setActiveStep((prev) => (prev <= 1 ? statusToStep(s || null, tt) : prev));
+                // Only update step if we're at step 0 or 1, and don't override if already at correct step
+                setActiveStep((prev) => {
+                    if (prev >= 2) return prev; // Don't override if already at payment or ticket step
+                    const target = statusToStep(s || null, tt);
+                    return target > prev ? target : prev;
+                });
             })
             .catch(() => {});
         return () => { cancelled = true; };
@@ -508,26 +513,33 @@ const OnboardingCard: React.FC = () => {
                                                 return;
                                             }
                                             setVerifyError(null);
-                                            let targetStep = 1;
-                                            try {
-                                                const byCodeRes = await fetch(`/api/tickets/by-code/${encodeURIComponent(ticketCode)}`, { credentials: 'include' });
-                                                if (byCodeRes.ok) {
-                                                    const byCodeData = await byCodeRes.json();
-                                                    const id = byCodeData.id != null ? String(byCodeData.id) : null;
-                                                    const status = (byCodeData.status || '').toLowerCase();
-                                                    const tt = byCodeData.ticket_type || null;
-                                                    if (id) {
-                                                        setRegId(id);
-                                                        setRegistrationStatus(status || null);
-                                                        setTicketType(tt);
-                                                        targetStep = statusToStep(status || null, tt);
-                                                        const url = new URL(window.location.href);
-                                                        url.searchParams.set('id', id);
-                                                        window.history.replaceState({}, '', url.pathname + url.search);
+                                            // Ticket verified successfully - fetch full details
+                                            const byCodeRes = await fetch(`/api/tickets/by-code/${encodeURIComponent(ticketCode)}`, { credentials: 'include' });
+                                            if (byCodeRes.ok) {
+                                                const byCodeData = await byCodeRes.json();
+                                                const id = byCodeData.id != null ? String(byCodeData.id) : null;
+                                                const status = (byCodeData.status || '').toLowerCase();
+                                                const tt = byCodeData.ticket_type || null;
+                                                if (id) {
+                                                    const url = new URL(window.location.href);
+                                                    url.searchParams.set('id', id);
+                                                    window.history.replaceState({}, '', url.pathname + url.search);
+                                                    // Set all state together, then navigate
+                                                    setRegId(id);
+                                                    setRegistrationStatus(status || null);
+                                                    setTicketType(tt);
+                                                    // For confirmed tickets, go directly to step 3
+                                                    if (status === 'confirmed') {
+                                                        setActiveStep(3);
+                                                    } else {
+                                                        setActiveStep(statusToStep(status || null, tt));
                                                     }
+                                                } else {
+                                                    setVerifyError('Could not retrieve ticket details.');
                                                 }
-                                            } catch { }
-                                            setActiveStep(targetStep);
+                                            } else {
+                                                setVerifyError('Could not retrieve ticket details.');
+                                            }
                                         } catch {
                                             setVerifyError('Unable to verify ticket. Please try again.');
                                         } finally {
