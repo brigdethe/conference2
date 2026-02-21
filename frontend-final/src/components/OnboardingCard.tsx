@@ -15,7 +15,7 @@ const onboardingSteps = [
     { id: 1, title: 'Registration status', desc: 'Check approval and payment status', color: '#b7dcc2', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
     { id: 2, title: 'Complete payment', desc: 'Pay with MTN MoMo', color: '#ddd4cc', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
     { id: 3, title: 'Receive ticket', desc: 'Your conference ticket', color: '#8f6248', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
-    { id: 4, title: 'Add your socials', desc: 'Share posts to your social accounts', color: '#3d2b27', bg: 'https://ik.imagekit.io/dr5fryhth/conference/Accra_xxxxxxxxx_i116585_13by5.webp?updatedAt=1771048872912' }
+    { id: 4, title: 'See you there', desc: 'Your ticket is ready for event day', color: '#3d2b27', bg: 'https://ik.imagekit.io/dr5fryhth/conference/Accra_xxxxxxxxx_i116585_13by5.webp?updatedAt=1771048872912' }
 ];
 
 const POLL_INTERVAL_MS = 5000;
@@ -49,6 +49,9 @@ const OnboardingCard: React.FC = () => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [prevBg, setPrevBg] = useState(onboardingSteps[0].bg);
     const [bgFading, setBgFading] = useState(false);
+    const [finalTabSpinToken, setFinalTabSpinToken] = useState(0);
+    const [showPrintTicketButton, setShowPrintTicketButton] = useState(false);
+    const previousStepRef = React.useRef(0);
 
     // Swipe gesture tracking
     const touchStartX = React.useRef<number>(0);
@@ -102,6 +105,16 @@ const OnboardingCard: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [activeBg, prevBg]);
+
+    useEffect(() => {
+        if (activeStep === 4 && previousStepRef.current === 3) {
+            setShowPrintTicketButton(false);
+            setFinalTabSpinToken((prev) => prev + 1);
+        } else if (activeStep === 4) {
+            setShowPrintTicketButton(true);
+        }
+        previousStepRef.current = activeStep;
+    }, [activeStep]);
 
     const isLightBackground = [0, 1, 2].includes(activeStep);
 
@@ -212,7 +225,7 @@ const OnboardingCard: React.FC = () => {
     }, [paymentSubmitted, paymentRegId, activeStep]);
 
     useEffect(() => {
-        if (activeStep !== 3) return;
+        if (activeStep !== 3 && activeStep !== 4) return;
         const regId = paymentRegId || getRegIdFromSearch();
         if (!regId) {
             setTicketData(null);
@@ -657,10 +670,34 @@ const OnboardingCard: React.FC = () => {
                 )}
 
                 {activeStep === 4 && (
-                    <div className="content-wrapper">
-                        <h2 className="onboarding-title">Add your socials</h2>
-                        <p className="onboarding-subtitle">Placeholder for linking external accounts.</p>
-                        <button className="continue-btn" onClick={() => alert('Validation complete!')}>Finish Setup</button>
+                    <div className="content-wrapper receive-ticket-tab">
+                        {ticketLoading && (
+                            <div className="payment-card payment-card--loading">
+                                <div className="payment-card__spinner" aria-hidden="true" />
+                                <p className="payment-card__loading-text">Loading your ticket…</p>
+                            </div>
+                        )}
+                        {!ticketLoading && (
+                            <>
+                                <TicketCard
+                                    name={ticketData?.full_name}
+                                    ticketCode={ticketData?.ticket_code}
+                                    qrImage={ticketData?.qr_image}
+                                    spinOnceToken={finalTabSpinToken}
+                                    onSpinComplete={() => setTimeout(() => setShowPrintTicketButton(true), 2000)}
+                                    pinToRight
+                                />
+                                {showPrintTicketButton && (
+                                    <button
+                                        type="button"
+                                        className="print-ticket-btn"
+                                        onClick={() => window.print()}
+                                    >
+                                        Print ticket
+                                    </button>
+                                )}
+                            </>
+                        )}
                     </div>
                 )}
 

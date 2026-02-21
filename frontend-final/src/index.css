@@ -1076,7 +1076,7 @@ body {
   border-radius: 10px 10px 0 0;
   box-shadow: 0 20px 45px rgba(10, 19, 35, 0.2);
   margin-bottom: 1.25rem;
-  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0);
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg);
   transform-style: preserve-3d;
   transform-origin: center center;
   transition: transform 180ms ease-out, box-shadow 220ms ease-out;
@@ -1110,6 +1110,56 @@ body {
 
 .event-ticket:hover::after {
   opacity: 1;
+}
+
+.event-ticket-mover {
+  width: 100%;
+  max-width: min(420px, 100%);
+  transform-style: preserve-3d;
+}
+
+.event-ticket-mover--spinning {
+  animation: ticket-mover-spin 960ms cubic-bezier(0.22, 1, 0.36, 1) 1 forwards;
+}
+
+@keyframes ticket-mover-spin {
+  0%   { transform: translateX(0)                        rotateY(0deg); }
+  70%  { transform: translateX(var(--ticket-shift, 0px)) rotateY(320deg); }
+  100% { transform: translateX(var(--ticket-shift, 0px)) rotateY(360deg); }
+}
+
+.print-ticket-btn {
+  width: 100%;
+  max-width: 260px;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 0.6rem;
+  background: #cb9635;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.print-ticket-btn:hover {
+  background: #aa7e2c;
+  transform: translateY(-1px);
+}
+
+.event-ticket__top-hole {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: rgba(12, 18, 28, 0.24);
+  border: 1px solid rgba(140, 153, 173, 0.7);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 1px rgba(255, 255, 255, 0.35);
+  z-index: 3;
+  pointer-events: none;
 }
 
 .event-ticket__content {
@@ -1226,6 +1276,7 @@ body {
     height: 100px;
   }
 }
+
 
 .onboarding-title {
   font-family: var(--font-heading);
