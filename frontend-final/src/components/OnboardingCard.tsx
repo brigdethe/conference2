@@ -678,25 +678,26 @@ const OnboardingCard: React.FC = () => {
                             </div>
                         )}
                         {!ticketLoading && (
-                            <>
-                                <TicketCard
-                                    name={ticketData?.full_name}
-                                    ticketCode={ticketData?.ticket_code}
-                                    qrImage={ticketData?.qr_image}
-                                    spinOnceToken={finalTabSpinToken}
-                                    onSpinComplete={() => setTimeout(() => setShowPrintTicketButton(true), 2000)}
-                                    pinToRight
-                                />
+                            <TicketCard
+                                name={ticketData?.full_name}
+                                ticketCode={ticketData?.ticket_code}
+                                qrImage={ticketData?.qr_image}
+                                spinOnceToken={finalTabSpinToken}
+                                onSpinComplete={() => setShowPrintTicketButton(true)}
+                                pinToRight
+                            >
                                 {showPrintTicketButton && (
-                                    <button
-                                        type="button"
-                                        className="print-ticket-btn"
-                                        onClick={() => window.print()}
-                                    >
-                                        Print ticket
-                                    </button>
+                                    <div className="print-ticket-btn-wrap">
+                                        <button
+                                            type="button"
+                                            className="print-ticket-btn"
+                                            onClick={() => window.print()}
+                                        >
+                                            Print ticket
+                                        </button>
+                                    </div>
                                 )}
-                            </>
+                            </TicketCard>
                         )}
                     </div>
                 )}
