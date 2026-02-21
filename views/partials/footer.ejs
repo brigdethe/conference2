@@ -1208,66 +1208,10 @@
                     return;
                 }
 
-                if (result.status === 'pending_payment' && result.registration && result.registration.id) {
-                    // Close modal smoothly before redirect
-                    closeModal();
-                    // Small delay for smooth transition
-                    setTimeout(function() {
-                        window.location.href = '/payment?id=' + result.registration.id;
-                    }, 100);
-                    return;
-                }
-
-                if (result.status === 'pending_approval') {
-                    // Show pending approval modal
-                    var ticketsPendingModal = document.getElementById('ticketsPendingApprovalModal');
-                    if (ticketsPendingModal) {
-                        closeModal();
-                        ticketsPendingModal.style.display = 'flex';
-                        ticketsPendingModal.setAttribute('aria-hidden', 'false');
-                        // Setup close button
-                        var pendingCloseBtn = document.getElementById('ticketsPendingCloseBtn');
-                        if (pendingCloseBtn) {
-                            pendingCloseBtn.onclick = function() {
-                                ticketsPendingModal.style.display = 'none';
-                                ticketsPendingModal.setAttribute('aria-hidden', 'true');
-                            };
-                        }
-                    }
-                    ticketsForm.reset();
-                    return;
-                }
-
-                // Only fetch ticket for confirmed status
-                if (result.status === 'confirmed') {
-                    currentTicketCode = result.registration?.ticket_code || '----';
-                    currentQrImage = '';
-                    currentOrgLogo = '';
-                    
-                    // Fetch ticket with QR code
-                    var regId = result.registration?.id;
-                    if (regId) {
-                        try {
-                            var ticketRes = await fetch('/api/registration/' + regId + '/ticket');
-                            if (ticketRes.ok) {
-                                var ticketData = await ticketRes.json();
-                                currentTicketCode = ticketData.ticket_code || currentTicketCode;
-                                currentQrImage = ticketData.qr_image || '';
-                                currentOrgLogo = ticketData.firm_logo || '';
-                            }
-                        } catch (e) {
-                            console.error('Error fetching ticket:', e);
-                        }
-                    }
-
-                    if (ticketsConfirmationModal && ticketsCelebrationModal) {
-                        closeModal();
-                        ticketsConfirmationModal.style.display = 'flex';
-                        ticketsConfirmationModal.setAttribute('aria-hidden', 'false');
-                    } else {
-                        showTicketsFeedback(result.message || 'Registration confirmed! Welcome to the seminar.', 'success');
-                    }
-                }
+                closeModal();
+                var regId = result.registration && result.registration.id ? result.registration.id : (result.id || null);
+                window.location.href = regId ? '/onboarding?id=' + regId : '/onboarding';
+                ticketsForm.reset();
             } catch (error) {
                 console.error('Tickets registration error:', error);
                 showTicketsFeedback('An error occurred. Please try again.', 'error');

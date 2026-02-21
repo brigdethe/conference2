@@ -41,22 +41,22 @@ export function Login({ onLoginSuccess }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen bg-bgPrimary flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 font-sans" style={{ backgroundColor: '#f8efe6' }}>
       <div className="w-full max-w-sm">
-        <div className="bg-white rounded-2xl shadow-soft p-8">
+        <div className="rounded-2xl shadow-warm p-8" style={{ backgroundColor: '#f4ece4' }}>
           <div className="text-center mb-8">
-            <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center mx-auto mb-4">
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#3d2b27' }}>
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h1 className="text-xl font-semibold text-textPrimary">Admin Login</h1>
-            <p className="text-sm text-textSecondary mt-1">Conference Management System</p>
+            <h1 className="font-heading text-2xl font-normal tracking-tight" style={{ color: '#3d2b27' }}>Admin Login</h1>
+            <p className="text-sm mt-1" style={{ color: '#8f6248' }}>Conference Management System</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-textSecondary mb-1.5">
+              <label htmlFor="username" className="block text-sm font-medium mb-1.5" style={{ color: '#5a413b' }}>
                 Username
               </label>
               <input
@@ -64,7 +64,8 @@ export function Login({ onLoginSuccess }: LoginProps) {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3d2b27] focus:border-transparent transition-all"
+                style={{ borderColor: '#ddd4cc', color: '#3d2b27', backgroundColor: '#fff' }}
                 placeholder="Enter username"
                 required
                 autoComplete="username"
@@ -72,7 +73,7 @@ export function Login({ onLoginSuccess }: LoginProps) {
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-textSecondary mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium mb-1.5" style={{ color: '#5a413b' }}>
                 Password
               </label>
               <input
@@ -80,7 +81,8 @@ export function Login({ onLoginSuccess }: LoginProps) {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+                className="w-full px-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#3d2b27] focus:border-transparent transition-all"
+                style={{ borderColor: '#ddd4cc', color: '#3d2b27', backgroundColor: '#fff' }}
                 placeholder="Enter password"
                 required
                 autoComplete="current-password"
@@ -88,7 +90,7 @@ export function Login({ onLoginSuccess }: LoginProps) {
             </div>
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2.5 rounded-lg text-sm">
+              <div className="px-4 py-2.5 rounded-lg text-sm" style={{ backgroundColor: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c' }}>
                 {error}
               </div>
             )}
@@ -96,14 +98,15 @@ export function Login({ onLoginSuccess }: LoginProps) {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-slate-900 text-white py-2.5 px-4 rounded-lg text-sm font-medium hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-white py-2.5 px-4 rounded-lg text-sm font-medium hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#3d2b27] focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: '#3d2b27' }}
             >
               {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
         </div>
 
-        <p className="text-center text-xs text-textTertiary mt-6">
+        <p className="text-center text-xs mt-6 font-medium" style={{ color: '#8f6248' }}>
           Ghana Competition Law Seminar
         </p>
       </div>

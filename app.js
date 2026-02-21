@@ -22,6 +22,10 @@ app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
 // Serve React Onboarding App
 app.use('/onboarding', express.static(path.join(__dirname, 'frontend-final', 'dist')));
 
+app.use('/admin', express.static(path.join(__dirname, 'quantro-main', 'dist')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'quantro-main', 'dist', 'index.html')));
+app.get('/admin/*', (req, res) => res.sendFile(path.join(__dirname, 'quantro-main', 'dist', 'index.html')));
+
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 

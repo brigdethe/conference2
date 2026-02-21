@@ -16,8 +16,7 @@ const onboardingSteps = [
     { id: 0, title: 'Verify your ticket', desc: 'Enter your ticket code or scan your QR code', color: '#f8efe6', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg?updatedAt=1770793618312' },
     { id: 1, title: 'Registration status', desc: 'Check approval and payment status', color: '#b7dcc2', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
     { id: 2, title: 'Complete payment', desc: 'Pay with MTN MoMo', color: '#ddd4cc', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
-    { id: 3, title: 'Receive ticket', desc: 'Your conference ticket', color: '#8f6248', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
-    { id: 4, title: 'See you there', desc: 'Your ticket is ready for event day', color: '#3d2b27', bg: 'https://ik.imagekit.io/dr5fryhth/conference/Accra_xxxxxxxxx_i116585_13by5.webp?updatedAt=1771048872912' }
+    { id: 3, title: 'See you there', desc: 'Your ticket is ready for event day', color: '#3d2b27', bg: 'https://ik.imagekit.io/dr5fryhth/conference/Accra_xxxxxxxxx_i116585_13by5.webp?updatedAt=1771048872912' }
 ];
 
 const POLL_INTERVAL_MS = 5000;
@@ -25,7 +24,7 @@ const POLL_INTERVAL_MS = 5000;
 function statusToMaxStep(status: string | null): number {
     if (!status) return 0;
     const s = status.toLowerCase();
-    if (s === 'confirmed') return 4;
+    if (s === 'confirmed') return 3;
     if (s === 'pending_payment') return 2;
     if (s === 'pending_approval' || s === 'awaiting_verification' || s === 'payment_submitted' || s === 'rejected' || s === 'error') return 1;
     return 1;
@@ -34,13 +33,13 @@ function statusToMaxStep(status: string | null): number {
 function statusToStep(status: string | null): number {
     if (!status) return 1;
     const s = status.toLowerCase();
-    if (s === 'confirmed') return 4;
+    if (s === 'confirmed') return 3;
     if (s === 'pending_payment') return 2;
     return 1;
 }
 
 const OnboardingCard: React.FC = () => {
-    const [activeStep, setActiveStep] = useState(0);
+    const [activeStep, setActiveStep] = useState(() => getRegIdFromSearch() ? 1 : 0);
     const [ticketCode, setTicketCode] = useState('');
     const ticketCodeRefs = React.useRef<(HTMLInputElement | null)[]>([]);
     const [verifyLoading, setVerifyLoading] = useState(false);
@@ -128,7 +127,7 @@ const OnboardingCard: React.FC = () => {
     }, [activeBg, prevBg]);
 
     useEffect(() => {
-        if (activeStep === 4 && previousStepRef.current !== 4) {
+        if (activeStep === 3 && previousStepRef.current !== 3) {
             setShowPrintTicketButton(false);
             setFinalTabSpinToken((prev) => prev + 1);
         }
@@ -265,7 +264,7 @@ const OnboardingCard: React.FC = () => {
     }, [paymentSubmitted, regId, activeStep]);
 
     useEffect(() => {
-        if (activeStep !== 3 && activeStep !== 4) return;
+        if (activeStep !== 3) return;
         if (!regId) {
             setTicketData(null);
             return;
@@ -414,100 +413,123 @@ const OnboardingCard: React.FC = () => {
                 <div className="content-bg-overlay" aria-hidden="true" />
                 {activeStep === 0 && (
                     <div className="content-wrapper step-verify">
-                        <div className="scan-icon-wrapper">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
-                                <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
-                                <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
-                                <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
-                            </svg>
-                        </div>
-                        <h2 className="onboarding-title">Verify your ticket</h2>
-                        <p className="onboarding-subtitle">Enter your 4-character ticket code below or scan your QR code to continue.</p>
-                        <div className="onboarding-qr-wrapper">
-                            <QRCodeSection />
-                        </div>
-                        <div className="divider">
-                            <span>or enter ticket code</span>
-                        </div>
-                        <div className="ticket-code-boxes">
-                            {[0, 1, 2, 3].map((i) => (
-                                <input
-                                    key={i}
-                                    ref={(el) => { ticketCodeRefs.current[i] = el; }}
-                                    type="text"
-                                    className="ticket-code-box"
-                                    maxLength={1}
-                                    value={ticketCode[i] ?? ''}
-                                    onChange={(e) => {
-                                        const char = (e.target.value.slice(-1) || '').toUpperCase().replace(/[^A-Z0-9]/, '');
-                                        const next = (ticketCode.slice(0, i) + char + ticketCode.slice(i + 1)).slice(0, 4);
-                                        setTicketCode(next);
-                                        if (char && i < 3) ticketCodeRefs.current[i + 1]?.focus();
-                                    }}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Backspace' && !ticketCode[i] && i > 0) {
-                                            setTicketCode(ticketCode.slice(0, i - 1) + ticketCode.slice(i));
-                                            ticketCodeRefs.current[i - 1]?.focus();
-                                        }
-                                    }}
-                                    inputMode="text"
-                                    autoComplete="one-time-code"
-                                    aria-label={`Ticket code character ${i + 1}`}
-                                />
-                            ))}
-                        </div>
-                        {verifyError && (
-                            <p className="verify-error" role="alert">{verifyError}</p>
-                        )}
-                        <button
-                            className="continue-btn"
-                            onClick={async () => {
-                                if (ticketCode.length !== 4) return;
-                                setVerifyError(null);
-                                setVerifyLoading(true);
-                                try {
-                                    const res = await fetch(`/api/tickets/verify/${encodeURIComponent(ticketCode)}`, { credentials: 'include' });
-                                    const data = await res.json().catch(() => ({}));
-                                    if (!res.ok) {
-                                        setVerifyError(data.detail || data.error || 'Verification failed');
-                                        return;
-                                    }
-                                    setVerifyError(null);
-                                    let targetStep = 1;
-                                    try {
-                                        const byCodeRes = await fetch(`/api/tickets/by-code/${encodeURIComponent(ticketCode)}`, { credentials: 'include' });
-                                        if (byCodeRes.ok) {
-                                            const byCodeData = await byCodeRes.json();
-                                            const id = byCodeData.id != null ? String(byCodeData.id) : null;
-                                            const status = (byCodeData.status || '').toLowerCase();
-                                            if (id) {
-                                                setRegId(id);
-                                                setRegistrationStatus(status || null);
-                                                targetStep = statusToStep(status || null);
-                                                const url = new URL(window.location.href);
-                                                url.searchParams.set('id', id);
-                                                window.history.replaceState({}, '', url.pathname + url.search);
+                        {regId ? (
+                            <>
+                                <div className="scan-icon-wrapper">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                                        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                                    </svg>
+                                </div>
+                                <h2 className="onboarding-title">You&apos;re registered</h2>
+                                <p className="onboarding-subtitle">We&apos;ve got your registration. Continue to see your status and next steps.</p>
+                                <button
+                                    className="continue-btn"
+                                    onClick={() => setActiveStep(registrationStatus != null ? statusToStep(registrationStatus) : 1)}
+                                >
+                                    Continue
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <div className="scan-icon-wrapper">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                                        <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                                        <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                                        <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                                    </svg>
+                                </div>
+                                <h2 className="onboarding-title">Verify your ticket</h2>
+                                <p className="onboarding-subtitle">Enter your 4-character ticket code below or scan your QR code to continue.</p>
+                                <div className="onboarding-qr-wrapper">
+                                    <QRCodeSection />
+                                </div>
+                                <div className="divider">
+                                    <span>or enter ticket code</span>
+                                </div>
+                                <div className="ticket-code-boxes">
+                                    {[0, 1, 2, 3].map((i) => (
+                                        <input
+                                            key={i}
+                                            ref={(el) => { ticketCodeRefs.current[i] = el; }}
+                                            type="text"
+                                            className="ticket-code-box"
+                                            maxLength={1}
+                                            value={ticketCode[i] ?? ''}
+                                            onChange={(e) => {
+                                                const char = (e.target.value.slice(-1) || '').toUpperCase().replace(/[^A-Z0-9]/, '');
+                                                const next = (ticketCode.slice(0, i) + char + ticketCode.slice(i + 1)).slice(0, 4);
+                                                setTicketCode(next);
+                                                if (char && i < 3) ticketCodeRefs.current[i + 1]?.focus();
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Backspace' && !ticketCode[i] && i > 0) {
+                                                    setTicketCode(ticketCode.slice(0, i - 1) + ticketCode.slice(i));
+                                                    ticketCodeRefs.current[i - 1]?.focus();
+                                                }
+                                            }}
+                                            inputMode="text"
+                                            autoComplete="one-time-code"
+                                            aria-label={`Ticket code character ${i + 1}`}
+                                        />
+                                    ))}
+                                </div>
+                                {verifyError && (
+                                    <p className="verify-error" role="alert">{verifyError}</p>
+                                )}
+                                <button
+                                    className="continue-btn"
+                                    onClick={async () => {
+                                        if (ticketCode.length !== 4) return;
+                                        setVerifyError(null);
+                                        setVerifyLoading(true);
+                                        try {
+                                            const res = await fetch(`/api/tickets/verify/${encodeURIComponent(ticketCode)}`, { credentials: 'include' });
+                                            const data = await res.json().catch(() => ({}));
+                                            if (!res.ok) {
+                                                setVerifyError(data.detail || data.error || 'Verification failed');
+                                                return;
                                             }
+                                            setVerifyError(null);
+                                            let targetStep = 1;
+                                            try {
+                                                const byCodeRes = await fetch(`/api/tickets/by-code/${encodeURIComponent(ticketCode)}`, { credentials: 'include' });
+                                                if (byCodeRes.ok) {
+                                                    const byCodeData = await byCodeRes.json();
+                                                    const id = byCodeData.id != null ? String(byCodeData.id) : null;
+                                                    const status = (byCodeData.status || '').toLowerCase();
+                                                    if (id) {
+                                                        setRegId(id);
+                                                        setRegistrationStatus(status || null);
+                                                        targetStep = statusToStep(status || null);
+                                                        const url = new URL(window.location.href);
+                                                        url.searchParams.set('id', id);
+                                                        window.history.replaceState({}, '', url.pathname + url.search);
+                                                    }
+                                                }
+                                            } catch { }
+                                            setActiveStep(targetStep);
+                                        } catch {
+                                            setVerifyError('Unable to verify ticket. Please try again.');
+                                        } finally {
+                                            setVerifyLoading(false);
                                         }
-                                    } catch { }
-                                    setActiveStep(targetStep);
-                                } catch {
-                                    setVerifyError('Unable to verify ticket. Please try again.');
-                                } finally {
-                                    setVerifyLoading(false);
-                                }
-                            }}
-                            disabled={ticketCode.length !== 4 || verifyLoading}
-                        >
-                            {verifyLoading ? 'Verifying…' : 'Verify'}
-                        </button>
-                        <div className="verify-register-cta">
-                            <p className="verify-register-cta__text">Haven&apos;t registered yet? Register for the event to get your ticket.</p>
-                            <a href="/contact" className="verify-register-cta__btn" rel="noopener noreferrer">
-                                Go to registration
-                            </a>
-                        </div>
+                                    }}
+                                    disabled={ticketCode.length !== 4 || verifyLoading}
+                                >
+                                    {verifyLoading ? 'Verifying…' : 'Verify'}
+                                </button>
+                                <div className="verify-register-cta">
+                                    <p className="verify-register-cta__text">Haven&apos;t registered yet? Register for the event to get your ticket.</p>
+                                    <a href="/contact" className="verify-register-cta__btn" rel="noopener noreferrer">
+                                        Go to registration
+                                    </a>
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
 
@@ -773,30 +795,6 @@ const OnboardingCard: React.FC = () => {
                 )}
 
                 {activeStep === 3 && (
-                    <div className="content-wrapper receive-ticket-tab">
-                        {!regId && (
-                            <div className="payment-card payment-card--no-id">
-                                <p className="payment-card__heading">Open the link from your email</p>
-                                <p className="payment-card__sub">To view your ticket, use the link we sent you after registration (it includes your registration ID).</p>
-                            </div>
-                        )}
-                        {regId && ticketLoading && (
-                            <div className="payment-card payment-card--loading">
-                                <div className="payment-card__spinner" aria-hidden="true" />
-                                <p className="payment-card__loading-text">Loading your ticket…</p>
-                            </div>
-                        )}
-                        {regId && !ticketLoading && (
-                            <TicketCard
-                                name={ticketData?.full_name}
-                                ticketCode={ticketData?.ticket_code}
-                                qrImage={ticketData?.qr_image}
-                            />
-                        )}
-                    </div>
-                )}
-
-                {activeStep === 4 && (
                     <>
                     <Confetti active={showPrintTicketButton} />
                     <div className="see-you-tab">

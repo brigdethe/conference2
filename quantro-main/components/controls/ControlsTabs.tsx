@@ -9,7 +9,7 @@ interface ControlsTabsProps {
 
 export const ControlsTabs: React.FC<ControlsTabsProps> = ({ activeTab, onTabChange }) => {
     return (
-        <div className="flex bg-white p-1 rounded-xl shadow-sm">
+        <div className="inline-flex bg-white p-1 rounded-xl shadow-sm">
             {Object.values(TabOption).map((tab) => (
                 <button key={tab} onClick={() => onTabChange(tab)} className="relative px-5 py-1.5 text-sm font-medium rounded-lg transition-colors z-10">
                     {activeTab === tab && (

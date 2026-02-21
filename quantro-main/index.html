@@ -6,27 +6,35 @@
     <link rel="icon" type="image/png" href="https://ik.imagekit.io/dr5fryhth/conference/imglogo?updatedAt=1769778325875" />
     <title>Conference Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
         theme: {
           extend: {
             fontFamily: {
-              sans: ['Inter', 'sans-serif'],
+              sans: ['DM Sans', 'Arial', 'sans-serif'],
+              heading: ['DM Serif Display', 'Georgia', 'serif'],
             },
             colors: {
-              bgPrimary: '#EAEAEA', // Slightly darker off-white for main bg
+              bgPrimary: '#EAEAEA',
               bgCard: '#FFFFFF',
               textPrimary: '#111827',
-              textSecondary: '#6B7280', // Gray-500
-              textTertiary: '#9CA3AF', // Gray-400
-              accentGreen: '#4ADE80', // Green-400
-              accentGreenLight: '#DCFCE7', // Green-100
-              chartDark: '#1F2937', // Gray-800
-              chartGray: '#E5E7EB', // Gray-200
+              textSecondary: '#6B7280',
+              textTertiary: '#9CA3AF',
+              accentGreen: '#4ADE80',
+              accentGreenLight: '#DCFCE7',
+              chartDark: '#1F2937',
+              chartGray: '#E5E7EB',
+              clay: '#3d2b27',
+              earth: '#8f6248',
+              cream: '#f4ece4',
+              lightBg: '#f8efe6',
             },
             boxShadow: {
               'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
+              'warm': '0 8px 32px rgba(61, 43, 39, 0.12)',
             }
           }
         }
@@ -34,8 +42,10 @@
     </script>
     <style>
       body {
-        background-color: #EAEAEA;
-        color: #111827;
+        background-color: #f8efe6;
+        color: #3d2b27;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
     </style>
   <script type="importmap">
