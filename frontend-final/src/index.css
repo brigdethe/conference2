@@ -753,6 +753,119 @@ body {
   margin-bottom: 1rem;
 }
 
+.pending-approval-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  background: #f8efe6;
+  border-radius: 1rem;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.pending-approval-card__tag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.pending-approval-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 11px;
+  color: #cb9635;
+}
+
+.pending-approval-card__label {
+  font-size: 0.875rem;
+  color: #6e3527;
+  font-weight: 500;
+}
+
+.pending-approval-card__heading {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  color: #3d2b27;
+  margin: 0 0 1.5rem 0;
+  font-weight: 600;
+}
+
+.pending-approval-card__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background-color: #cb9635;
+  color: #fff;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.pending-approval-card__btn:hover {
+  background-color: #aa7e2c;
+}
+
+.pending-approval-card__btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pending-approval-card--loading {
+  text-align: center;
+}
+
+.pending-approval-card__spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(62, 43, 39, 0.2);
+  border-top-color: #cb9635;
+  border-radius: 50%;
+  animation: pending-spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes pending-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pending-approval-card__loading-text {
+  color: #6e3527;
+  font-size: 0.9375rem;
+  margin: 0;
+}
+
+.pending-approval-card--approved .pending-approval-card__heading {
+  margin-bottom: 1rem;
+}
+
+.pending-approval-card__icon--success {
+  color: #059669;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.pending-approval-card--rejected .pending-approval-card__icon--rejected,
+.pending-approval-card__icon--rejected {
+  color: #dc2626;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.pending-approval-card--confirmed .pending-approval-card__heading {
+  margin-bottom: 0;
+}
+
+.pending-approval-card--error .pending-approval-card__label {
+  color: #6b7280;
+}
+
 .onboarding-title {
   font-family: var(--font-heading);
   font-size: 2.75rem;
