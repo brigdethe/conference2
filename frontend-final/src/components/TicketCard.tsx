@@ -11,7 +11,6 @@ export type TicketCardProps = {
     qrImage?: string | null;
     spinOnceToken?: number;
     onSpinComplete?: () => void;
-    pinToRight?: boolean;
     children?: React.ReactNode;
 };
 
@@ -30,64 +29,61 @@ const TicketCard: React.FC<TicketCardProps> = ({
     qrImage = null,
     spinOnceToken = 0,
     onSpinComplete,
-    pinToRight = false,
     children
 }) => {
     const wrapperRef = useRef<HTMLDivElement | null>(null);
-    const articleRef = useRef<HTMLElement | null>(null);
+    const ticketRef = useRef<HTMLElement | null>(null);
     const [isSpinning, setIsSpinning] = useState(false);
-    const shiftRef = useRef(0);
 
-    const calcShift = () => {
+    const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+        const article = ticketRef.current;
+        if (!article) return;
+        const rect = article.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        article.style.setProperty('--glow-x', `${x}%`);
+        article.style.setProperty('--glow-y', `${y}%`);
+        article.style.setProperty('--glow-visible', '1');
+    };
+
+    const handleMouseLeave = () => {
+        const article = ticketRef.current;
+        if (!article) return;
+        article.style.setProperty('--glow-visible', '0');
+    };
+
+    const calcCenterOffset = (): number => {
         const wrapper = wrapperRef.current;
-        if (!wrapper || !pinToRight || window.innerWidth < 769) {
-            shiftRef.current = 0;
-            return 0;
-        }
+        if (!wrapper || window.innerWidth < 769) return 0;
         const saved = wrapper.style.transform;
         wrapper.style.transform = 'none';
         const wRect = wrapper.getBoundingClientRect();
         wrapper.style.transform = saved;
-
         const container = wrapper.closest('.onboarding-content') as HTMLElement | null;
-        const containerRight = container
-            ? container.getBoundingClientRect().right
-            : window.innerWidth;
-
-        const s = Math.max(0, containerRight - wRect.right - 10);
-        shiftRef.current = s;
-        return s;
+        if (!container) return 0;
+        const cRect = container.getBoundingClientRect();
+        const contentCenter = cRect.left + cRect.width / 2;
+        const wrapperCenter = wRect.left + wRect.width / 2;
+        return contentCenter - wrapperCenter;
     };
-
-    useEffect(() => {
-        calcShift();
-        const onResize = () => {
-            calcShift();
-            if (!isSpinning && pinToRight && wrapperRef.current) {
-                gsap.set(wrapperRef.current, { x: shiftRef.current });
-            }
-        };
-        window.addEventListener('resize', onResize);
-        return () => window.removeEventListener('resize', onResize);
-    }, [pinToRight, isSpinning]);
 
     useEffect(() => {
         if (spinOnceToken <= 0 || !wrapperRef.current) return;
         const el = wrapperRef.current;
-        const shift = calcShift();
+        const startOffset = calcCenterOffset();
 
         setIsSpinning(true);
         gsap.killTweensOf(el);
         gsap.fromTo(
             el,
-            { rotationY: 0, x: 0 },
+            { rotationY: 0, x: startOffset },
             {
                 rotationY: 360,
-                x: shift,
+                x: 0,
                 duration: 0.85,
                 ease: 'power2.inOut',
                 onComplete: () => {
-                    gsap.set(el, { rotationY: 0, x: shift });
+                    gsap.set(el, { rotationY: 0, x: 0 });
                     setIsSpinning(false);
                     if (onSpinComplete) onSpinComplete();
                 }
@@ -95,52 +91,13 @@ const TicketCard: React.FC<TicketCardProps> = ({
         );
     }, [spinOnceToken]);
 
-    useEffect(() => {
-        if (!pinToRight && wrapperRef.current) {
-            gsap.set(wrapperRef.current, { x: 0, rotationY: 0 });
-        }
-    }, [pinToRight]);
-
-    const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
-        if (isSpinning) return;
-        const article = articleRef.current;
-        if (!article) return;
-        const rect = article.getBoundingClientRect();
-        const x = (e.clientX - rect.left) / rect.width;
-        const y = (e.clientY - rect.top) / rect.height;
-        article.style.setProperty('--event-ticket-glare-x', `${x * 100}%`);
-        article.style.setProperty('--event-ticket-glare-y', `${y * 100}%`);
-        gsap.to(article, {
-            rotationX: (0.5 - y) * 8,
-            rotationY: (x - 0.5) * 8,
-            duration: 0.15,
-            ease: 'none',
-            overwrite: true
-        });
-    };
-
-    const handleMouseLeave = () => {
-        if (isSpinning) return;
-        const article = articleRef.current;
-        if (!article) return;
-        article.style.setProperty('--event-ticket-glare-x', '50%');
-        article.style.setProperty('--event-ticket-glare-y', '50%');
-        gsap.to(article, {
-            rotationX: 0,
-            rotationY: 0,
-            duration: 0.4,
-            ease: 'power2.out',
-            overwrite: true
-        });
-    };
-
     return (
         <div
             ref={wrapperRef}
             className="event-ticket-mover"
         >
             <article
-                ref={articleRef}
+                ref={ticketRef}
                 className="event-ticket"
                 aria-label="Event Ticket"
                 onMouseMove={handleMouseMove}

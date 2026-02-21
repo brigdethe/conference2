@@ -205,6 +205,90 @@ app.get('/api/registrations/:id', async (req, res) => {
   }
 });
 
+app.post('/api/ticket-pdf', async (req, res) => {
+  const { ticketCode, fullName, qrImage } = req.body;
+  if (!ticketCode) return res.status(400).json({ error: 'Missing ticketCode' });
+
+  try {
+    const PDFDocument = require('pdfkit');
+    const MM = 2.8346;
+    const W = 100 * MM;
+    const H = 150 * MM;
+    const BROWN = '#5b3426';
+    const CREAM = '#f8f2e8';
+    const MUTED = '#7b6a5e';
+
+    const doc = new PDFDocument({ size: [W, H], margin: 0, autoFirstPage: true });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="ticket-${ticketCode}.pdf"`);
+    doc.pipe(res);
+
+    doc.rect(0, 0, W, H).fill('#ffffff');
+
+    doc.roundedRect(5 * MM, 5 * MM, 90 * MM, 140 * MM, 3 * MM)
+      .lineWidth(1)
+      .strokeColor(BROWN)
+      .stroke();
+
+    doc.font('Helvetica-Bold')
+      .fontSize(10)
+      .fillColor(BROWN)
+      .text('Ghana Competition Law Seminar', 0, 18 * MM, { align: 'center' });
+
+    doc.font('Helvetica')
+      .fontSize(7.5)
+      .fillColor(MUTED)
+      .text('Conference Ticket', 0, 24 * MM, { align: 'center' });
+
+    doc.roundedRect(10 * MM, 30 * MM, 80 * MM, 28 * MM, 2 * MM)
+      .fill(CREAM);
+
+    doc.font('Helvetica')
+      .fontSize(6.5)
+      .fillColor(MUTED)
+      .text('TICKET CODE', 0, 38 * MM, { align: 'center' });
+
+    doc.font('Courier-Bold')
+      .fontSize(22)
+      .fillColor(BROWN)
+      .text(ticketCode.toUpperCase(), 0, 45 * MM, { align: 'center' });
+
+    if (fullName) {
+      doc.font('Helvetica')
+        .fontSize(8)
+        .fillColor(MUTED)
+        .text('ATTENDEE', 0, 61 * MM, { align: 'center' });
+      doc.font('Helvetica-Bold')
+        .fontSize(9)
+        .fillColor(BROWN)
+        .text(fullName, 10 * MM, 66 * MM, { width: 80 * MM, align: 'center' });
+    }
+
+    if (qrImage) {
+      const imgBuffer = Buffer.from(qrImage, 'base64');
+      const qrY = fullName ? 78 * MM : 65 * MM;
+      doc.image(imgBuffer, W / 2 - 20 * MM, qrY, { width: 40 * MM, height: 40 * MM });
+    }
+
+    doc.font('Helvetica')
+      .fontSize(7.5)
+      .fillColor(MUTED)
+      .text('Present this ticket at check-in', 0, 118 * MM, { align: 'center' });
+
+    doc.fontSize(6.5)
+      .text('Mövenpick Ambassador Hotel, Accra', 0, 124 * MM, { align: 'center' });
+
+    doc.fontSize(6)
+      .fillColor('#aaaaaa')
+      .text('25 March 2026', 0, 130 * MM, { align: 'center' });
+
+    doc.end();
+  } catch (err) {
+    console.error('PDF generation error:', err);
+    res.status(500).json({ error: 'Could not generate PDF' });
+  }
+});
+
 app.get('/api/settings', async (req, res) => {
   try {
     const response = await fetchBackend('/api/settings');
@@ -591,7 +675,19 @@ app.get('/api/registration/:id/ticket', async (req, res) => {
   }
 });
 
-// Ticket verification endpoint (proxy to backend)
+app.get('/api/tickets/by-code/:ticketCode', async (req, res) => {
+  const { ticketCode } = req.params;
+  try {
+    const response = await fetchBackend(`/api/tickets/${encodeURIComponent(ticketCode)}`);
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching ticket by code:', error);
+    res.status(500).json({ error: 'Failed to fetch ticket' });
+  }
+});
+
 app.get('/api/tickets/verify/:ticketCode', async (req, res) => {
   const { ticketCode } = req.params;
   try {

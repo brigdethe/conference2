@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import QRCodeSection from './QRCodeSection';
 import TicketCard from './TicketCard';
+import CountdownCard from './CountdownCard';
+import Confetti from './Confetti';
 
 type PendingStatus = 'idle' | 'loading' | 'pending_approval' | 'pending_payment' | 'rejected' | 'confirmed' | 'awaiting_verification' | 'error';
 
@@ -20,15 +22,32 @@ const onboardingSteps = [
 
 const POLL_INTERVAL_MS = 5000;
 
+function statusToMaxStep(status: string | null): number {
+    if (!status) return 0;
+    const s = status.toLowerCase();
+    if (s === 'confirmed') return 4;
+    if (s === 'pending_payment') return 2;
+    if (s === 'pending_approval' || s === 'awaiting_verification' || s === 'payment_submitted' || s === 'rejected' || s === 'error') return 1;
+    return 1;
+}
+
+function statusToStep(status: string | null): number {
+    if (!status) return 1;
+    const s = status.toLowerCase();
+    if (s === 'confirmed') return 4;
+    if (s === 'pending_payment') return 2;
+    return 1;
+}
+
 const OnboardingCard: React.FC = () => {
     const [activeStep, setActiveStep] = useState(0);
     const [ticketCode, setTicketCode] = useState('');
     const ticketCodeRefs = React.useRef<(HTMLInputElement | null)[]>([]);
     const [verifyLoading, setVerifyLoading] = useState(false);
     const [verifyError, setVerifyError] = useState<string | null>(null);
-    const [pendingRegId] = useState<string | null>(() => getRegIdFromSearch());
+    const [regId, setRegId] = useState<string | null>(() => getRegIdFromSearch());
+    const [registrationStatus, setRegistrationStatus] = useState<string | null>(null);
     const [pendingStatus, setPendingStatus] = useState<PendingStatus>('idle');
-    const [paymentRegId, setPaymentRegId] = useState<string | null>(null);
     const [paymentData, setPaymentData] = useState<{
         registration: { id: number; full_name: string; email: string; firm_name: string | null } | null;
         settings: { ticket_price: string; merchant_code: string; merchant_name: string };
@@ -61,22 +80,24 @@ const OnboardingCard: React.FC = () => {
         touchStartX.current = e.changedTouches[0].screenX;
     };
 
+    const maxAllowedStep = !regId ? 0 : (registrationStatus !== null ? statusToMaxStep(registrationStatus) : 0);
+
     const handleTouchEnd = (e: React.TouchEvent) => {
         touchEndX.current = e.changedTouches[0].screenX;
         const diff = touchStartX.current - touchEndX.current;
-        const threshold = 50; // minimum swipe distance in px
+        const threshold = 50;
         if (diff > threshold && activeStep < onboardingSteps.length - 1) {
-            // Swiped left → next step
-            setActiveStep(activeStep + 1);
+            const next = Math.min(activeStep + 1, maxAllowedStep);
+            setActiveStep(next);
         } else if (diff < -threshold && activeStep > 0) {
-            // Swiped right → previous step
             setActiveStep(activeStep - 1);
         }
     };
 
     const handleStepClick = (stepId: number) => {
+        if (stepId > maxAllowedStep) return;
         setActiveStep(stepId);
-        setSidebarOpen(false); // Auto-close sidebar on mobile
+        setSidebarOpen(false);
     };
 
     const activeColor = onboardingSteps[activeStep].color;
@@ -107,11 +128,9 @@ const OnboardingCard: React.FC = () => {
     }, [activeBg, prevBg]);
 
     useEffect(() => {
-        if (activeStep === 4 && previousStepRef.current === 3) {
+        if (activeStep === 4 && previousStepRef.current !== 4) {
             setShowPrintTicketButton(false);
             setFinalTabSpinToken((prev) => prev + 1);
-        } else if (activeStep === 4) {
-            setShowPrintTicketButton(true);
         }
         previousStepRef.current = activeStep;
     }, [activeStep]);
@@ -119,7 +138,27 @@ const OnboardingCard: React.FC = () => {
     const isLightBackground = [0, 1, 2].includes(activeStep);
 
     useEffect(() => {
-        if (activeStep !== 1 || !pendingRegId) {
+        const id = getRegIdFromSearch();
+        if (id) setRegId(id);
+    }, []);
+
+    useEffect(() => {
+        if (!regId) return;
+        let cancelled = false;
+        fetch(`/api/registration/${encodeURIComponent(regId)}/status`, { credentials: 'include' })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                if (cancelled || !data) return;
+                const s = (data.status || '').toLowerCase();
+                setRegistrationStatus(s || null);
+                setActiveStep((prev) => (prev === 0 ? statusToStep(s || null) : prev));
+            })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, [regId]);
+
+    useEffect(() => {
+        if (activeStep !== 1 || !regId) {
             if (activeStep !== 1) setPendingStatus('idle');
             return;
         }
@@ -127,7 +166,7 @@ const OnboardingCard: React.FC = () => {
         setPendingStatus('loading');
         const fetchStatus = async () => {
             try {
-                const res = await fetch(`/api/registration/${encodeURIComponent(pendingRegId)}/status`, { credentials: 'include' });
+                const res = await fetch(`/api/registration/${encodeURIComponent(regId)}/status`, { credentials: 'include' });
                 if (cancelled) return;
                 if (!res.ok) {
                     setPendingStatus('error');
@@ -135,6 +174,7 @@ const OnboardingCard: React.FC = () => {
                 }
                 const data = await res.json();
                 const s = (data.status || '').toLowerCase();
+                setRegistrationStatus(s || null);
                 if (s === 'pending_approval') setPendingStatus('pending_approval');
                 else if (s === 'pending_payment') setPendingStatus('pending_payment');
                 else if (s === 'rejected') setPendingStatus('rejected');
@@ -151,16 +191,14 @@ const OnboardingCard: React.FC = () => {
             cancelled = true;
             clearInterval(interval);
         };
-    }, [activeStep, pendingRegId]);
+    }, [activeStep, regId]);
 
     useEffect(() => {
         if (activeStep !== 2) return;
-        const regId = paymentRegId || getRegIdFromSearch();
         if (!regId) {
             setPaymentData(null);
             return;
         }
-        if (!paymentRegId) setPaymentRegId(regId);
         let cancelled = false;
         setPaymentLoading(true);
         (async () => {
@@ -177,6 +215,7 @@ const OnboardingCard: React.FC = () => {
                 }
                 const registration = await regRes.json();
                 if (registration.status === 'confirmed') {
+                    setRegistrationStatus('confirmed');
                     setPaymentData({ registration, settings: { ticket_price: '150', merchant_code: '123456', merchant_name: 'CMC Conference' }, isExpired: false });
                     setPaymentConfirming(true);
                     setPaymentLoading(false);
@@ -203,18 +242,19 @@ const OnboardingCard: React.FC = () => {
             if (!cancelled) setPaymentLoading(false);
         })();
         return () => { cancelled = true; };
-    }, [activeStep, paymentRegId]);
+    }, [activeStep, regId]);
 
     useEffect(() => {
-        if (!paymentSubmitted || !paymentRegId || activeStep !== 2) return;
+        if (!paymentSubmitted || !regId || activeStep !== 2) return;
         let cancelled = false;
         const interval = setInterval(async () => {
             if (cancelled) return;
             try {
-                const res = await fetch(`/api/registration/${paymentRegId}/status`, { credentials: 'include' });
+                const res = await fetch(`/api/registration/${regId}/status`, { credentials: 'include' });
                 if (!cancelled && res.ok) {
                     const data = await res.json();
                     if (data.status === 'confirmed') {
+                        setRegistrationStatus('confirmed');
                         setPaymentConfirming(true);
                         setPaymentSubmitted(false);
                     }
@@ -222,11 +262,10 @@ const OnboardingCard: React.FC = () => {
             } catch { /* ignore */ }
         }, 3000);
         return () => { cancelled = true; clearInterval(interval); };
-    }, [paymentSubmitted, paymentRegId, activeStep]);
+    }, [paymentSubmitted, regId, activeStep]);
 
     useEffect(() => {
         if (activeStep !== 3 && activeStep !== 4) return;
-        const regId = paymentRegId || getRegIdFromSearch();
         if (!regId) {
             setTicketData(null);
             return;
@@ -250,7 +289,7 @@ const OnboardingCard: React.FC = () => {
             .catch(() => { if (!cancelled) setTicketData(null); })
             .finally(() => { if (!cancelled) setTicketLoading(false); });
         return () => { cancelled = true; };
-    }, [activeStep, paymentRegId]);
+    }, [activeStep, regId]);
 
     return (
         <div className={`onboarding-card ${sidebarOpen ? 'sidebar-open' : ''}`}>
@@ -291,7 +330,6 @@ const OnboardingCard: React.FC = () => {
 
                 <div className="sidebar-content-wrapper">
                     <div className="sidebar-header">
-
                         <span className="logo-text">Ghana Competition Law & Policy Seminar.</span>
                     </div>
 
@@ -299,22 +337,28 @@ const OnboardingCard: React.FC = () => {
                         {onboardingSteps.map((step) => {
                             const isCompleted = activeStep > step.id;
                             const isActive = activeStep === step.id;
+                            const isLocked = step.id > maxAllowedStep;
                             let stepClass = "step";
                             if (isCompleted) stepClass += " completed";
                             if (isActive) stepClass += " active";
+                            if (isLocked) stepClass += " step--locked";
 
                             return (
                                 <div
                                     key={step.id}
                                     className={stepClass}
-                                    onClick={() => handleStepClick(step.id)}
+                                    onClick={() => !isLocked && handleStepClick(step.id)}
                                     style={{
-                                        cursor: 'pointer',
+                                        cursor: isLocked ? 'not-allowed' : 'pointer',
                                         '--step-color': step.color
                                     } as React.CSSProperties}
                                 >
                                     <div className="step-icon">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        {isLocked ? (
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                                        ) : (
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        )}
                                     </div>
                                     <div className="step-content">
                                         <div className="step-title">{step.title}</div>
@@ -327,6 +371,13 @@ const OnboardingCard: React.FC = () => {
 
                     <div className="sidebar-footer">
                         <button className="login-link">Laying a Sound Foundation for a New Era.</button>
+                        <a href="/" className="sidebar-home-btn" rel="noopener noreferrer">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                            </svg>
+                            <span>Home</span>
+                        </a>
                     </div>
 
                     {/* Section Break Graphic */}
@@ -423,7 +474,24 @@ const OnboardingCard: React.FC = () => {
                                         return;
                                     }
                                     setVerifyError(null);
-                                    setActiveStep(1);
+                                    let targetStep = 1;
+                                    try {
+                                        const byCodeRes = await fetch(`/api/tickets/by-code/${encodeURIComponent(ticketCode)}`, { credentials: 'include' });
+                                        if (byCodeRes.ok) {
+                                            const byCodeData = await byCodeRes.json();
+                                            const id = byCodeData.id != null ? String(byCodeData.id) : null;
+                                            const status = (byCodeData.status || '').toLowerCase();
+                                            if (id) {
+                                                setRegId(id);
+                                                setRegistrationStatus(status || null);
+                                                targetStep = statusToStep(status || null);
+                                                const url = new URL(window.location.href);
+                                                url.searchParams.set('id', id);
+                                                window.history.replaceState({}, '', url.pathname + url.search);
+                                            }
+                                        }
+                                    } catch { }
+                                    setActiveStep(targetStep);
                                 } catch {
                                     setVerifyError('Unable to verify ticket. Please try again.');
                                 } finally {
@@ -434,18 +502,36 @@ const OnboardingCard: React.FC = () => {
                         >
                             {verifyLoading ? 'Verifying…' : 'Verify'}
                         </button>
+                        <div className="verify-register-cta">
+                            <p className="verify-register-cta__text">Haven&apos;t registered yet? Register for the event to get your ticket.</p>
+                            <a href="/contact" className="verify-register-cta__btn" rel="noopener noreferrer">
+                                Go to registration
+                            </a>
+                        </div>
                     </div>
                 )}
 
                 {activeStep === 1 && (
                     <div className="content-wrapper">
-                        {pendingRegId && pendingStatus === 'loading' && (
+                        {!regId && (
+                            <div className="pending-approval-card pending-approval-card--no-id">
+                                <div className="pending-approval-card__tag">
+                                    <span className="pending-approval-card__label">Registration status</span>
+                                </div>
+                                <h2 className="pending-approval-card__heading">
+                                    Open the link from your email to see your status.
+                                    <br /><br />
+                                    After you register, we send you a link that includes your registration ID. Use that link to check approval and payment status here.
+                                </h2>
+                            </div>
+                        )}
+                        {regId && pendingStatus === 'loading' && (
                             <div className="pending-approval-card pending-approval-card--loading">
                                 <div className="pending-approval-card__spinner" aria-hidden="true" />
                                 <p className="pending-approval-card__loading-text">Checking registration status…</p>
                             </div>
                         )}
-                        {(!pendingRegId || pendingStatus === 'pending_approval' || pendingStatus === 'awaiting_verification') && pendingStatus !== 'loading' && (
+                        {regId && (pendingStatus === 'pending_approval' || pendingStatus === 'awaiting_verification') && (
                             <div className="pending-approval-card">
                                 <div className="pending-approval-card__tag">
                                     <span className="pending-approval-card__icon" aria-hidden="true">
@@ -475,7 +561,7 @@ const OnboardingCard: React.FC = () => {
                                 </a>
                             </div>
                         )}
-                        {pendingRegId && pendingStatus === 'pending_payment' && (
+                        {regId && pendingStatus === 'pending_payment' && (
                             <div className="pending-approval-card pending-approval-card--approved">
                                 <div className="pending-approval-card__tag">
                                     <span className="pending-approval-card__icon pending-approval-card__icon--success" aria-hidden="true">✓</span>
@@ -488,7 +574,6 @@ const OnboardingCard: React.FC = () => {
                                     type="button"
                                     className="pending-approval-card__btn"
                                     onClick={() => {
-                                        setPaymentRegId(pendingRegId);
                                         setPaymentData(null);
                                         setPaymentSubmitted(false);
                                         setActiveStep(2);
@@ -503,7 +588,7 @@ const OnboardingCard: React.FC = () => {
                                 </button>
                             </div>
                         )}
-                        {pendingRegId && pendingStatus === 'rejected' && (
+                        {regId && pendingStatus === 'rejected' && (
                             <div className="pending-approval-card pending-approval-card--rejected">
                                 <div className="pending-approval-card__tag">
                                     <span className="pending-approval-card__icon pending-approval-card__icon--rejected" aria-hidden="true">✕</span>
@@ -514,7 +599,7 @@ const OnboardingCard: React.FC = () => {
                                 </h2>
                             </div>
                         )}
-                        {pendingRegId && pendingStatus === 'confirmed' && (
+                        {regId && pendingStatus === 'confirmed' && (
                             <div className="pending-approval-card pending-approval-card--confirmed">
                                 <div className="pending-approval-card__tag">
                                     <span className="pending-approval-card__icon pending-approval-card__icon--success" aria-hidden="true">✓</span>
@@ -525,7 +610,7 @@ const OnboardingCard: React.FC = () => {
                                 </h2>
                             </div>
                         )}
-                        {pendingRegId && pendingStatus === 'error' && (
+                        {regId && pendingStatus === 'error' && (
                             <div className="pending-approval-card pending-approval-card--error">
                                 <div className="pending-approval-card__tag">
                                     <span className="pending-approval-card__label">Registration not found</span>
@@ -535,7 +620,9 @@ const OnboardingCard: React.FC = () => {
                                 </h2>
                             </div>
                         )}
-                        <button className="continue-btn" onClick={() => setActiveStep(2)}>Continue</button>
+                        {maxAllowedStep >= 2 && (
+                            <button className="continue-btn" onClick={() => setActiveStep(2)}>Continue</button>
+                        )}
                     </div>
                 )}
 
@@ -547,16 +634,16 @@ const OnboardingCard: React.FC = () => {
                                 <p className="payment-card__loading-text">Loading payment details…</p>
                             </div>
                         )}
-                        {!paymentLoading && !paymentData && (paymentRegId || getRegIdFromSearch()) && (
+                        {!paymentLoading && !paymentData && regId && (
                             <div className="payment-card payment-card--error">
                                 <p className="payment-card__heading">Registration not found</p>
                                 <p className="payment-card__sub">We couldn&apos;t load this payment.</p>
                             </div>
                         )}
-                        {!paymentLoading && !paymentRegId && !getRegIdFromSearch() && (
-                            <div className="payment-card payment-card--error">
-                                <p className="payment-card__heading">No registration</p>
-                                <p className="payment-card__sub">Go to Registration status and use Complete Payment, or open this page with ?id= your registration ID.</p>
+                        {!paymentLoading && !regId && (
+                            <div className="payment-card payment-card--no-id">
+                                <p className="payment-card__heading">Open the link from your email</p>
+                                <p className="payment-card__sub">To see your payment details and complete payment, use the link we sent you after registration (it includes your registration ID).</p>
                             </div>
                         )}
                         {!paymentLoading && paymentData?.isExpired && (
@@ -605,32 +692,64 @@ const OnboardingCard: React.FC = () => {
                                     <span>Total</span>
                                     <span>GHS {paymentData.settings.ticket_price}.00</span>
                                 </div>
-                                <button
-                                    type="button"
-                                    className="payment-card__submit"
-                                    onClick={async () => {
-                                        if (!paymentRegId) return;
-                                        setPaymentLoading(true);
-                                        try {
-                                            const res = await fetch('/api/payment-submitted', {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ registrationId: paymentRegId }),
-                                                credentials: 'include'
-                                            });
-                                            if (res.ok) {
-                                                setPaymentSubmitted(true);
-                                            } else throw new Error();
-                                        } catch {
+                                <div className="payment-card__actions">
+                                    <button
+                                        type="button"
+                                        className="payment-card__submit payment-card__submit--secondary"
+                                        onClick={async () => {
+                                            if (!regId) return;
+                                            setPaymentLoading(true);
+                                            try {
+                                                const res = await fetch('/api/pay', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ registrationId: regId }),
+                                                    credentials: 'include'
+                                                });
+                                                if (res.ok) {
+                                                    setRegistrationStatus('confirmed');
+                                                    setPaymentConfirming(true);
+                                                } else {
+                                                    const data = await res.json().catch(() => ({}));
+                                                    alert(data.error || data.detail || 'Payment could not be completed.');
+                                                }
+                                            } catch {
+                                                alert('Something went wrong. Please try again.');
+                                            } finally {
+                                                setPaymentLoading(false);
+                                            }
+                                        }}
+                                        disabled={paymentLoading}
+                                    >
+                                        Pay now
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="payment-card__submit"
+                                        onClick={async () => {
+                                            if (!regId) return;
+                                            setPaymentLoading(true);
+                                            try {
+                                                const res = await fetch('/api/payment-submitted', {
+                                                    method: 'POST',
+                                                    headers: { 'Content-Type': 'application/json' },
+                                                    body: JSON.stringify({ registrationId: regId }),
+                                                    credentials: 'include'
+                                                });
+                                                if (res.ok) {
+                                                    setPaymentSubmitted(true);
+                                                } else throw new Error();
+                                            } catch {
+                                                setPaymentLoading(false);
+                                                alert('Something went wrong. Please try again.');
+                                                return;
+                                            }
                                             setPaymentLoading(false);
-                                            alert('Something went wrong. Please try again.');
-                                            return;
-                                        }
-                                        setPaymentLoading(false);
-                                    }}
-                                >
-                                    I have made payment
-                                </button>
+                                        }}
+                                    >
+                                        I have made payment
+                                    </button>
+                                </div>
                             </div>
                         )}
                         {!paymentLoading && paymentData && paymentSubmitted && !paymentConfirming && (
@@ -647,19 +766,27 @@ const OnboardingCard: React.FC = () => {
                                 <p className="payment-card__sub">Your registration is confirmed. See you at the event!</p>
                             </div>
                         )}
-                        <button className="continue-btn" onClick={() => setActiveStep(3)}>Continue</button>
+                        {maxAllowedStep >= 3 && (
+                            <button className="continue-btn" onClick={() => setActiveStep(3)}>Continue</button>
+                        )}
                     </div>
                 )}
 
                 {activeStep === 3 && (
                     <div className="content-wrapper receive-ticket-tab">
-                        {ticketLoading && (
+                        {!regId && (
+                            <div className="payment-card payment-card--no-id">
+                                <p className="payment-card__heading">Open the link from your email</p>
+                                <p className="payment-card__sub">To view your ticket, use the link we sent you after registration (it includes your registration ID).</p>
+                            </div>
+                        )}
+                        {regId && ticketLoading && (
                             <div className="payment-card payment-card--loading">
                                 <div className="payment-card__spinner" aria-hidden="true" />
                                 <p className="payment-card__loading-text">Loading your ticket…</p>
                             </div>
                         )}
-                        {!ticketLoading && (
+                        {regId && !ticketLoading && (
                             <TicketCard
                                 name={ticketData?.full_name}
                                 ticketCode={ticketData?.ticket_code}
@@ -670,47 +797,127 @@ const OnboardingCard: React.FC = () => {
                 )}
 
                 {activeStep === 4 && (
-                    <div className="content-wrapper receive-ticket-tab">
-                        {ticketLoading && (
-                            <div className="payment-card payment-card--loading">
-                                <div className="payment-card__spinner" aria-hidden="true" />
-                                <p className="payment-card__loading-text">Loading your ticket…</p>
-                            </div>
-                        )}
-                        {!ticketLoading && (
-                            <TicketCard
-                                name={ticketData?.full_name}
-                                ticketCode={ticketData?.ticket_code}
-                                qrImage={ticketData?.qr_image}
-                                spinOnceToken={finalTabSpinToken}
-                                onSpinComplete={() => setShowPrintTicketButton(true)}
-                                pinToRight
-                            >
-                                {showPrintTicketButton && (
-                                    <div className="print-ticket-btn-wrap">
+                    <>
+                    <Confetti active={showPrintTicketButton} />
+                    <div className="see-you-tab">
+                        <div className={`see-you-tab__left ${showPrintTicketButton ? 'see-you-tab__left--visible' : ''}`}>
+                            {showPrintTicketButton && (
+                                <>
+                                    <h2 className="see-you-tab__heading">You're in!</h2>
+                                    <CountdownCard />
+                                    <a
+                                        href="https://maps.app.goo.gl/mj8J9C9djk545Sep9"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="countdown-directions-btn"
+                                    >
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <polygon points="3 11 22 2 13 21 11 13 3 11" />
+                                        </svg>
+                                        Directions
+                                    </a>
+                                    <a
+                                        href="/#team-section"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="countdown-ask-card countdown-ask-card--speakers"
+                                    >
+                                        <div>
+                                            <p className="countdown-ask-card__label">Who's presenting?</p>
+                                            <p className="countdown-ask-card__heading">Read about speakers</p>
+                                        </div>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M5 12h14M12 5l7 7-7 7" />
+                                        </svg>
+                                    </a>
+                                    <a
+                                        href="/#footer"
+                                        className="countdown-ask-card"
+                                    >
+                                        <div>
+                                            <p className="countdown-ask-card__label">Have a question?</p>
+                                            <p className="countdown-ask-card__heading">Ask about seminar</p>
+                                        </div>
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <path d="M5 12h14M12 5l7 7-7 7" />
+                                        </svg>
+                                    </a>
+                                </>
+                            )}
+                        </div>
+
+                        <div className="see-you-tab__right">
+                            {!regId && (
+                                <div className="payment-card payment-card--no-id">
+                                    <p className="payment-card__heading">Open the link from your email</p>
+                                    <p className="payment-card__sub">To view your ticket, use the link we sent you after registration.</p>
+                                </div>
+                            )}
+                            {regId && ticketLoading && (
+                                <div className="payment-card payment-card--loading">
+                                    <div className="payment-card__spinner" aria-hidden="true" />
+                                    <p className="payment-card__loading-text">Loading your ticket…</p>
+                                </div>
+                            )}
+                            {regId && !ticketLoading && (
+                                <TicketCard
+                                    name={ticketData?.full_name}
+                                    ticketCode={ticketData?.ticket_code}
+                                    qrImage={ticketData?.qr_image}
+                                    spinOnceToken={finalTabSpinToken}
+                                    onSpinComplete={() => setShowPrintTicketButton(true)}
+                                >
+                                    {showPrintTicketButton && (
                                         <button
                                             type="button"
                                             className="print-ticket-btn"
-                                            onClick={() => window.print()}
+                                            onClick={async () => {
+                                                try {
+                                                    const res = await fetch('/api/ticket-pdf', {
+                                                        method: 'POST',
+                                                        headers: { 'Content-Type': 'application/json' },
+                                                        credentials: 'include',
+                                                        body: JSON.stringify({
+                                                            ticketCode: ticketData?.ticket_code,
+                                                            fullName: ticketData?.full_name,
+                                                            qrImage: ticketData?.qr_image ?? null
+                                                        })
+                                                    });
+                                                    if (!res.ok) throw new Error('PDF failed');
+                                                    const blob = await res.blob();
+                                                    const url = URL.createObjectURL(blob);
+                                                    const a = document.createElement('a');
+                                                    a.href = url;
+                                                    a.download = `ticket-${ticketData?.ticket_code ?? 'conference'}.pdf`;
+                                                    a.click();
+                                                    URL.revokeObjectURL(url);
+                                                } catch {
+                                                    alert('Could not generate PDF. Please try again.');
+                                                }
+                                            }}
                                         >
                                             Print ticket
                                         </button>
-                                    </div>
-                                )}
-                            </TicketCard>
-                        )}
+                                    )}
+                                </TicketCard>
+                            )}
+                        </div>
                     </div>
+                    </>
                 )}
 
                 <div className="onboarding-footer-controls" style={{ marginTop: 'auto', maxWidth: '400px', width: '100%' }}>
                     <div className="pagination-dots">
-                        {onboardingSteps.map((step) => (
-                            <span
-                                key={step.id}
-                                className={`dot ${activeStep === step.id ? 'active' : ''}`}
-                                onClick={() => handleStepClick(step.id)}
-                            ></span>
-                        ))}
+                        {onboardingSteps.map((step) => {
+                            const isLocked = step.id > maxAllowedStep;
+                            return (
+                                <span
+                                    key={step.id}
+                                    className={`dot ${activeStep === step.id ? 'active' : ''} ${isLocked ? 'dot--locked' : ''}`}
+                                    onClick={() => !isLocked && handleStepClick(step.id)}
+                                ></span>
+                            );
+                        })}
                     </div>
                     <p className="active-step-label">{onboardingSteps[activeStep].title}</p>
                     <button className="help-btn">
