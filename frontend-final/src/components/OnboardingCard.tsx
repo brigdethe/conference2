@@ -21,20 +21,22 @@ const onboardingSteps = [
 
 const POLL_INTERVAL_MS = 5000;
 
-function statusToMaxStep(status: string | null): number {
+function statusToMaxStep(status: string | null, ticketType?: string | null): number {
     if (!status) return 0;
     const s = status.toLowerCase();
+    const isAccessCode = ticketType?.toLowerCase() === 'access code';
     if (s === 'confirmed') return 3;
-    if (s === 'pending_payment') return 2;
+    if (s === 'pending_payment') return isAccessCode ? 3 : 2;
     if (s === 'pending_approval' || s === 'awaiting_verification' || s === 'payment_submitted' || s === 'rejected' || s === 'error') return 1;
     return 1;
 }
 
-function statusToStep(status: string | null): number {
+function statusToStep(status: string | null, ticketType?: string | null): number {
     if (!status) return 1;
     const s = status.toLowerCase();
+    const isAccessCode = ticketType?.toLowerCase() === 'access code';
     if (s === 'confirmed') return 3;
-    if (s === 'pending_payment') return 2;
+    if (s === 'pending_payment') return isAccessCode ? 3 : 2;
     return 1;
 }
 
@@ -62,6 +64,7 @@ const OnboardingCard: React.FC = () => {
         firm_name?: string | null;
     } | null>(null);
     const [ticketLoading, setTicketLoading] = useState(false);
+    const [ticketType, setTicketType] = useState<string | null>(null);
     const [prevColor, setPrevColor] = useState(onboardingSteps[0].color);
     const [isAnimating, setIsAnimating] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -79,7 +82,7 @@ const OnboardingCard: React.FC = () => {
         touchStartX.current = e.changedTouches[0].screenX;
     };
 
-    const maxAllowedStep = !regId ? 0 : (registrationStatus !== null ? statusToMaxStep(registrationStatus) : 0);
+    const maxAllowedStep = !regId ? 0 : (registrationStatus !== null ? statusToMaxStep(registrationStatus, ticketType) : 0);
 
     const handleTouchEnd = (e: React.TouchEvent) => {
         touchEndX.current = e.changedTouches[0].screenX;
@@ -149,8 +152,10 @@ const OnboardingCard: React.FC = () => {
             .then((data) => {
                 if (cancelled || !data) return;
                 const s = (data.status || '').toLowerCase();
+                const tt = data.ticket_type || null;
                 setRegistrationStatus(s || null);
-                setActiveStep((prev) => (prev === 0 ? statusToStep(s || null) : prev));
+                setTicketType(tt);
+                setActiveStep((prev) => (prev === 0 ? statusToStep(s || null, tt) : prev));
             })
             .catch(() => {});
         return () => { cancelled = true; };
@@ -173,7 +178,9 @@ const OnboardingCard: React.FC = () => {
                 }
                 const data = await res.json();
                 const s = (data.status || '').toLowerCase();
+                const tt = data.ticket_type || null;
                 setRegistrationStatus(s || null);
+                setTicketType(tt);
                 if (s === 'pending_approval') setPendingStatus('pending_approval');
                 else if (s === 'pending_payment') setPendingStatus('pending_payment');
                 else if (s === 'rejected') setPendingStatus('rejected');
@@ -630,7 +637,7 @@ const OnboardingCard: React.FC = () => {
                             </div>
                         )}
                         {maxAllowedStep >= 2 && (
-                            <button className="continue-btn" onClick={() => setActiveStep(2)}>Continue</button>
+                            <button className="continue-btn" onClick={() => setActiveStep(ticketType?.toLowerCase() === 'access code' ? 3 : 2)}>Continue</button>
                         )}
                     </div>
                 )}

@@ -52,11 +52,19 @@ document.addEventListener("DOMContentLoaded", () => {
     menuButton.setAttribute("aria-controls", mobileMenu.id);
     menuButton.setAttribute("aria-haspopup", "true");
 
-    menuButton.addEventListener("click", (event) => {
+    let lastToggleTime = 0;
+    function handleMenuToggle(event) {
         event.preventDefault();
+        event.stopPropagation();
         if (!isMobileViewport()) return;
+        const now = Date.now();
+        if (now - lastToggleTime < 300) return;
+        lastToggleTime = now;
         toggleMenu();
-    });
+    }
+
+    menuButton.addEventListener("click", handleMenuToggle);
+    menuButton.addEventListener("touchend", handleMenuToggle, { passive: false });
 
     footerLinks.forEach((link) => {
         link.addEventListener("click", (event) => {

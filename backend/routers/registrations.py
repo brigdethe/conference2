@@ -403,7 +403,8 @@ def get_registration_status(registration_id: int, db: Session = Depends(get_db))
     
     return {
         "status": registration.status,
-        "ticket_code": registration.ticket_code
+        "ticket_code": registration.ticket_code,
+        "ticket_type": registration.ticket_type
     }
 
 
