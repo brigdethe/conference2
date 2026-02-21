@@ -487,27 +487,6 @@ app.get('/payment', async (req, res) => {
   }
 });
 
-app.post('/api/pay', paymentLimiter, async (req, res) => {
-  const { registrationId } = req.body;
-
-  try {
-    const response = await fetchBackend(`/api/payments/pay?registration_id=${registrationId}`, {
-      method: 'POST',
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return res.status(response.status).json(data);
-    }
-
-    res.json(data);
-  } catch (error) {
-    console.error('Error processing payment:', error);
-    res.status(500).json({ error: 'Failed to process payment' });
-  }
-});
-
 app.post('/api/payment-submitted', paymentLimiter, async (req, res) => {
   const { registrationId } = req.body;
 

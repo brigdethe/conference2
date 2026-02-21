@@ -1,8 +1,11 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from database import get_db
+
+logger = logging.getLogger(__name__)
 from models import Payment, Registration, Settings
 from schemas import PaymentCreate, PaymentResponse
 from utils import generate_ticket_code, generate_qr_data
@@ -95,8 +98,12 @@ async def confirm_payment(payment_id: int, db: Session = Depends(get_db)):
     ).first()
     
     if registration:
+        from_status = registration.status
         registration.status = "confirmed"
-        
+        logger.info(
+            "registration_status_change registration_id=%s from_status=%s to_status=confirmed email=%s",
+            registration.id, from_status, registration.email or ""
+        )
         if not registration.ticket_code:
             ticket_code = generate_ticket_code()
             while db.query(Registration).filter(
@@ -139,49 +146,22 @@ def process_payment(registration_id: int, db: Session = Depends(get_db)):
     ).first()
     if not registration:
         raise HTTPException(status_code=404, detail="Registration not found")
-    
     if registration.status == "confirmed":
         return {"success": True, "message": "Already confirmed"}
-    
     ticket_price = int(get_setting(db, "ticket_price", "150"))
     merchant_code = get_setting(db, "merchant_code", "")
-    
     existing_payment = db.query(Payment).filter(
         Payment.registration_id == registration_id
     ).first()
-    
     if not existing_payment:
         payment = Payment(
             registration_id=registration_id,
             amount=ticket_price,
             merchant_code=merchant_code,
-            status="confirmed"
+            status="pending"
         )
         db.add(payment)
-    else:
-        existing_payment.status = "confirmed"
-    
-    registration.status = "confirmed"
-    
-    if not registration.ticket_code:
-        ticket_code = generate_ticket_code()
-        while db.query(Registration).filter(
-            Registration.ticket_code == ticket_code
-        ).first():
-            ticket_code = generate_ticket_code()
-        
-        qr_data = generate_qr_data(
-            ticket_code=ticket_code,
-            registration_id=registration.id,
-            full_name=registration.full_name,
-            firm_name=registration.firm.name if registration.firm else None
-        )
-        
-        registration.ticket_code = ticket_code
-        registration.qr_data = qr_data
-    
     db.commit()
-    
     return {"success": True}
 
 

@@ -566,21 +566,8 @@ const OnboardingCard: React.FC = () => {
                                 <h2 className="pending-approval-card__heading">
                                     Your registration is being reviewed.
                                     <br /><br />
-                                    We&apos;ll contact you via WhatsApp when it&apos;s approved or if we need more information.
+                                    We&apos;ll contact you via email when it&apos;s approved or if we need more information.
                                 </h2>
-                                <a
-                                    href="https://wa.me/233XXXXXXXXX"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="pending-approval-card__btn"
-                                >
-                                    <span>WhatsApp</span>
-                                    <span className="pending-approval-card__btn-icon">
-                                        <svg width="17" height="10" viewBox="0 0 17 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M10.7402 0.758789C11.1101 1.43055 11.6506 1.99534 12.335 2.67969L12.3369 2.68066C12.563 2.90815 12.7969 3.12518 13.0391 3.32129L13.2979 3.52148C13.5554 3.71189 13.8112 3.87433 14.0771 4.00781L14.0908 4.01465C14.1127 4.0265 14.1327 4.03626 14.1494 4.04297L14.1738 4.05371C14.8406 4.36321 15.5323 4.46164 16.3486 4.48926L16.6221 4.49805L16.8135 4.49219V4.50488L16.8486 4.50684L16.8311 4.99805L16.8496 5.49121L16.8145 5.49219V5.50586L16.6299 5.49902L16.3496 5.50977C15.5318 5.53888 14.8415 5.6347 14.1758 5.94629L14.1494 5.95801C14.1326 5.96472 14.1128 5.97443 14.0908 5.98633L14.0742 5.99512C13.7223 6.16906 13.388 6.39803 13.04 6.67871C12.7966 6.87576 12.5613 7.09202 12.335 7.31836C11.6504 8.00447 11.1101 8.56842 10.7402 9.24023L10.499 9.67773L9.62305 9.19629L9.86426 8.75781C10.2003 8.14756 10.6449 7.6253 11.1309 7.11719L11.6279 6.61133C11.8735 6.36578 12.1346 6.12418 12.4111 5.90039H12.4121C12.5856 5.76046 12.7623 5.62776 12.9443 5.50391H0.5V4.50391H12.9561C12.8708 4.44617 12.7863 4.38669 12.7031 4.3252L12.4131 4.10156L12.4111 4.10059C12.1342 3.87643 11.873 3.63336 11.6279 3.38672L11.1309 2.88184C10.6449 2.37432 10.2003 1.85144 9.86426 1.24121L9.62305 0.803711L10.499 0.321289L10.7402 0.758789Z" fill="currentColor" />
-                                        </svg>
-                                    </span>
-                                </a>
                             </div>
                         )}
                         {regId && pendingStatus === 'pending_payment' && (
@@ -715,36 +702,6 @@ const OnboardingCard: React.FC = () => {
                                     <span>GHS {paymentData.settings.ticket_price}.00</span>
                                 </div>
                                 <div className="payment-card__actions">
-                                    <button
-                                        type="button"
-                                        className="payment-card__submit payment-card__submit--secondary"
-                                        onClick={async () => {
-                                            if (!regId) return;
-                                            setPaymentLoading(true);
-                                            try {
-                                                const res = await fetch('/api/pay', {
-                                                    method: 'POST',
-                                                    headers: { 'Content-Type': 'application/json' },
-                                                    body: JSON.stringify({ registrationId: regId }),
-                                                    credentials: 'include'
-                                                });
-                                                if (res.ok) {
-                                                    setRegistrationStatus('confirmed');
-                                                    setPaymentConfirming(true);
-                                                } else {
-                                                    const data = await res.json().catch(() => ({}));
-                                                    alert(data.error || data.detail || 'Payment could not be completed.');
-                                                }
-                                            } catch {
-                                                alert('Something went wrong. Please try again.');
-                                            } finally {
-                                                setPaymentLoading(false);
-                                            }
-                                        }}
-                                        disabled={paymentLoading}
-                                    >
-                                        Pay now
-                                    </button>
                                     <button
                                         type="button"
                                         className="payment-card__submit"

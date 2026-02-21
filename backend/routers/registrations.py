@@ -1,9 +1,19 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
 
 from database import get_db
+
+logger = logging.getLogger(__name__)
+
+
+def _log_registration_status(registration_id: int, from_status: str, to_status: str, email: Optional[str] = None):
+    logger.info(
+        "registration_status_change registration_id=%s from_status=%s to_status=%s email=%s",
+        registration_id, from_status, to_status, email or ""
+    )
 from models import LawFirm, Registration, Settings
 from schemas import RegistrationCreate, RegistrationResponse
 from utils import generate_ticket_code, generate_qr_data
@@ -250,7 +260,7 @@ async def create_registration(
     db.add(registration)
     db.commit()
     db.refresh(registration)
-    
+    _log_registration_status(registration.id, "", status, registration.email)
     if status == "confirmed":
         ticket_code = generate_ticket_code()
         while db.query(Registration).filter(
@@ -405,9 +415,10 @@ async def mark_payment_submitted(registration_id: int, db: Session = Depends(get
     if not registration:
         raise HTTPException(status_code=404, detail="Registration not found")
     
-    # Update status to awaiting_verification so admin can see it
+    from_status = registration.status
     registration.status = "awaiting_verification"
     db.commit()
+    _log_registration_status(registration.id, from_status, "awaiting_verification", registration.email)
     
     # Get ticket price for notification
     ticket_price = int(get_setting(db, "ticket_price", "150"))
@@ -432,11 +443,13 @@ async def verify_payment(registration_id: int, db: Session = Depends(get_db)):
     ).first()
     if not registration:
         raise HTTPException(status_code=404, detail="Registration not found")
-    
     if registration.status == "confirmed":
         return {"success": True, "message": "Already confirmed"}
-    
-    # Generate ticket code if not exists
+    if registration.status != "awaiting_verification":
+        raise HTTPException(
+            status_code=400,
+            detail="Payment must be submitted first before admin can verify."
+        )
     if not registration.ticket_code:
         ticket_code = generate_ticket_code()
         while db.query(Registration).filter(
@@ -454,11 +467,10 @@ async def verify_payment(registration_id: int, db: Session = Depends(get_db)):
         registration.ticket_code = ticket_code
         registration.qr_data = qr_data
     
-    # Confirm the registration
+    from_status = registration.status
     registration.status = "confirmed"
     db.commit()
-    
-    # Send ticket notification to user
+    _log_registration_status(registration.id, from_status, "confirmed", registration.email)
     await send_ticket_notification(
         db=db,
         email=registration.email,
@@ -468,47 +480,11 @@ async def verify_payment(registration_id: int, db: Session = Depends(get_db)):
         qr_data=registration.qr_data,
         org_name=registration.firm.name if registration.firm else None
     )
-    
     return {
-        "success": True, 
+        "success": True,
         "message": "Payment verified and confirmation sent",
         "ticket_code": registration.ticket_code
     }
-
-
-@router.patch("/{registration_id}/confirm")
-def confirm_registration(registration_id: int, db: Session = Depends(get_db)):
-    registration = db.query(Registration).filter(
-        Registration.id == registration_id
-    ).first()
-    if not registration:
-        raise HTTPException(status_code=404, detail="Registration not found")
-    
-    if registration.status == "confirmed":
-        return {"success": True, "message": "Already confirmed"}
-    
-    registration.status = "confirmed"
-    
-    if not registration.ticket_code:
-        ticket_code = generate_ticket_code()
-        while db.query(Registration).filter(
-            Registration.ticket_code == ticket_code
-        ).first():
-            ticket_code = generate_ticket_code()
-        
-        qr_data = generate_qr_data(
-            ticket_code=ticket_code,
-            registration_id=registration.id,
-            full_name=registration.full_name,
-            firm_name=registration.firm.name if registration.firm else None
-        )
-        
-        registration.ticket_code = ticket_code
-        registration.qr_data = qr_data
-    
-    db.commit()
-    
-    return {"success": True}
 
 
 @router.post("/{registration_id}/approve")
@@ -525,11 +501,11 @@ async def approve_registration(registration_id: int, db: Session = Depends(get_d
     
     if registration.status != "pending_approval":
         raise HTTPException(status_code=400, detail="Registration is not pending approval")
-    
-    # Update status and set approved_at timestamp
+    from_status = registration.status
     registration.status = "pending_payment"
     registration.approved_at = datetime.utcnow()
     db.commit()
+    _log_registration_status(registration.id, from_status, "pending_payment", registration.email)
     
     # Send payment link notification
     await send_approval_with_payment_link(
@@ -567,10 +543,10 @@ async def reject_registration(
     
     if registration.status != "pending_approval":
         raise HTTPException(status_code=400, detail="Registration is not pending approval")
-    
-    # Update status to rejected
+    from_status = registration.status
     registration.status = "rejected"
     db.commit()
+    _log_registration_status(registration.id, from_status, "rejected", registration.email)
     
     # Send rejection notification
     rejection_reason = data.reason if data else None
