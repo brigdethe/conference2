@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import QRCodeSection from './QRCodeSection';
+import TicketCard from './TicketCard';
 
 type PendingStatus = 'idle' | 'loading' | 'pending_approval' | 'pending_payment' | 'rejected' | 'confirmed' | 'awaiting_verification' | 'error';
 
@@ -12,8 +13,8 @@ function getRegIdFromSearch(): string | null {
 const onboardingSteps = [
     { id: 0, title: 'Verify your ticket', desc: 'Enter your ticket code or scan your QR code', color: '#f8efe6', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg?updatedAt=1770793618312' },
     { id: 1, title: 'Registration status', desc: 'Check approval and payment status', color: '#b7dcc2', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
-    { id: 2, title: 'Choose a password', desc: 'Must be at least 8 characters', color: '#ddd4cc', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
-    { id: 3, title: 'Invite your team', desc: 'Start collaborating with your team', color: '#8f6248', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
+    { id: 2, title: 'Complete payment', desc: 'Pay with MTN MoMo', color: '#ddd4cc', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
+    { id: 3, title: 'Receive ticket', desc: 'Your conference ticket', color: '#8f6248', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
     { id: 4, title: 'Add your socials', desc: 'Share posts to your social accounts', color: '#3d2b27', bg: 'https://ik.imagekit.io/dr5fryhth/conference/Accra_xxxxxxxxx_i116585_13by5.webp?updatedAt=1771048872912' }
 ];
 
@@ -27,6 +28,22 @@ const OnboardingCard: React.FC = () => {
     const [verifyError, setVerifyError] = useState<string | null>(null);
     const [pendingRegId] = useState<string | null>(() => getRegIdFromSearch());
     const [pendingStatus, setPendingStatus] = useState<PendingStatus>('idle');
+    const [paymentRegId, setPaymentRegId] = useState<string | null>(null);
+    const [paymentData, setPaymentData] = useState<{
+        registration: { id: number; full_name: string; email: string; firm_name: string | null } | null;
+        settings: { ticket_price: string; merchant_code: string; merchant_name: string };
+        isExpired: boolean;
+    } | null>(null);
+    const [paymentLoading, setPaymentLoading] = useState(false);
+    const [paymentSubmitted, setPaymentSubmitted] = useState(false);
+    const [paymentConfirming, setPaymentConfirming] = useState(false);
+    const [ticketData, setTicketData] = useState<{
+        full_name: string;
+        ticket_code: string;
+        qr_image?: string | null;
+        firm_name?: string | null;
+    } | null>(null);
+    const [ticketLoading, setTicketLoading] = useState(false);
     const [prevColor, setPrevColor] = useState(onboardingSteps[0].color);
     const [isAnimating, setIsAnimating] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -122,6 +139,105 @@ const OnboardingCard: React.FC = () => {
             clearInterval(interval);
         };
     }, [activeStep, pendingRegId]);
+
+    useEffect(() => {
+        if (activeStep !== 2) return;
+        const regId = paymentRegId || getRegIdFromSearch();
+        if (!regId) {
+            setPaymentData(null);
+            return;
+        }
+        if (!paymentRegId) setPaymentRegId(regId);
+        let cancelled = false;
+        setPaymentLoading(true);
+        (async () => {
+            try {
+                const [regRes, setRes] = await Promise.all([
+                    fetch(`/api/registrations/${regId}`, { credentials: 'include' }),
+                    fetch('/api/settings', { credentials: 'include' })
+                ]);
+                if (cancelled) return;
+                if (!regRes.ok) {
+                    setPaymentData(null);
+                    setPaymentLoading(false);
+                    return;
+                }
+                const registration = await regRes.json();
+                if (registration.status === 'confirmed') {
+                    setPaymentData({ registration, settings: { ticket_price: '150', merchant_code: '123456', merchant_name: 'CMC Conference' }, isExpired: false });
+                    setPaymentConfirming(true);
+                    setPaymentLoading(false);
+                    return;
+                }
+                let isExpired = false;
+                if (registration.approved_at) {
+                    const approvedAt = new Date(registration.approved_at).getTime();
+                    isExpired = (Date.now() - approvedAt) > 3 * 24 * 60 * 60 * 1000;
+                }
+                let settings = { ticket_price: '150', merchant_code: '123456', merchant_name: 'CMC Conference' };
+                if (setRes.ok) {
+                    const setArr = await setRes.json();
+                    setArr.forEach((s: { key: string; value: string }) => {
+                        if (s.key === 'ticket_price' && s.value) settings.ticket_price = s.value;
+                        if (s.key === 'merchant_code' && s.value) settings.merchant_code = s.value;
+                        if (s.key === 'merchant_name' && s.value) settings.merchant_name = s.value;
+                    });
+                }
+                if (!cancelled) setPaymentData({ registration, settings, isExpired });
+            } catch {
+                if (!cancelled) setPaymentData(null);
+            }
+            if (!cancelled) setPaymentLoading(false);
+        })();
+        return () => { cancelled = true; };
+    }, [activeStep, paymentRegId]);
+
+    useEffect(() => {
+        if (!paymentSubmitted || !paymentRegId || activeStep !== 2) return;
+        let cancelled = false;
+        const interval = setInterval(async () => {
+            if (cancelled) return;
+            try {
+                const res = await fetch(`/api/registration/${paymentRegId}/status`, { credentials: 'include' });
+                if (!cancelled && res.ok) {
+                    const data = await res.json();
+                    if (data.status === 'confirmed') {
+                        setPaymentConfirming(true);
+                        setPaymentSubmitted(false);
+                    }
+                }
+            } catch { /* ignore */ }
+        }, 3000);
+        return () => { cancelled = true; clearInterval(interval); };
+    }, [paymentSubmitted, paymentRegId, activeStep]);
+
+    useEffect(() => {
+        if (activeStep !== 3) return;
+        const regId = paymentRegId || getRegIdFromSearch();
+        if (!regId) {
+            setTicketData(null);
+            return;
+        }
+        let cancelled = false;
+        setTicketLoading(true);
+        fetch(`/api/registration/${regId}/ticket`, { credentials: 'include' })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                if (cancelled || !data) {
+                    if (!cancelled) setTicketData(null);
+                    return;
+                }
+                setTicketData({
+                    full_name: data.full_name ?? '—',
+                    ticket_code: data.ticket_code ?? '—',
+                    qr_image: data.qr_image ?? null,
+                    firm_name: data.firm_name ?? null
+                });
+            })
+            .catch(() => { if (!cancelled) setTicketData(null); })
+            .finally(() => { if (!cancelled) setTicketLoading(false); });
+        return () => { cancelled = true; };
+    }, [activeStep, paymentRegId]);
 
     return (
         <div className={`onboarding-card ${sidebarOpen ? 'sidebar-open' : ''}`}>
@@ -355,9 +471,15 @@ const OnboardingCard: React.FC = () => {
                                 <h2 className="pending-approval-card__heading">
                                     Your registration has been approved. Please complete payment.
                                 </h2>
-                                <a
-                                    href={`/payment?id=${pendingRegId}`}
+                                <button
+                                    type="button"
                                     className="pending-approval-card__btn"
+                                    onClick={() => {
+                                        setPaymentRegId(pendingRegId);
+                                        setPaymentData(null);
+                                        setPaymentSubmitted(false);
+                                        setActiveStep(2);
+                                    }}
                                 >
                                     <span>Complete Payment</span>
                                     <span className="pending-approval-card__btn-icon">
@@ -365,7 +487,7 @@ const OnboardingCard: React.FC = () => {
                                             <path d="M10.7402 0.758789C11.1101 1.43055 11.6506 1.99534 12.335 2.67969L12.3369 2.68066C12.563 2.90815 12.7969 3.12518 13.0391 3.32129L13.2979 3.52148C13.5554 3.71189 13.8112 3.87433 14.0771 4.00781L14.0908 4.01465C14.1127 4.0265 14.1327 4.03626 14.1494 4.04297L14.1738 4.05371C14.8406 4.36321 15.5323 4.46164 16.3486 4.48926L16.6221 4.49805L16.8135 4.49219V4.50488L16.8486 4.50684L16.8311 4.99805L16.8496 5.49121L16.8145 5.49219V5.50586L16.6299 5.49902L16.3496 5.50977C15.5318 5.53888 14.8415 5.6347 14.1758 5.94629L14.1494 5.95801C14.1326 5.96472 14.1128 5.97443 14.0908 5.98633L14.0742 5.99512C13.7223 6.16906 13.388 6.39803 13.04 6.67871C12.7966 6.87576 12.5613 7.09202 12.335 7.31836C11.6504 8.00447 11.1101 8.56842 10.7402 9.24023L10.499 9.67773L9.62305 9.19629L9.86426 8.75781C10.2003 8.14756 10.6449 7.6253 11.1309 7.11719L11.6279 6.61133C11.8735 6.36578 12.1346 6.12418 12.4111 5.90039H12.4121C12.5856 5.76046 12.7623 5.62776 12.9443 5.50391H0.5V4.50391H12.9561C12.8708 4.44617 12.7863 4.38669 12.7031 4.3252L12.4131 4.10156L12.4111 4.10059C12.1342 3.87643 11.873 3.63336 11.6279 3.38672L11.1309 2.88184C10.6449 2.37432 10.2003 1.85144 9.86426 1.24121L9.62305 0.803711L10.499 0.321289L10.7402 0.758789Z" fill="currentColor" />
                                         </svg>
                                     </span>
-                                </a>
+                                </button>
                             </div>
                         )}
                         {pendingRegId && pendingStatus === 'rejected' && (
@@ -405,18 +527,132 @@ const OnboardingCard: React.FC = () => {
                 )}
 
                 {activeStep === 2 && (
-                    <div className="content-wrapper">
-                        <h2 className="onboarding-title">Choose a password</h2>
-                        <p className="onboarding-subtitle">Placeholder for next step.</p>
+                    <div className="content-wrapper payment-tab">
+                        {paymentLoading && (
+                            <div className="payment-card payment-card--loading">
+                                <div className="payment-card__spinner" aria-hidden="true" />
+                                <p className="payment-card__loading-text">Loading payment details…</p>
+                            </div>
+                        )}
+                        {!paymentLoading && !paymentData && (paymentRegId || getRegIdFromSearch()) && (
+                            <div className="payment-card payment-card--error">
+                                <p className="payment-card__heading">Registration not found</p>
+                                <p className="payment-card__sub">We couldn&apos;t load this payment.</p>
+                            </div>
+                        )}
+                        {!paymentLoading && !paymentRegId && !getRegIdFromSearch() && (
+                            <div className="payment-card payment-card--error">
+                                <p className="payment-card__heading">No registration</p>
+                                <p className="payment-card__sub">Go to Registration status and use Complete Payment, or open this page with ?id= your registration ID.</p>
+                            </div>
+                        )}
+                        {!paymentLoading && paymentData?.isExpired && (
+                            <div className="payment-card payment-card--expired">
+                                <div className="payment-card__icon-wrap payment-card__icon-wrap--error">
+                                    <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                </div>
+                                <p className="payment-card__heading">Payment link expired</p>
+                                <p className="payment-card__sub">This link is valid for 3 days after approval. Please register again.</p>
+                                <a href="/contact" className="payment-card__btn payment-card__btn--primary">Register again</a>
+                            </div>
+                        )}
+                        {!paymentLoading && paymentData && !paymentData.isExpired && !paymentSubmitted && !paymentConfirming && (
+                            <div className="payment-card">
+                                <h2 className="payment-card__title">Pay with Mobile Money</h2>
+                                <div className="payment-card__momo">
+                                    <div className="payment-card__row">
+                                        <span className="payment-card__label">Merchant code</span>
+                                        <span className="payment-card__value payment-card__value--code">{paymentData.settings.merchant_code}</span>
+                                    </div>
+                                    <div className="payment-card__row">
+                                        <span className="payment-card__label">Merchant name</span>
+                                        <span className="payment-card__value">{paymentData.settings.merchant_name}</span>
+                                    </div>
+                                    <div className="payment-card__row">
+                                        <span className="payment-card__label">Amount</span>
+                                        <span className="payment-card__value payment-card__value--amount">GHS {paymentData.settings.ticket_price}.00</span>
+                                    </div>
+                                    <div className="payment-card__row">
+                                        <span className="payment-card__label">Reference</span>
+                                        <span className="payment-card__value payment-card__value--ref">REG-{paymentData.registration?.id}</span>
+                                    </div>
+                                </div>
+                                <p className="payment-card__hint">Dial <strong>*170#</strong> → Pay Merchant, or use MTN MoMo app</p>
+                                <div className="payment-card__summary">
+                                    <p className="payment-card__label">Attendee</p>
+                                    <p className="payment-card__summary-value">{paymentData.registration?.full_name}</p>
+                                    {paymentData.registration?.firm_name && (
+                                        <>
+                                            <p className="payment-card__label">Organization</p>
+                                            <p className="payment-card__summary-value">{paymentData.registration.firm_name}</p>
+                                        </>
+                                    )}
+                                </div>
+                                <div className="payment-card__total">
+                                    <span>Total</span>
+                                    <span>GHS {paymentData.settings.ticket_price}.00</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    className="payment-card__submit"
+                                    onClick={async () => {
+                                        if (!paymentRegId) return;
+                                        setPaymentLoading(true);
+                                        try {
+                                            const res = await fetch('/api/payment-submitted', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ registrationId: paymentRegId }),
+                                                credentials: 'include'
+                                            });
+                                            if (res.ok) {
+                                                setPaymentSubmitted(true);
+                                            } else throw new Error();
+                                        } catch {
+                                            setPaymentLoading(false);
+                                            alert('Something went wrong. Please try again.');
+                                            return;
+                                        }
+                                        setPaymentLoading(false);
+                                    }}
+                                >
+                                    I have made payment
+                                </button>
+                            </div>
+                        )}
+                        {!paymentLoading && paymentData && paymentSubmitted && !paymentConfirming && (
+                            <div className="payment-card payment-card--pending">
+                                <div className="payment-card__spinner payment-card__spinner--slow" aria-hidden="true" />
+                                <p className="payment-card__heading">Payment processing</p>
+                                <p className="payment-card__sub">Your payment is being verified. This usually takes a few minutes.</p>
+                            </div>
+                        )}
+                        {paymentConfirming && (
+                            <div className="payment-card payment-card--confirmed">
+                                <div className="payment-card__icon-wrap payment-card__icon-wrap--success">✓</div>
+                                <p className="payment-card__heading">Payment confirmed</p>
+                                <p className="payment-card__sub">Your registration is confirmed. See you at the event!</p>
+                            </div>
+                        )}
                         <button className="continue-btn" onClick={() => setActiveStep(3)}>Continue</button>
                     </div>
                 )}
 
                 {activeStep === 3 && (
-                    <div className="content-wrapper">
-                        <h2 className="onboarding-title">Invite your team</h2>
-                        <p className="onboarding-subtitle">Placeholder for adding team members.</p>
-                        <button className="continue-btn" onClick={() => setActiveStep(4)}>Continue</button>
+                    <div className="content-wrapper receive-ticket-tab">
+                        {ticketLoading && (
+                            <div className="payment-card payment-card--loading">
+                                <div className="payment-card__spinner" aria-hidden="true" />
+                                <p className="payment-card__loading-text">Loading your ticket…</p>
+                            </div>
+                        )}
+                        {!ticketLoading && (
+                            <TicketCard
+                                name={ticketData?.full_name}
+                                ticketCode={ticketData?.ticket_code}
+                                qrImage={ticketData?.qr_image}
+                            />
+                        )}
                     </div>
                 )}
 

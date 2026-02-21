@@ -1,4 +1,4 @@
-﻿const path = require('path');
+const path = require('path');
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
@@ -189,6 +189,31 @@ app.get('/api/registration/:id/status', async (req, res) => {
   } catch (error) {
     console.error('Error fetching status:', error);
     res.status(500).json({ error: 'Failed to fetch status' });
+  }
+});
+
+app.get('/api/registrations/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const response = await fetchBackend(`/api/registrations/${id}`);
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching registration:', error);
+    res.status(500).json({ error: 'Failed to fetch registration' });
+  }
+});
+
+app.get('/api/settings', async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/settings');
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({ error: 'Failed to fetch settings' });
   }
 });
 
