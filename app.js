@@ -421,70 +421,11 @@ app.post('/api/register', registrationLimiter, checkHoneypot, async (req, res) =
 
 app.get('/payment', async (req, res) => {
   const { id } = req.query;
-
-  try {
-    const response = await fetchBackend(`/api/registrations/${id}`);
-
-    if (!response.ok) {
-      return res.redirect('/');
-    }
-
-    const registration = await response.json();
-
-    if (registration.status === 'confirmed') {
-      return res.redirect('/');
-    }
-
-    // Check if payment link has expired (3 days from approval)
-    let isExpired = false;
-    if (registration.approved_at) {
-      const approvedAt = new Date(registration.approved_at);
-      const now = new Date();
-      const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
-      isExpired = (now - approvedAt) > threeDaysMs;
-    }
-
-    // Fetch payment settings
-    let settings = {
-      ticket_price: '150',
-      merchant_code: '123456',
-      merchant_name: 'CMC Conference'
-    };
-
-    try {
-      const settingsResponse = await fetchBackend('/api/settings');
-      if (settingsResponse.ok) {
-        const settingsData = await settingsResponse.json();
-        settingsData.forEach(s => {
-          if (s.key === 'ticket_price' && s.value) settings.ticket_price = s.value;
-          if (s.key === 'merchant_code' && s.value) settings.merchant_code = s.value;
-          if (s.key === 'merchant_name' && s.value) settings.merchant_name = s.value;
-        });
-      }
-    } catch (e) {
-      console.error('Error fetching settings:', e);
-    }
-
-    res.render('pages/payment', {
-      registration: {
-        id: registration.id,
-        fullName: registration.full_name,
-        email: registration.email,
-        phone: registration.phone,
-        jobTitle: registration.job_title,
-        company: registration.company,
-        status: registration.status,
-        ticketType: registration.ticket_type,
-        firmName: registration.firm_name,
-        approvedAt: registration.approved_at
-      },
-      settings,
-      isExpired
-    });
-  } catch (error) {
-    console.error('Error fetching registration:', error);
-    res.redirect('/');
+  // Redirect to onboarding page with the registration ID
+  if (id) {
+    return res.redirect(`/onboarding/?id=${id}`);
   }
+  return res.redirect('/');
 });
 
 app.post('/api/payment-submitted', paymentLimiter, async (req, res) => {
@@ -575,6 +516,27 @@ app.post('/api/registrations/:id/reject', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error rejecting registration:', error);
     res.status(500).json({ error: 'Failed to reject registration' });
+  }
+});
+
+app.delete('/api/registrations/:id', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const response = await fetchBackend(`/api/registrations/${id}`, {
+      method: 'DELETE',
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error deleting registration:', error);
+    res.status(500).json({ error: 'Failed to delete registration' });
   }
 });
 

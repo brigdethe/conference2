@@ -528,7 +528,7 @@ async def send_approval_with_payment_link(
     sms_enabled = get_setting(db, "notifications_sms_enabled", "true") == "true"
     
     base_url = get_setting(db, "base_url", "https://seminar.cmc-ghana.com")
-    payment_link = f"{base_url}/payment?id={registration_id}"
+    payment_link = f"{base_url}/onboarding/?id={registration_id}"
     
     if email_enabled and email:
         html_body = f"""

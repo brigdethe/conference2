@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronDown, ChevronUp, MoreHorizontal, Phone, Mail } from 'lucide-react';
+import { ChevronDown, ChevronUp, MoreHorizontal, Phone, Mail, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import type { User } from '../data/users';
@@ -10,6 +10,7 @@ interface UserTableProps {
     error?: string | null;
     onRetry?: () => void;
     onUserSelect?: (user: User) => void;
+    onDelete?: (userId: number) => void;
 }
 
 export const UserTable: React.FC<UserTableProps> = ({
@@ -18,6 +19,7 @@ export const UserTable: React.FC<UserTableProps> = ({
     error = null,
     onRetry,
     onUserSelect,
+    onDelete,
 }) => {
     const [expandedRows, setExpandedRows] = useState<number[]>([]);
     const [activeActionRow, setActiveActionRow] = useState<number | null>(null);
@@ -258,6 +260,24 @@ export const UserTable: React.FC<UserTableProps> = ({
                                 )}
                                 {!activeUser.phone && !activeUser.email && (
                                     <div className="px-4 py-2 text-sm text-slate-400">No contact info</div>
+                                )}
+                                {onDelete && (
+                                    <>
+                                        <div className="border-t border-slate-100 my-1"></div>
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm(`Are you sure you want to delete ${activeUser.fullName}? This action cannot be undone.`)) {
+                                                    onDelete(activeUser.id);
+                                                    setActiveActionRow(null);
+                                                    setActiveButton(null);
+                                                }
+                                            }}
+                                            className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            Delete
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         </motion.div>

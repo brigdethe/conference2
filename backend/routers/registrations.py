@@ -563,3 +563,38 @@ async def reject_registration(
         "success": True,
         "message": "Registration rejected. User has been notified."
     }
+
+
+@router.delete("/{registration_id}")
+def delete_registration(registration_id: int, db: Session = Depends(get_db)):
+    """Delete a registration. If it's a confirmed Access Code registration, free up the slot."""
+    registration = db.query(Registration).filter(
+        Registration.id == registration_id
+    ).first()
+    
+    if not registration:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    
+    # Store info before deletion for response
+    was_confirmed_access_code = (
+        registration.ticket_type == "Access Code" and 
+        registration.status == "confirmed"
+    )
+    firm_id = registration.firm_id
+    
+    # Delete associated check-ins first
+    db.query(CheckIn).filter(CheckIn.registration_id == registration_id).delete()
+    
+    # Delete the registration
+    db.delete(registration)
+    db.commit()
+    
+    message = "Registration deleted successfully."
+    if was_confirmed_access_code and firm_id:
+        message = "Registration deleted. Access code slot has been freed."
+    
+    return {
+        "success": True,
+        "message": message,
+        "slot_freed": was_confirmed_access_code
+    }

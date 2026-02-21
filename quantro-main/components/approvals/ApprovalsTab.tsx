@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, CheckCircle, XCircle, Clock, User, Mail, Building, Briefcase, MessageSquare, Eye } from 'lucide-react';
+import { RefreshCw, CheckCircle, XCircle, Clock, User, Mail, Building, Briefcase, MessageSquare, Eye, Trash2 } from 'lucide-react';
 
 interface Registration {
     id: number;
@@ -100,6 +100,29 @@ export const ApprovalsTab: React.FC = () => {
             }
         } catch (err) {
             console.error('Error rejecting registration:', err);
+            alert('An error occurred. Please try again.');
+        } finally {
+            setProcessing(null);
+        }
+    };
+
+    const handleDelete = async (id: number, name: string) => {
+        if (!window.confirm(`Are you sure you want to delete ${name}? This action cannot be undone.`)) return;
+        
+        setProcessing(id);
+        try {
+            const res = await fetch(`/api/registrations/${id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            if (res.ok) {
+                fetchAllData();
+            } else {
+                const data = await res.json();
+                alert(data.detail || data.error || 'Failed to delete registration.');
+            }
+        } catch (err) {
+            console.error('Error deleting registration:', err);
             alert('An error occurred. Please try again.');
         } finally {
             setProcessing(null);
@@ -241,6 +264,14 @@ export const ApprovalsTab: React.FC = () => {
                                                         </button>
                                                     </>
                                                 )}
+                                                <button
+                                                    onClick={() => handleDelete(reg.id, reg.fullName)}
+                                                    disabled={processing === reg.id}
+                                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                                                    title="Delete"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>

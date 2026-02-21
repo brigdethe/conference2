@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { QrCode, Search, CheckCircle2, Clock, Loader2, Camera } from 'lucide-react';
+import { QrCode, Search, CheckCircle2, Clock, Loader2, Camera, Trash2 } from 'lucide-react';
 import { QRScanner } from './QRScanner';
 
 interface Ticket {
@@ -140,6 +140,26 @@ export const TicketsTab: React.FC = () => {
     });
   };
 
+  const handleDelete = async (id: number, name: string) => {
+    if (!window.confirm(`Are you sure you want to delete ${name}'s ticket? This action cannot be undone.`)) return;
+    
+    try {
+      const res = await fetch(`/api/registrations/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        fetchTickets();
+      } else {
+        const data = await res.json();
+        alert(data.detail || data.error || 'Failed to delete ticket.');
+      }
+    } catch (err) {
+      console.error('Error deleting ticket:', err);
+      alert('An error occurred. Please try again.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -266,6 +286,7 @@ export const TicketsTab: React.FC = () => {
                   <th className="px-6 py-3">Firm</th>
                   <th className="px-6 py-3">Type</th>
                   <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -306,6 +327,15 @@ export const TicketsTab: React.FC = () => {
                           <span className="text-xs font-medium">Pending</span>
                         </div>
                       )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleDelete(ticket.id, ticket.full_name)}
+                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}

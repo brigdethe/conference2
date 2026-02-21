@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, MessageSquare, Briefcase, Calendar, RefreshCw } from 'lucide-react';
+import { Search, Filter, MessageSquare, Briefcase, Calendar, RefreshCw, Download } from 'lucide-react';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from 'docx';
+import { saveAs } from 'file-saver';
 import type { Inquiry, InquiryType } from '../../data/inquiries';
 
 const INQUIRY_TYPES: InquiryType[] = [
@@ -59,6 +61,75 @@ export const InquiriesTab: React.FC<InquiriesTabProps> = ({ onSelect }) => {
         return matchesType && matchesSearch;
     });
 
+    const exportToDocx = async () => {
+        const children: Paragraph[] = [
+            new Paragraph({
+                text: 'Inquiries Export',
+                heading: HeadingLevel.HEADING_1,
+                spacing: { after: 400 },
+            }),
+            new Paragraph({
+                text: `Generated on ${new Date().toLocaleString()}`,
+                spacing: { after: 400 },
+            }),
+        ];
+
+        filteredInquiries.forEach((inquiry, index) => {
+            children.push(
+                new Paragraph({
+                    text: `${index + 1}. ${inquiry.name}`,
+                    heading: HeadingLevel.HEADING_2,
+                    spacing: { before: 400, after: 200 },
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: 'Email: ', bold: true }),
+                        new TextRun(inquiry.email),
+                    ],
+                    spacing: { after: 100 },
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: 'Organization: ', bold: true }),
+                        new TextRun(inquiry.organization || 'N/A'),
+                    ],
+                    spacing: { after: 100 },
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: 'Type: ', bold: true }),
+                        new TextRun(inquiry.type),
+                    ],
+                    spacing: { after: 100 },
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: 'Date: ', bold: true }),
+                        new TextRun(new Date(inquiry.date).toLocaleString()),
+                    ],
+                    spacing: { after: 100 },
+                }),
+                new Paragraph({
+                    children: [
+                        new TextRun({ text: 'Message:', bold: true }),
+                    ],
+                    spacing: { after: 50 },
+                }),
+                new Paragraph({
+                    text: inquiry.message,
+                    spacing: { after: 300 },
+                }),
+            );
+        });
+
+        const doc = new Document({
+            sections: [{ children }],
+        });
+
+        const blob = await Packer.toBlob(doc);
+        saveAs(blob, `inquiries-${new Date().toISOString().split('T')[0]}.docx`);
+    };
+
     return (
         <div className="bg-white rounded-3xl shadow-soft overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header / Filter Toolbar */}
@@ -92,6 +163,14 @@ export const InquiriesTab: React.FC<InquiriesTabProps> = ({ onSelect }) => {
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                         Refresh
+                    </button>
+                    <button
+                        onClick={exportToDocx}
+                        disabled={filteredInquiries.length === 0}
+                        className="px-4 py-2 rounded-xl text-sm font-medium bg-slate-900 text-white hover:bg-slate-800 transition-colors flex items-center gap-2 disabled:opacity-50"
+                    >
+                        <Download className="w-4 h-4" />
+                        Export DOCX
                     </button>
                 </div>
             </div>

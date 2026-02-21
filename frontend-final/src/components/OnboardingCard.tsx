@@ -271,6 +271,13 @@ const OnboardingCard: React.FC = () => {
     }, [paymentSubmitted, regId, activeStep]);
 
     useEffect(() => {
+        if (paymentConfirming && activeStep === 2) {
+            const timer = setTimeout(() => setActiveStep(3), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [paymentConfirming, activeStep]);
+
+    useEffect(() => {
         if (activeStep !== 3) return;
         if (!regId) {
             setTicketData(null);
@@ -508,10 +515,12 @@ const OnboardingCard: React.FC = () => {
                                                     const byCodeData = await byCodeRes.json();
                                                     const id = byCodeData.id != null ? String(byCodeData.id) : null;
                                                     const status = (byCodeData.status || '').toLowerCase();
+                                                    const tt = byCodeData.ticket_type || null;
                                                     if (id) {
                                                         setRegId(id);
                                                         setRegistrationStatus(status || null);
-                                                        targetStep = statusToStep(status || null);
+                                                        setTicketType(tt);
+                                                        targetStep = statusToStep(status || null, tt);
                                                         const url = new URL(window.location.href);
                                                         url.searchParams.set('id', id);
                                                         window.history.replaceState({}, '', url.pathname + url.search);
