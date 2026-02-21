@@ -1076,6 +1076,13 @@ body {
   border-radius: 10px 10px 0 0;
   box-shadow: 0 20px 45px rgba(10, 19, 35, 0.2);
   margin-bottom: 1.25rem;
+  transform: perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0);
+  transform-style: preserve-3d;
+  transform-origin: center center;
+  transition: transform 180ms ease-out, box-shadow 220ms ease-out;
+  will-change: transform;
+  --event-ticket-glare-x: 50%;
+  --event-ticket-glare-y: 50%;
   --event-ticket-cutout-size: 24px;
   --event-ticket-cutout-y: calc(100% - 166px);
   -webkit-mask:
@@ -1084,6 +1091,25 @@ body {
   mask:
     radial-gradient(circle var(--event-ticket-cutout-size) at 0 var(--event-ticket-cutout-y), transparent 98%, #000 100%) left / 51% 100% no-repeat,
     radial-gradient(circle var(--event-ticket-cutout-size) at 100% var(--event-ticket-cutout-y), transparent 98%, #000 100%) right / 51% 100% no-repeat;
+}
+
+.event-ticket::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at var(--event-ticket-glare-x) var(--event-ticket-glare-y), rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 42%);
+  transition: opacity 180ms ease-out;
+}
+
+.event-ticket:hover {
+  box-shadow: 0 24px 52px rgba(10, 19, 35, 0.24);
+}
+
+.event-ticket:hover::after {
+  opacity: 1;
 }
 
 .event-ticket__content {

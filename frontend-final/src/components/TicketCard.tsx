@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 
 export type TicketCardProps = {
     eventName?: string;
@@ -24,8 +24,42 @@ const TicketCard: React.FC<TicketCardProps> = ({
     location = DEFAULT_LOCATION,
     qrImage = null
 }) => {
+    const ticketRef = useRef<HTMLElement | null>(null);
+
+    const handleMouseMove = (event: React.MouseEvent<HTMLElement>) => {
+        const ticket = ticketRef.current;
+        if (!ticket) {
+            return;
+        }
+        const rect = ticket.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width;
+        const y = (event.clientY - rect.top) / rect.height;
+        const rotateY = (x - 0.5) * 8;
+        const rotateX = (0.5 - y) * 8;
+
+        ticket.style.setProperty('--event-ticket-glare-x', `${x * 100}%`);
+        ticket.style.setProperty('--event-ticket-glare-y', `${y * 100}%`);
+        ticket.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateZ(0)`;
+    };
+
+    const handleMouseLeave = () => {
+        const ticket = ticketRef.current;
+        if (!ticket) {
+            return;
+        }
+        ticket.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0)';
+        ticket.style.setProperty('--event-ticket-glare-x', '50%');
+        ticket.style.setProperty('--event-ticket-glare-y', '50%');
+    };
+
     return (
-        <article className="event-ticket" aria-label="Event Ticket">
+        <article
+            ref={ticketRef}
+            className="event-ticket"
+            aria-label="Event Ticket"
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+        >
             <section className="event-ticket__content">
                 <p className="event-ticket__label">Event</p>
                 <h1 className="event-ticket__title">{eventName}</h1>
