@@ -661,6 +661,7 @@ app.get('/api/tickets/verify/:ticketCode', ticketVerifyLimiter, async (req, res)
     res.json({
       valid: data.valid,
       ticket_type: data.ticket_type,
+      status: data.status,
       checked_in: data.checked_in
     });
   } catch (error) {

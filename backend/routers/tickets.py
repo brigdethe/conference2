@@ -49,9 +49,6 @@ def verify_ticket_by_code(ticket_code: str, db: Session = Depends(get_db)):
     if not registration:
         raise HTTPException(status_code=404, detail="Ticket not found")
     
-    if registration.status != "confirmed":
-        raise HTTPException(status_code=400, detail="Ticket not confirmed - payment may be pending")
-    
     existing_checkin = db.query(CheckIn).filter(
         CheckIn.registration_id == registration.id
     ).first()
@@ -64,6 +61,7 @@ def verify_ticket_by_code(ticket_code: str, db: Session = Depends(get_db)):
         "company": registration.company,
         "firm_name": registration.firm.name if registration.firm else None,
         "ticket_type": registration.ticket_type,
+        "status": registration.status,
         "checked_in": existing_checkin is not None,
         "checked_in_at": existing_checkin.checked_in_at.isoformat() if existing_checkin else None
     }

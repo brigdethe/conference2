@@ -262,26 +262,26 @@ async def create_registration(
     db.commit()
     db.refresh(registration)
     _log_registration_status(registration.id, "", status, registration.email)
-    if status == "confirmed":
+
+    ticket_code = generate_ticket_code()
+    while db.query(Registration).filter(
+        Registration.ticket_code == ticket_code
+    ).first():
         ticket_code = generate_ticket_code()
-        while db.query(Registration).filter(
-            Registration.ticket_code == ticket_code
-        ).first():
-            ticket_code = generate_ticket_code()
-        
-        qr_data = generate_qr_data(
-            ticket_code=ticket_code,
-            registration_id=registration.id,
-            full_name=registration.full_name,
-            firm_name=firm.name if firm else None
-        )
-        
-        registration.ticket_code = ticket_code
-        registration.qr_data = qr_data
-        db.commit()
-        db.refresh(registration)
-        
-        # Send ticket notification in background
+
+    qr_data = generate_qr_data(
+        ticket_code=ticket_code,
+        registration_id=registration.id,
+        full_name=registration.full_name,
+        firm_name=firm.name if firm else None
+    )
+
+    registration.ticket_code = ticket_code
+    registration.qr_data = qr_data
+    db.commit()
+    db.refresh(registration)
+
+    if status == "confirmed":
         await send_ticket_notification(
             db=db,
             email=registration.email,

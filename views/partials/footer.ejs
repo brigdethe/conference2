@@ -575,6 +575,16 @@
                 <li>Complete payment to confirm your spot</li>
             </ol>
         </div>
+        <div id="ticketsPendingCodeSection" style="background: #f5f5f5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; text-align: center; display: none;">
+            <p style="color: #5b3426; margin: 0 0 0.5rem; font-size: 0.85rem; font-weight: 500;">Your Ticket Code</p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <p id="ticketsPendingCodeValue" style="color: #1a365d; font-size: 2rem; font-weight: 700; letter-spacing: 4px; margin: 0; font-family: monospace;"></p>
+                <button id="ticketsPendingCopyBtn" type="button" onclick="navigator.clipboard.writeText(document.getElementById('ticketsPendingCodeValue').textContent).then(function(){var b=document.getElementById('ticketsPendingCopyBtn');b.textContent='Copied!';setTimeout(function(){b.innerHTML='<svg width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><rect x=&quot;9&quot; y=&quot;9&quot; width=&quot;13&quot; height=&quot;13&quot; rx=&quot;2&quot; ry=&quot;2&quot;></rect><path d=&quot;M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1&quot;></path></svg>';},1500)})" style="background: none; border: 1px solid #ccc; border-radius: 6px; padding: 0.35rem 0.5rem; cursor: pointer; color: #5b3426; font-size: 0.75rem; display: flex; align-items: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+            </div>
+            <p style="color: #888; margin: 0; font-size: 0.8rem;">Use this code to track your registration on the onboarding page.</p>
+        </div>
         <a id="ticketsPendingTrackBtn" href="/onboarding" class="tickets-celebration-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; text-decoration: none;">
             Track Registration
         </a>
@@ -1223,12 +1233,19 @@
 
                 closeModal();
                 var regId = result.registration && result.registration.id ? result.registration.id : (result.id || null);
+                var ticketCode = result.registration && result.registration.ticket_code ? result.registration.ticket_code : null;
                 ticketsForm.reset();
 
                 var pendingModal = document.getElementById('ticketsPendingApprovalModal');
                 var trackBtn = document.getElementById('ticketsPendingTrackBtn');
                 if (trackBtn) {
                     trackBtn.href = regId ? '/onboarding?id=' + regId : '/onboarding';
+                }
+                var codeSection = document.getElementById('ticketsPendingCodeSection');
+                var codeValue = document.getElementById('ticketsPendingCodeValue');
+                if (codeSection && codeValue && ticketCode) {
+                    codeValue.textContent = ticketCode;
+                    codeSection.style.display = 'block';
                 }
                 if (pendingModal) {
                     pendingModal.style.display = 'flex';

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import QRCodeSection from './QRCodeSection';
 import TicketCard from './TicketCard';
 import CountdownCard from './CountdownCard';
 import Confetti from './Confetti';
@@ -13,7 +12,7 @@ function getRegIdFromSearch(): string | null {
 }
 
 const onboardingSteps = [
-    { id: 0, title: 'Verify your ticket', desc: 'Enter your ticket code or scan your QR code', color: '#f8efe6', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg?updatedAt=1770793618312' },
+    { id: 0, title: 'Verify your ticket', desc: 'Enter your ticket code to get started', color: '#f8efe6', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg?updatedAt=1770793618312' },
     { id: 1, title: 'Registration status', desc: 'Check approval and payment status', color: '#b7dcc2', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
     { id: 2, title: 'Complete payment', desc: 'Pay with MTN MoMo', color: '#ddd4cc', bg: 'https://ik.imagekit.io/dr5fryhth/conferencenew/maxresdefault.jpg?updatedAt=1770793618115' },
     { id: 3, title: 'See you there', desc: 'Your ticket is ready for event day', color: '#3d2b27', bg: 'https://ik.imagekit.io/dr5fryhth/conference/Accra_xxxxxxxxx_i116585_13by5.webp?updatedAt=1771048872912' }
@@ -57,6 +56,7 @@ const OnboardingCard: React.FC = () => {
     const [paymentLoading, setPaymentLoading] = useState(false);
     const [paymentSubmitted, setPaymentSubmitted] = useState(false);
     const [paymentConfirming, setPaymentConfirming] = useState(false);
+    const [paymentError, setPaymentError] = useState<string | null>(null);
     const [ticketData, setTicketData] = useState<{
         full_name: string;
         ticket_code: string;
@@ -189,6 +189,7 @@ const OnboardingCard: React.FC = () => {
             return;
         }
         let cancelled = false;
+        let intervalId: ReturnType<typeof setInterval> | null = null;
         setPendingStatus('loading');
         const fetchStatus = async () => {
             try {
@@ -205,19 +206,23 @@ const OnboardingCard: React.FC = () => {
                 setTicketType(tt);
                 if (s === 'pending_approval') setPendingStatus('pending_approval');
                 else if (s === 'pending_payment') setPendingStatus('pending_payment');
-                else if (s === 'rejected') setPendingStatus('rejected');
-                else if (s === 'confirmed') setPendingStatus('confirmed');
-                else if (s === 'awaiting_verification' || s === 'payment_submitted') setPendingStatus('awaiting_verification');
+                else if (s === 'rejected') {
+                    setPendingStatus('rejected');
+                    if (intervalId) clearInterval(intervalId);
+                } else if (s === 'confirmed') {
+                    setPendingStatus('confirmed');
+                    if (intervalId) clearInterval(intervalId);
+                } else if (s === 'awaiting_verification' || s === 'payment_submitted') setPendingStatus('awaiting_verification');
                 else setPendingStatus('pending_approval');
             } catch {
                 if (!cancelled) setPendingStatus('error');
             }
         };
         fetchStatus();
-        const interval = setInterval(fetchStatus, POLL_INTERVAL_MS);
+        intervalId = setInterval(fetchStatus, POLL_INTERVAL_MS);
         return () => {
             cancelled = true;
-            clearInterval(interval);
+            if (intervalId) clearInterval(intervalId);
         };
     }, [activeStep, regId]);
 
@@ -463,7 +468,7 @@ const OnboardingCard: React.FC = () => {
                                 <p className="onboarding-subtitle">We&apos;ve got your registration. Continue to see your status and next steps.</p>
                                 <button
                                     className="continue-btn"
-                                    onClick={() => setActiveStep(registrationStatus != null ? statusToStep(registrationStatus) : 1)}
+                                    onClick={() => setActiveStep(registrationStatus != null ? statusToStep(registrationStatus, ticketType) : 1)}
                                 >
                                     Continue
                                 </button>
@@ -486,13 +491,7 @@ const OnboardingCard: React.FC = () => {
                                     </svg>
                                 </div>
                                 <h2 className="onboarding-title">Verify your ticket</h2>
-                                <p className="onboarding-subtitle">Enter your 4-character ticket code below or scan your QR code to continue.</p>
-                                <div className="onboarding-qr-wrapper">
-                                    <QRCodeSection />
-                                </div>
-                                <div className="divider">
-                                    <span>or enter ticket code</span>
-                                </div>
+                                <p className="onboarding-subtitle">Enter your 4-character ticket code below to continue.</p>
                                 <div className="ticket-code-boxes">
                                     {[0, 1, 2, 3].map((i) => (
                                         <input
@@ -605,7 +604,7 @@ const OnboardingCard: React.FC = () => {
                                 <p className="pending-approval-card__loading-text">Checking registration status…</p>
                             </div>
                         )}
-                        {regId && (pendingStatus === 'pending_approval' || pendingStatus === 'awaiting_verification') && (
+                        {regId && pendingStatus === 'pending_approval' && (
                             <div className="pending-approval-card">
                                 <div className="pending-approval-card__tag">
                                     <span className="pending-approval-card__icon" aria-hidden="true">
@@ -619,6 +618,23 @@ const OnboardingCard: React.FC = () => {
                                     Your registration is being reviewed.
                                     <br /><br />
                                     We&apos;ll contact you via email when it&apos;s approved or if we need more information.
+                                </h2>
+                            </div>
+                        )}
+                        {regId && pendingStatus === 'awaiting_verification' && (
+                            <div className="pending-approval-card">
+                                <div className="pending-approval-card__tag">
+                                    <span className="pending-approval-card__icon" aria-hidden="true">
+                                        <svg width="10" height="11" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="5" cy="5.5" r="5" fill="currentColor" />
+                                        </svg>
+                                    </span>
+                                    <span className="pending-approval-card__label">Payment Status</span>
+                                </div>
+                                <h2 className="pending-approval-card__heading">
+                                    Your payment is being verified.
+                                    <br /><br />
+                                    We&apos;ll confirm once it&apos;s processed. This usually takes a few minutes.
                                 </h2>
                             </div>
                         )}
@@ -658,6 +674,14 @@ const OnboardingCard: React.FC = () => {
                                 <h2 className="pending-approval-card__heading">
                                     Unfortunately, your registration was not approved.
                                 </h2>
+                                <div className="pending-approval-card__actions">
+                                    <button type="button" className="check-another-btn" onClick={resetOnboarding}>
+                                        Check another ticket
+                                    </button>
+                                    <a href="/contact" className="verify-register-cta__btn" rel="noopener noreferrer">
+                                        Go to registration
+                                    </a>
+                                </div>
                             </div>
                         )}
                         {regId && pendingStatus === 'confirmed' && (
@@ -679,6 +703,9 @@ const OnboardingCard: React.FC = () => {
                                 <h2 className="pending-approval-card__heading">
                                     We couldn&apos;t find this registration.
                                 </h2>
+                                <button type="button" className="check-another-btn" onClick={resetOnboarding}>
+                                    Try again
+                                </button>
                             </div>
                         )}
                         {maxAllowedStep >= 2 && (
@@ -699,6 +726,9 @@ const OnboardingCard: React.FC = () => {
                             <div className="payment-card payment-card--error">
                                 <p className="payment-card__heading">Registration not found</p>
                                 <p className="payment-card__sub">We couldn&apos;t load this payment.</p>
+                                <button type="button" className="check-another-btn" onClick={resetOnboarding}>
+                                    Check another ticket
+                                </button>
                             </div>
                         )}
                         {!paymentLoading && !regId && (
@@ -766,6 +796,7 @@ const OnboardingCard: React.FC = () => {
                                         className="payment-card__submit"
                                         onClick={async () => {
                                             if (!regId) return;
+                                            setPaymentError(null);
                                             setPaymentLoading(true);
                                             try {
                                                 const res = await fetch('/api/payment-submitted', {
@@ -779,7 +810,7 @@ const OnboardingCard: React.FC = () => {
                                                 } else throw new Error();
                                             } catch {
                                                 setPaymentLoading(false);
-                                                alert('Something went wrong. Please try again.');
+                                                setPaymentError('Something went wrong. Please try again.');
                                                 return;
                                             }
                                             setPaymentLoading(false);
@@ -788,6 +819,9 @@ const OnboardingCard: React.FC = () => {
                                         I have made payment
                                     </button>
                                 </div>
+                                {paymentError && (
+                                    <p className="verify-error" role="alert">{paymentError}</p>
+                                )}
                             </div>
                         )}
                         {!paymentLoading && paymentData && paymentSubmitted && !paymentConfirming && (
@@ -795,6 +829,13 @@ const OnboardingCard: React.FC = () => {
                                 <div className="payment-card__spinner payment-card__spinner--slow" aria-hidden="true" />
                                 <p className="payment-card__heading">Payment processing</p>
                                 <p className="payment-card__sub">Your payment is being verified. This usually takes a few minutes.</p>
+                                <button
+                                    type="button"
+                                    className="check-another-btn"
+                                    onClick={() => setPaymentSubmitted(false)}
+                                >
+                                    I haven&apos;t paid yet
+                                </button>
                             </div>
                         )}
                         {paymentConfirming && (
@@ -870,7 +911,35 @@ const OnboardingCard: React.FC = () => {
                                     <p className="payment-card__loading-text">Loading your ticket…</p>
                                 </div>
                             )}
-                            {regId && !ticketLoading && (
+                            {regId && !ticketLoading && !ticketData && (
+                                <div className="payment-card payment-card--error">
+                                    <p className="payment-card__heading">Couldn&apos;t load your ticket</p>
+                                    <p className="payment-card__sub">Something went wrong. Please try again.</p>
+                                    <button
+                                        type="button"
+                                        className="check-another-btn"
+                                        onClick={() => {
+                                            setTicketLoading(true);
+                                            fetch(`/api/registration/${regId}/ticket`, { credentials: 'include' })
+                                                .then((res) => (res.ok ? res.json() : null))
+                                                .then((data) => {
+                                                    if (!data) { setTicketData(null); return; }
+                                                    setTicketData({
+                                                        full_name: data.full_name ?? '—',
+                                                        ticket_code: data.ticket_code ?? '—',
+                                                        qr_image: data.qr_image ?? null,
+                                                        firm_name: data.firm_name ?? null
+                                                    });
+                                                })
+                                                .catch(() => setTicketData(null))
+                                                .finally(() => setTicketLoading(false));
+                                        }}
+                                    >
+                                        Retry
+                                    </button>
+                                </div>
+                            )}
+                            {regId && !ticketLoading && ticketData && (
                                 <TicketCard
                                     name={ticketData?.full_name}
                                     ticketCode={ticketData?.ticket_code}
@@ -931,11 +1000,11 @@ const OnboardingCard: React.FC = () => {
                         })}
                     </div>
                     <p className="active-step-label">{onboardingSteps[activeStep].title}</p>
-                    <button className="help-btn">
+                    <a href="/#footer" className="help-btn" rel="noopener noreferrer">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#667085" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
                         </svg>
-                    </button>
+                    </a>
                 </div>
             </div>
         </div>
