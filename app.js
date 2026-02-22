@@ -74,6 +74,17 @@ const generalLimiter = rateLimit({
   legacyHeaders: false
 });
 
+// Strict rate limiter for ticket verification to prevent brute-force attacks
+// Only 5 attempts per 15 minutes per IP
+const ticketVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many ticket verification attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: false
+});
+
 app.use('/api/', generalLimiter);
 
 function generateCsrfToken(req) {
@@ -620,20 +631,25 @@ app.get('/api/registration/:id/ticket', async (req, res) => {
   }
 });
 
-app.get('/api/tickets/by-code/:ticketCode', async (req, res) => {
+app.get('/api/tickets/by-code/:ticketCode', ticketVerifyLimiter, async (req, res) => {
   const { ticketCode } = req.params;
   try {
     const response = await fetchBackend(`/api/tickets/${encodeURIComponent(ticketCode)}`);
     const data = await response.json();
     if (!response.ok) return res.status(response.status).json(data);
-    res.json(data);
+    // Return limited data to prevent information leakage
+    res.json({
+      id: data.id,
+      status: data.status,
+      ticket_type: data.ticket_type
+    });
   } catch (error) {
     console.error('Error fetching ticket by code:', error);
     res.status(500).json({ error: 'Failed to fetch ticket' });
   }
 });
 
-app.get('/api/tickets/verify/:ticketCode', async (req, res) => {
+app.get('/api/tickets/verify/:ticketCode', ticketVerifyLimiter, async (req, res) => {
   const { ticketCode } = req.params;
   try {
     const response = await fetchBackend(`/api/tickets/verify/${ticketCode}`);
@@ -641,7 +657,12 @@ app.get('/api/tickets/verify/:ticketCode', async (req, res) => {
     if (!response.ok) {
       return res.status(response.status).json(data);
     }
-    res.json(data);
+    // Return only necessary data - no personal info exposed
+    res.json({
+      valid: data.valid,
+      ticket_type: data.ticket_type,
+      checked_in: data.checked_in
+    });
   } catch (error) {
     console.error('Error verifying ticket:', error);
     res.status(500).json({ error: 'Failed to verify ticket' });
