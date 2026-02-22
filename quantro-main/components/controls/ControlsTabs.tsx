@@ -9,8 +9,7 @@ interface ControlsTabsProps {
 }
 
 function getTabBadgeCount(tab: TabOption, badges: TabBadges): number {
-    if (tab === TabOption.Approvals) return badges[TabOption.Approvals];
-    if (tab === TabOption.Payments) return badges[TabOption.Payments];
+    if (tab === TabOption.Registrations) return badges[TabOption.Registrations];
     if (tab === TabOption.Inquiries) return badges[TabOption.Inquiries];
     return 0;
 }
@@ -18,7 +17,7 @@ function getTabBadgeCount(tab: TabOption, badges: TabBadges): number {
 export const ControlsTabs: React.FC<ControlsTabsProps> = ({ activeTab, onTabChange }) => {
     const { refetch, ...badges } = useTabBadges();
     useEffect(() => {
-        if (activeTab === TabOption.Approvals || activeTab === TabOption.Payments || activeTab === TabOption.Inquiries) {
+        if (activeTab === TabOption.Registrations || activeTab === TabOption.Inquiries) {
             refetch();
         }
     }, [activeTab, refetch]);

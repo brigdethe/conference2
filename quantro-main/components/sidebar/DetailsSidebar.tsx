@@ -29,7 +29,7 @@ const DetailLine: React.FC<{ label: string; value: React.ReactNode }> = ({ label
       {label}
     </span>
     <span className="max-w-[65%] break-words text-right text-sm font-medium text-slate-800">
-      {value || '-'}
+      {value !== null && value !== undefined && value !== '' ? value : '-'}
     </span>
   </div>
 );
@@ -368,22 +368,43 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({ detail, onClose 
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 26, stiffness: 280 }}
-            className="fixed right-0 top-0 z-50 h-screen w-full max-w-xl overflow-y-auto border-l border-slate-200 bg-white shadow-2xl"
+            className="fixed right-4 top-4 bottom-4 z-50 w-full max-w-xl overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-[0_8px_40px_-12px_rgba(0,0,0,0.2),0_0_0_1px_rgba(0,0,0,0.03)]"
           >
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4">
+            <div className="sticky top-0 z-10 flex items-center justify-between bg-white/80 backdrop-blur-md px-6 py-4 border-b border-slate-100">
               <h3 className="pr-4 text-base font-semibold text-slate-900">{getTitle(detail)}</h3>
               <button
                 type="button"
                 onClick={onClose}
-                className="rounded-md p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="p-5">
+            <div className="h-[calc(100%-57px)] overflow-y-auto p-6 sidebar-scroll">
               <SidebarContent detail={detail} />
             </div>
+
+            <style>{`
+              .sidebar-scroll::-webkit-scrollbar {
+                width: 6px;
+              }
+              .sidebar-scroll::-webkit-scrollbar-track {
+                background: transparent;
+                margin: 8px 0;
+              }
+              .sidebar-scroll::-webkit-scrollbar-thumb {
+                background: #CBD5E1;
+                border-radius: 100px;
+              }
+              .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+                background: #94A3B8;
+              }
+              .sidebar-scroll {
+                scrollbar-width: thin;
+                scrollbar-color: #CBD5E1 transparent;
+              }
+            `}</style>
           </motion.aside>
         </>
       )}

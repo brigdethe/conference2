@@ -2,14 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { TabOption } from '../types';
 
 export interface TabBadges {
-  [TabOption.Approvals]: number;
-  [TabOption.Payments]: number;
+  [TabOption.Registrations]: number;
   [TabOption.Inquiries]: number;
 }
 
 const initialBadges: TabBadges = {
-  [TabOption.Approvals]: 0,
-  [TabOption.Payments]: 0,
+  [TabOption.Registrations]: 0,
   [TabOption.Inquiries]: 0,
 };
 
@@ -36,8 +34,7 @@ export function useTabBadges(): TabBadges & { refetch: () => void } {
         : 0;
       const inquiryTotal = Array.isArray(inquiriesData) ? inquiriesData.length : 0;
       setBadges({
-        [TabOption.Approvals]: approvalTotal,
-        [TabOption.Payments]: paymentTotal,
+        [TabOption.Registrations]: approvalTotal + paymentTotal,
         [TabOption.Inquiries]: inquiryTotal,
       });
     } catch {
