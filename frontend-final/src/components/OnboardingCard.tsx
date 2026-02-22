@@ -96,6 +96,23 @@ const OnboardingCard: React.FC = () => {
         }
     };
 
+    const resetOnboarding = () => {
+        setRegId(null);
+        setRegistrationStatus(null);
+        setTicketType(null);
+        setTicketCode('');
+        setPendingStatus('idle');
+        setPaymentData(null);
+        setPaymentSubmitted(false);
+        setPaymentConfirming(false);
+        setTicketData(null);
+        setVerifyError(null);
+        setActiveStep(0);
+        const url = new URL(window.location.href);
+        url.searchParams.delete('id');
+        window.history.replaceState({}, '', url.pathname + url.search);
+    };
+
     const handleStepClick = (stepId: number) => {
         if (stepId > maxAllowedStep) return;
         setActiveStep(stepId);
@@ -450,6 +467,13 @@ const OnboardingCard: React.FC = () => {
                                 >
                                     Continue
                                 </button>
+                                <button
+                                    type="button"
+                                    className="check-another-btn"
+                                    onClick={resetOnboarding}
+                                >
+                                    Check another ticket
+                                </button>
                             </>
                         ) : (
                             <>
@@ -779,9 +803,6 @@ const OnboardingCard: React.FC = () => {
                                 <p className="payment-card__heading">Payment confirmed</p>
                                 <p className="payment-card__sub">Your registration is confirmed. See you at the event!</p>
                             </div>
-                        )}
-                        {maxAllowedStep >= 3 && (
-                            <button className="continue-btn" onClick={() => setActiveStep(3)}>Continue</button>
                         )}
                     </div>
                 )}

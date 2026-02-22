@@ -529,7 +529,8 @@
                     placeholder="Firm Access Code (Optional)" autocomplete="off" />
                 <div id="ticketsCodeValidation" style="margin-top: 4px; font-size: 0.8rem;"></div>
             </div>
-            <input class="tickets-modal__input" type="text" name="fullName" placeholder="Full Name" required />
+            <input class="tickets-modal__input" type="text" name="firstName" placeholder="First Name" required />
+            <input class="tickets-modal__input" type="text" name="lastName" placeholder="Last Name" required />
             <input class="tickets-modal__input" type="text" name="jobTitle" placeholder="Job Title" required />
             <div id="ticketsCompanyWrapper">
                 <input class="tickets-modal__input" type="text" name="companyName" id="ticketsCompanyInput" placeholder="Law Firm / Company" />
@@ -562,7 +563,6 @@
 <div id="ticketsPendingApprovalModal" class="tickets-celebration-overlay" style="display: none;" aria-hidden="true">
     <div class="tickets-celebration-content" role="dialog" aria-modal="true" aria-labelledby="ticketsPendingTitle" style="max-width: 480px;">
         <div style="background: #fff8e1; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #ffcc80;">
-            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⏳</div>
             <h3 style="color: #e65100; margin: 0 0 0.5rem; font-size: 1.25rem;" id="ticketsPendingTitle">Registration Pending Approval</h3>
             <p style="color: #5d4037; margin: 0; font-size: 0.95rem;">Your registration request has been submitted and is awaiting approval from our team.</p>
         </div>
@@ -575,14 +575,8 @@
                 <li>Complete payment to confirm your spot</li>
             </ol>
         </div>
-        <div style="background: linear-gradient(135deg, #5b3426 0%, #8b5a3c 100%); border-radius: 12px; padding: 1.25rem; color: white; margin-bottom: 1.5rem;">
-            <p style="margin: 0 0 0.5rem; font-size: 0.85rem; opacity: 0.9;">📅 Event Date</p>
-            <p style="margin: 0; font-size: 1.1rem; font-weight: 600;">March 25, 2026 • 9:00 AM - 3:00 PM</p>
-            <p style="margin: 0.5rem 0 0; font-size: 0.9rem; opacity: 0.9;">📍 Mövenpick Ambassador Hotel, Accra</p>
-        </div>
-        <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Ghana%20Competition%20Law%20Seminar&dates=20260325T090000/20260325T150000&location=M%C3%B6venpick%20Ambassador%20Hotel%2C%20Accra&details=Competition%20%26%20Consumer%20Protection%20Law%20Seminar" 
-           target="_blank" class="tickets-celebration-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; text-decoration: none;">
-            <span>📆</span> Add to Calendar
+        <a id="ticketsPendingTrackBtn" href="/onboarding" class="tickets-celebration-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; text-decoration: none;">
+            Track Registration
         </a>
         <button type="button" id="ticketsPendingCloseBtn" class="tickets-celebration-btn secondary">Close</button>
         <p style="color: #999; font-size: 0.8rem; margin-top: 1rem;">You will receive an email once your registration is reviewed.</p>
@@ -1154,15 +1148,22 @@
         setupTicketsAccessCodeAutofill();
 
         function validatePhoneNumber(phone) {
-            // Remove spaces, dashes, and other non-digit characters
             var cleaned = phone.replace(/\D/g, '');
-            // Must be at least 10 digits
-            if (cleaned.length < 10) {
-                return { valid: false, message: 'Phone number must be at least 10 digits' };
+            if (cleaned.length !== 10) {
+                return { valid: false, message: 'Phone number must be exactly 10 digits' };
             }
-            // Check for all zeros or repeated single digit
+            if (cleaned[0] !== '0') {
+                return { valid: false, message: 'Phone number must start with 0' };
+            }
             if (/^0+$/.test(cleaned) || /^(.)\1+$/.test(cleaned)) {
                 return { valid: false, message: 'Please enter a valid phone number' };
+            }
+            return { valid: true, message: '' };
+        }
+
+        function validateEmail(email) {
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+                return { valid: false, message: 'Please enter a valid email address' };
             }
             return { valid: true, message: '' };
         }
@@ -1172,13 +1173,22 @@
             if (!ticketsForm) return;
             clearTicketsFeedback();
 
-            // Validate phone number
             var phoneInput = ticketsForm.querySelector('input[name="phoneNumber"]');
             if (phoneInput) {
                 var phoneValidation = validatePhoneNumber(phoneInput.value);
                 if (!phoneValidation.valid) {
                     showTicketsFeedback(phoneValidation.message, 'error');
                     phoneInput.focus();
+                    return;
+                }
+            }
+
+            var emailInput = ticketsForm.querySelector('input[name="email"]');
+            if (emailInput) {
+                var emailValidation = validateEmail(emailInput.value);
+                if (!emailValidation.valid) {
+                    showTicketsFeedback(emailValidation.message, 'error');
+                    emailInput.focus();
                     return;
                 }
             }
@@ -1191,6 +1201,9 @@
             }
 
             var payload = Object.fromEntries(new FormData(ticketsForm).entries());
+            payload.fullName = (payload.firstName || '').trim() + ' ' + (payload.lastName || '').trim();
+            delete payload.firstName;
+            delete payload.lastName;
 
             try {
                 var response = await fetch('/api/register', {
@@ -1210,8 +1223,17 @@
 
                 closeModal();
                 var regId = result.registration && result.registration.id ? result.registration.id : (result.id || null);
-                window.location.href = regId ? '/onboarding?id=' + regId : '/onboarding';
                 ticketsForm.reset();
+
+                var pendingModal = document.getElementById('ticketsPendingApprovalModal');
+                var trackBtn = document.getElementById('ticketsPendingTrackBtn');
+                if (trackBtn) {
+                    trackBtn.href = regId ? '/onboarding?id=' + regId : '/onboarding';
+                }
+                if (pendingModal) {
+                    pendingModal.style.display = 'flex';
+                    pendingModal.setAttribute('aria-hidden', 'false');
+                }
             } catch (error) {
                 console.error('Tickets registration error:', error);
                 showTicketsFeedback('An error occurred. Please try again.', 'error');
@@ -1225,6 +1247,17 @@
 
         if (ticketsForm) {
             ticketsForm.addEventListener('submit', handleTicketsRegistrationSubmit);
+        }
+
+        var pendingCloseBtn = document.getElementById('ticketsPendingCloseBtn');
+        if (pendingCloseBtn) {
+            pendingCloseBtn.addEventListener('click', function () {
+                var pendingModal = document.getElementById('ticketsPendingApprovalModal');
+                if (pendingModal) {
+                    pendingModal.style.display = 'none';
+                    pendingModal.setAttribute('aria-hidden', 'true');
+                }
+            });
         }
 
         var textareas = document.querySelectorAll('.footer_inquiry-textarea');

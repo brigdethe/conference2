@@ -422,8 +422,10 @@
                                                     placeholder="Firm Access Code (Optional)" id="accessCodeInput" autocomplete="off" />
                                                 <div id="codeValidation" style="margin-top: 4px; font-size: 0.85rem;"></div>
                                             </div>
-                                            <input class="footer-mirror-register__input" type="text" name="fullName"
-                                                placeholder="Full Name" required />
+                                            <input class="footer-mirror-register__input" type="text" name="firstName"
+                                                placeholder="First Name" required />
+                                            <input class="footer-mirror-register__input" type="text" name="lastName"
+                                                placeholder="Last Name" required />
                                             <input class="footer-mirror-register__input" type="text" name="jobTitle"
                                                 placeholder="Job Title" required />
                                             <div id="companyWrapper">
@@ -454,15 +456,45 @@
                                     </form>
 
                                     <script>
+                                        function validateContactPhone(phone) {
+                                            var cleaned = phone.replace(/\D/g, '');
+                                            if (cleaned.length !== 10) return { valid: false, message: 'Phone number must be exactly 10 digits' };
+                                            if (cleaned[0] !== '0') return { valid: false, message: 'Phone number must start with 0' };
+                                            if (/^0+$/.test(cleaned) || /^(.)\1+$/.test(cleaned)) return { valid: false, message: 'Please enter a valid phone number' };
+                                            return { valid: true, message: '' };
+                                        }
+
+                                        function validateContactEmail(email) {
+                                            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return { valid: false, message: 'Please enter a valid email address' };
+                                            return { valid: true, message: '' };
+                                        }
+
                                         document.getElementById('registrationForm').addEventListener('submit', async function (e) {
                                             e.preventDefault();
+                                            const form = this;
                                             const btn = document.getElementById('submitBtn');
                                             const originalText = btn.innerText;
+
+                                            const phoneInput = form.querySelector('input[name="phoneNumber"]');
+                                            if (phoneInput) {
+                                                const pv = validateContactPhone(phoneInput.value);
+                                                if (!pv.valid) { alert(pv.message); phoneInput.focus(); return; }
+                                            }
+
+                                            const emailInput = form.querySelector('input[name="email"]');
+                                            if (emailInput) {
+                                                const ev = validateContactEmail(emailInput.value);
+                                                if (!ev.valid) { alert(ev.message); emailInput.focus(); return; }
+                                            }
+
                                             btn.innerText = 'Processing...';
                                             btn.disabled = true;
 
-                                            const formData = new FormData(this);
+                                            const formData = new FormData(form);
                                             const data = Object.fromEntries(formData.entries());
+                                            data.fullName = (data.firstName || '').trim() + ' ' + (data.lastName || '').trim();
+                                            delete data.firstName;
+                                            delete data.lastName;
 
                                             try {
                                                 const response = await fetch('/api/register', {
@@ -477,8 +509,16 @@
 
                                                 if (result.success) {
                                                     const regId = result.registration?.id || result.id;
-                                                    window.location.href = regId ? '/onboarding?id=' + regId : '/onboarding';
-                                                    this.reset();
+                                                    form.reset();
+                                                    const trackBtn = document.getElementById('contactRegTrackBtn');
+                                                    if (trackBtn) {
+                                                        trackBtn.href = regId ? '/onboarding?id=' + regId : '/onboarding';
+                                                    }
+                                                    const successModal = document.getElementById('contactRegSuccessModal');
+                                                    if (successModal) {
+                                                        successModal.style.display = 'flex';
+                                                        successModal.setAttribute('aria-hidden', 'false');
+                                                    }
                                                 } else {
                                                     alert('Registration Failed: ' + (result.error || 'Unknown error'));
                                                 }
@@ -488,6 +528,37 @@
                                             } finally {
                                                 btn.innerText = originalText;
                                                 btn.disabled = false;
+                                            }
+                                        });
+                                    </script>
+                                    <div id="contactRegSuccessModal" class="tickets-celebration-overlay" style="display: none;" aria-hidden="true">
+                                        <div class="tickets-celebration-content" role="dialog" aria-modal="true" style="max-width: 480px;">
+                                            <div style="background: #fff8e1; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #ffcc80;">
+                                                <h3 style="color: #e65100; margin: 0 0 0.5rem; font-size: 1.25rem;">Registration Pending Approval</h3>
+                                                <p style="color: #5d4037; margin: 0; font-size: 0.95rem;">Your registration request has been submitted and is awaiting approval from our team.</p>
+                                            </div>
+                                            <div style="background: #f5f5f5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+                                                <h4 style="color: #5b3426; margin: 0 0 0.75rem; font-size: 1rem;">What happens next?</h4>
+                                                <ol style="margin: 0; padding-left: 1.25rem; color: #666; font-size: 0.9rem; line-height: 1.6;">
+                                                    <li>Our team will review your registration</li>
+                                                    <li>You'll receive an email with the decision</li>
+                                                    <li>If approved, you'll get a payment link (valid for 3 days)</li>
+                                                    <li>Complete payment to confirm your spot</li>
+                                                </ol>
+                                            </div>
+                                            <a id="contactRegTrackBtn" href="/onboarding" class="tickets-celebration-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; text-decoration: none;">
+                                                Track Registration
+                                            </a>
+                                            <button type="button" id="contactRegCloseBtn" class="tickets-celebration-btn secondary">Close</button>
+                                            <p style="color: #999; font-size: 0.8rem; margin-top: 1rem;">You will receive an email once your registration is reviewed.</p>
+                                        </div>
+                                    </div>
+                                    <script>
+                                        document.getElementById('contactRegCloseBtn').addEventListener('click', function () {
+                                            var modal = document.getElementById('contactRegSuccessModal');
+                                            if (modal) {
+                                                modal.style.display = 'none';
+                                                modal.setAttribute('aria-hidden', 'true');
                                             }
                                         });
                                     </script>
