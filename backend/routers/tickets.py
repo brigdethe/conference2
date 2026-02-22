@@ -39,55 +39,6 @@ def get_active_tickets(db: Session = Depends(get_db)):
     return {"tickets": tickets, "total": len(tickets)}
 
 
-@router.get("/{ticket_code}")
-def get_ticket(ticket_code: str, db: Session = Depends(get_db)):
-    registration = db.query(Registration).filter(
-        Registration.ticket_code == ticket_code.upper().strip()
-    ).first()
-    
-    if not registration:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-    
-    checked_in = db.query(CheckIn).filter(
-        CheckIn.registration_id == registration.id
-    ).first()
-    
-    return {
-        "id": registration.id,
-        "ticket_code": registration.ticket_code,
-        "full_name": registration.full_name,
-        "email": registration.email,
-        "phone": registration.phone,
-        "firm_name": registration.firm.name if registration.firm else None,
-        "ticket_type": registration.ticket_type,
-        "status": registration.status,
-        "checked_in": checked_in is not None,
-        "checked_in_at": checked_in.checked_in_at.isoformat() if checked_in else None,
-        "qr_data": registration.qr_data
-    }
-
-
-@router.get("/{ticket_code}/qr")
-def get_ticket_qr(ticket_code: str, db: Session = Depends(get_db)):
-    registration = db.query(Registration).filter(
-        Registration.ticket_code == ticket_code.upper().strip()
-    ).first()
-    
-    if not registration:
-        raise HTTPException(status_code=404, detail="Ticket not found")
-    
-    if not registration.qr_data:
-        raise HTTPException(status_code=400, detail="No QR data available")
-    
-    qr_image = generate_qr_image_base64(registration.qr_data)
-    
-    return {
-        "ticket_code": registration.ticket_code,
-        "qr_image": qr_image,
-        "qr_data": registration.qr_data
-    }
-
-
 @router.get("/verify/{ticket_code}")
 def verify_ticket_by_code(ticket_code: str, db: Session = Depends(get_db)):
     """Verify a ticket by its code (used by QR scan verification page)"""
@@ -115,6 +66,71 @@ def verify_ticket_by_code(ticket_code: str, db: Session = Depends(get_db)):
         "ticket_type": registration.ticket_type,
         "checked_in": existing_checkin is not None,
         "checked_in_at": existing_checkin.checked_in_at.isoformat() if existing_checkin else None
+    }
+
+
+@router.get("/checkins/stats")
+def get_checkin_stats(db: Session = Depends(get_db)):
+    total_tickets = db.query(Registration).filter(
+        Registration.status == "confirmed",
+        Registration.ticket_code.isnot(None)
+    ).count()
+    
+    checked_in = db.query(CheckIn).count()
+    
+    return {
+        "total_tickets": total_tickets,
+        "checked_in": checked_in,
+        "remaining": total_tickets - checked_in
+    }
+
+
+@router.get("/{ticket_code}/qr")
+def get_ticket_qr(ticket_code: str, db: Session = Depends(get_db)):
+    registration = db.query(Registration).filter(
+        Registration.ticket_code == ticket_code.upper().strip()
+    ).first()
+    
+    if not registration:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    if not registration.qr_data:
+        raise HTTPException(status_code=400, detail="No QR data available")
+    
+    qr_image = generate_qr_image_base64(registration.qr_data)
+    
+    return {
+        "ticket_code": registration.ticket_code,
+        "qr_image": qr_image,
+        "qr_data": registration.qr_data
+    }
+
+
+@router.get("/{ticket_code}")
+def get_ticket(ticket_code: str, db: Session = Depends(get_db)):
+    registration = db.query(Registration).filter(
+        Registration.ticket_code == ticket_code.upper().strip()
+    ).first()
+    
+    if not registration:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    
+    checked_in = db.query(CheckIn).filter(
+        CheckIn.registration_id == registration.id
+    ).first()
+    
+    return {
+        "id": registration.id,
+        "ticket_code": registration.ticket_code,
+        "full_name": registration.full_name,
+        "email": registration.email,
+        "phone": registration.phone,
+        "firm_name": registration.firm.name if registration.firm else None,
+        "ticket_type": registration.ticket_type,
+        "status": registration.status,
+        "checked_in": checked_in is not None,
+        "checked_in_at": checked_in.checked_in_at.isoformat() if checked_in else None,
+        "qr_data": registration.qr_data
     }
 
 
@@ -220,20 +236,4 @@ def check_in_ticket(data: CheckInCreate, db: Session = Depends(get_db)):
             checked_in_at=checkin.checked_in_at,
             method=checkin.method
         )
-    }
-
-
-@router.get("/checkins/stats")
-def get_checkin_stats(db: Session = Depends(get_db)):
-    total_tickets = db.query(Registration).filter(
-        Registration.status == "confirmed",
-        Registration.ticket_code.isnot(None)
-    ).count()
-    
-    checked_in = db.query(CheckIn).count()
-    
-    return {
-        "total_tickets": total_tickets,
-        "checked_in": checked_in,
-        "remaining": total_tickets - checked_in
     }
