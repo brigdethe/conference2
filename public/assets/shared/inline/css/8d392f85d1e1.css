@@ -4,6 +4,15 @@ body[data-menu-visible="true"] {
     width: 100% !important;
 }
 
+.navbar_logo-link {
+    width: 6.5rem;
+}
+
+.navbar_logo {
+    width: 100%;
+    height: auto;
+}
+
 body[data-scrolled="true"] .navbar_component {
     background-color: var(--_primitives---colors--white);
     padding-left: 16px;
@@ -93,6 +102,7 @@ body[data-scrolled="true"] .navbar_link.w--current {
         display: flex !important;
         opacity: 1;
         transform: translateY(0);
+        max-height: calc(100vh - 10rem);
         max-height: calc(100dvh - 10rem);
         overflow: auto;
         pointer-events: auto;
