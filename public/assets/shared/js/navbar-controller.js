@@ -1,4 +1,6 @@
 (() => {
+    window.__NAVBAR_CONTROLLER_LOADED__ = true;
+
     function runWhenReady(fn) {
         if (document.readyState === "loading") {
             document.addEventListener("DOMContentLoaded", fn);
