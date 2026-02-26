@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
+function initNavbarMenu() {
     const body = document.body;
     const menuButton = document.querySelector("#navbarMenuButton");
     const mobileMenu = document.querySelector(".navbar_menu.tablet-down");
@@ -142,4 +142,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     resetMenuState();
-});
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initNavbarMenu);
+} else {
+    initNavbarMenu();
+}
