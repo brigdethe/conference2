@@ -226,25 +226,28 @@ runWhenReady(function() {
         else openMenu();
     }
     var touchFired = false;
-    document.addEventListener("click", function(event) {
-        var btn = document.getElementById("navbarMenuButton");
-        if (!btn || !btn.contains(event.target)) return;
-        event.preventDefault();
-        event.stopPropagation();
-        if (touchFired) return;
-        if (!isMobileViewport()) return;
-        toggleMenu();
-    }, true);
-    document.addEventListener("touchend", function(event) {
-        var btn = document.getElementById("navbarMenuButton");
-        if (!btn || !btn.contains(event.target)) return;
-        event.preventDefault();
-        event.stopPropagation();
-        if (!isMobileViewport()) return;
-        touchFired = true;
-        toggleMenu();
-        setTimeout(function() { touchFired = false; }, 500);
-    }, true);
+    var menuButton = document.getElementById("navbarMenuButton");
+    if (menuButton) {
+        menuButton.addEventListener("click", function(event) {
+            if (touchFired) {
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            }
+            if (!isMobileViewport()) return;
+            event.preventDefault();
+            event.stopPropagation();
+            toggleMenu();
+        });
+        menuButton.addEventListener("touchend", function(event) {
+            if (!isMobileViewport()) return;
+            event.preventDefault();
+            event.stopPropagation();
+            touchFired = true;
+            toggleMenu();
+            setTimeout(function() { touchFired = false; }, 350);
+        });
+    }
     document.addEventListener("keydown", function(event) {
         if (event.key !== "Escape") return;
         if (isMenuOpen()) closeMenu();
