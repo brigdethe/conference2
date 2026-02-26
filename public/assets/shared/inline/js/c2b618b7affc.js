@@ -52,19 +52,27 @@ function initNavbarMenu() {
     menuButton.setAttribute("aria-controls", mobileMenu.id);
     menuButton.setAttribute("aria-haspopup", "true");
 
-    let lastToggleTime = 0;
-    function handleMenuToggle(event) {
+    let touchFired = false;
+
+    function handleClickToggle(event) {
         event.preventDefault();
         event.stopPropagation();
+        if (touchFired) return;          // block the ghost click after touchend
         if (!isMobileViewport()) return;
-        const now = Date.now();
-        if (now - lastToggleTime < 300) return;
-        lastToggleTime = now;
         toggleMenu();
     }
 
-    menuButton.addEventListener("click", handleMenuToggle);
-    menuButton.addEventListener("touchend", handleMenuToggle, { passive: false });
+    function handleTouchToggle(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!isMobileViewport()) return;
+        touchFired = true;
+        toggleMenu();
+        setTimeout(function () { touchFired = false; }, 500);
+    }
+
+    menuButton.addEventListener("click", handleClickToggle);
+    menuButton.addEventListener("touchend", handleTouchToggle, { passive: false });
 
     footerLinks.forEach((link) => {
         link.addEventListener("click", (event) => {

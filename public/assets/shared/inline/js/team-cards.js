@@ -97,14 +97,14 @@
                                 once, // ensures it runs only the first time
                                 onEnter: batch => {
                                     batch.forEach((c, i) => {
-                                        gsap.delayedCall(i * cardViewportStagger, () => tlByCard.get(c) ? .play());
+                                        gsap.delayedCall(i * cardViewportStagger, () => tlByCard.get(c)?.play());
                                     });
                                 }
                             });
                         } else {
                             // Fallback: play immediately in DOM order
                             cards.forEach((c, i) => {
-                                gsap.delayedCall(i * cardViewportStagger, () => tlByCard.get(c) ? .play());
+                                gsap.delayedCall(i * cardViewportStagger, () => tlByCard.get(c)?.play());
                             });
                         }
                     });
