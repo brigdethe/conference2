@@ -62,7 +62,7 @@ body[data-scrolled="true"] .navbar_link.w--current {
         width: min(46vw, 17rem);
         height: auto;
         margin: 0.5rem 0 0 auto;
-        display: flex;
+        display: flex !important;
         position: relative;
         inset: auto;
         border-radius: 1.25rem;
@@ -90,6 +90,7 @@ body[data-scrolled="true"] .navbar_link.w--current {
     }
 
     body[data-menu-visible="true"] .navbar_menu.tablet-down {
+        display: flex !important;
         opacity: 1;
         transform: translateY(0);
         max-height: calc(100dvh - 10rem);
