@@ -1,28 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { Controls, KPIHeader } from './components/Controls';
-import { RevenueHistory } from './components/revenue/RevenueHistory';
-import { GuestTypeChart } from './components/revenue/GuestTypeChart';
+import { DashboardTab } from './components/dashboard/DashboardTab';
 import { DetailsSidebar } from './components/sidebar/DetailsSidebar';
 import { UserTable } from './components/UserTable';
 import { useDashboard } from './hooks/useDashboard';
-import { InvitedFirmsList } from './components/overview/InvitedFirmsList';
-import { MetricsList } from './components/overview/MetricsList';
 import { FirmsTab } from './components/firms/FirmsTab';
 import { TicketsTab } from './components/tickets/TicketsTab';
 import { SettingsTab } from './components/settings/SettingsTab';
 import { InquiriesTab } from './components/inquiries/InquiriesTab';
-import { PaymentsTab } from './components/payments/PaymentsTab';
-import { ApprovalsTab } from './components/approvals/ApprovalsTab';
+import { RegistrationsTab } from './components/approvals/ApprovalsTab';
 import { Login } from './components/Login';
 import { TabOption } from './types';
 import type { DashboardSidebarContent } from './data/dashboard';
-import type { FirmActivityDetail } from './data/dashboard';
+import type { FirmActivityDetail, FirmRegistrationDetail } from './data/dashboard';
 import type { User } from './data/users';
+
+function normalizeFirmRegistration(raw: Record<string, unknown>): FirmRegistrationDetail {
+  return {
+    id: Number(raw.id ?? 0),
+    fullName: String(raw.fullName ?? raw.full_name ?? ''),
+    email: String(raw.email ?? ''),
+    jobTitle: String(raw.jobTitle ?? raw.job_title ?? ''),
+    phone: String(raw.phone ?? ''),
+    ticketType: (raw.ticketType ?? raw.ticket_type ?? 'Access Code') as FirmRegistrationDetail['ticketType'],
+    status: String(raw.status ?? 'confirmed') as FirmRegistrationDetail['status'],
+    registeredAt: (raw.registeredAt ?? raw.registered_at ?? raw.created_at ?? null) as string | null,
+  };
+}
+
+function normalizeFirmActivity(raw: Record<string, unknown>): FirmActivityDetail {
+  const rawRegs = Array.isArray(raw.registrations) ? raw.registrations : [];
+  return {
+    name: String(raw.name ?? ''),
+    code: String(raw.code ?? ''),
+    totalRegistrations: Number(raw.totalRegistrations ?? raw.total_registrations ?? 0),
+    confirmedAccessCode: Number(raw.confirmedAccessCode ?? raw.confirmed_access_code ?? 0),
+    confirmedPaid: Number(raw.confirmedPaid ?? raw.confirmed_paid ?? 0),
+    pendingPayment: Number(raw.pendingPayment ?? raw.pending_payment ?? 0),
+    freeSlotsRemaining: Number(raw.freeSlotsRemaining ?? raw.free_slots_remaining ?? 0),
+    lastRegistrationAt: (raw.lastRegistrationAt ?? raw.last_registration_at ?? null) as string | null,
+    registrations: rawRegs.map((r: Record<string, unknown>) => normalizeFirmRegistration(r ?? {})),
+  };
+}
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [activeTab, setActiveTab] = useState<TabOption>(TabOption.Overview);
+  const [activeTab, setActiveTab] = useState<TabOption>(TabOption.Dashboard);
   const [activeDetail, setActiveDetail] = useState<DashboardSidebarContent | null>(null);
   const { users, isLoading, error, refetch, dashboard } = useDashboard();
   const [selectedFirm, setSelectedFirm] = useState<string>('All');
@@ -82,8 +106,8 @@ export default function App() {
       }
 
       const data = await res.json();
-      const rows = Array.isArray(data?.firms) ? (data.firms as FirmActivityDetail[]) : [];
-      setInvitedFirms(rows);
+      const rawFirms = Array.isArray(data?.firms) ? data.firms : [];
+      setInvitedFirms(rawFirms.map((f: Record<string, unknown>) => normalizeFirmActivity(f ?? {})));
     } catch (err) {
       console.error('Failed to fetch firm activities:', err);
       setInvitedFirms([]);
@@ -128,18 +152,14 @@ export default function App() {
 
   const getKPILabel = () => {
     switch (activeTab) {
-      case TabOption.Revenue:
-        return 'Total Revenue';
-      case TabOption.Overview:
+      case TabOption.Dashboard:
         return 'Time until Seminar';
       case TabOption.Firms:
         return 'Total Firms';
-      case TabOption.Tickets:
+      case TabOption.CheckIn:
         return 'Active Tickets';
-      case TabOption.Approvals:
-        return 'Pending Approvals';
-      case TabOption.Payments:
-        return 'Pending Payments';
+      case TabOption.Registrations:
+        return 'Pending Registrations';
       case TabOption.Inquiries:
         return 'Inquiries';
       case TabOption.Settings:
@@ -153,17 +173,13 @@ export default function App() {
 
   const getKPIValue = () => {
     switch (activeTab) {
-      case TabOption.Revenue:
-        return `GHS ${dashboard.totalRevenue.toLocaleString()}`;
-      case TabOption.Overview:
+      case TabOption.Dashboard:
         return `${days}d ${hours}h`;
       case TabOption.Firms:
         return invitedFirms.length.toLocaleString();
-      case TabOption.Tickets:
+      case TabOption.CheckIn:
         return dashboard.registeredUsers.toLocaleString();
-      case TabOption.Approvals:
-        return '';
-      case TabOption.Payments:
+      case TabOption.Registrations:
         return '';
       case TabOption.Inquiries:
         return '';
@@ -205,33 +221,15 @@ export default function App() {
 
             <KPIHeader label={getKPILabel()} value={getKPIValue()} isLoading={isLoading} />
 
-            {activeTab === TabOption.Overview && (
-              <div className="mb-8 grid h-[500px] grid-cols-1 gap-6 lg:grid-cols-3">
-                <div className="h-full lg:col-span-2">
-                  <InvitedFirmsList
-                    firms={invitedFirms}
-                    isLoading={firmsLoading}
-                    error={firmsError}
-                    onRetry={fetchInvitedFirms}
-                    onOpenDetail={setActiveDetail}
-                  />
-                </div>
-                <div className="h-full">
-                  <MetricsList dashboard={dashboard} onOpenDetail={setActiveDetail} />
-                </div>
-              </div>
-            )}
-
-            {activeTab === TabOption.Revenue && (
-              <div className="mb-8 grid h-[500px] grid-cols-1 gap-6 lg:grid-cols-2">
-                <GuestTypeChart dashboard={dashboard} />
-                <RevenueHistory
-                  transactions={dashboard.transactions}
-                  revenueByTicketType={dashboard.revenueByTicketType}
-                  ticketTypeDetails={dashboard.details.ticketTypes}
-                  onOpenDetail={setActiveDetail}
-                />
-              </div>
+            {activeTab === TabOption.Dashboard && (
+              <DashboardTab
+                dashboard={dashboard}
+                invitedFirms={invitedFirms}
+                firmsLoading={firmsLoading}
+                firmsError={firmsError}
+                onRetryFirms={fetchInvitedFirms}
+                onOpenDetail={setActiveDetail}
+              />
             )}
 
             {activeTab === TabOption.Attendees && (
@@ -328,21 +326,15 @@ export default function App() {
               </section>
             )}
 
-            {activeTab === TabOption.Tickets && (
+            {activeTab === TabOption.CheckIn && (
               <section className="mb-8">
                 <TicketsTab />
               </section>
             )}
 
-            {activeTab === TabOption.Approvals && (
+            {activeTab === TabOption.Registrations && (
               <section className="mb-8">
-                <ApprovalsTab />
-              </section>
-            )}
-
-            {activeTab === TabOption.Payments && (
-              <section className="mb-8">
-                <PaymentsTab />
+                <RegistrationsTab />
               </section>
             )}
 

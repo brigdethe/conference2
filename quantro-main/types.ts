@@ -12,13 +12,11 @@ export interface ChartDataPoint {
 }
 
 export enum TabOption {
-  Overview = 'Overview',
+  Dashboard = 'Dashboard',
   Firms = 'Firms',
   Attendees = 'Attendees',
-  Tickets = 'Tickets',
-  Approvals = 'Approvals',
-  Payments = 'Payments',
+  Registrations = 'Registrations',
+  CheckIn = 'Check-in',
   Inquiries = 'Inquiries',
-  Revenue = 'Revenue',
   Settings = 'Settings'
 }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, CheckCircle, XCircle, Clock, User, Mail, Building, Briefcase, MessageSquare, Eye, Trash2 } from 'lucide-react';
+import { RefreshCw, CheckCircle, XCircle, Clock, User, Mail, Building, Briefcase, MessageSquare, Eye, Trash2, CreditCard } from 'lucide-react';
 
 interface Registration {
     id: number;
@@ -16,14 +16,25 @@ interface Registration {
     approvedAt?: string | null;
 }
 
-type TabType = 'pending' | 'approved' | 'rejected';
+interface PendingPayment {
+    id: number;
+    fullName: string;
+    email: string;
+    firmName: string | null;
+    status: string;
+    registeredAt: string;
+}
 
-export const ApprovalsTab: React.FC = () => {
+type TabType = 'pending' | 'approved' | 'rejected' | 'payments';
+
+export const RegistrationsTab: React.FC = () => {
     const [pendingList, setPendingList] = useState<Registration[]>([]);
     const [approvedList, setApprovedList] = useState<Registration[]>([]);
     const [rejectedList, setRejectedList] = useState<Registration[]>([]);
+    const [paymentsList, setPaymentsList] = useState<PendingPayment[]>([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState<number | null>(null);
+    const [verifying, setVerifying] = useState<number | null>(null);
     const [rejectModal, setRejectModal] = useState<{ id: number; name: string } | null>(null);
     const [rejectReason, setRejectReason] = useState('');
     const [activeTab, setActiveTab] = useState<TabType>('pending');
@@ -32,10 +43,11 @@ export const ApprovalsTab: React.FC = () => {
     const fetchAllData = async () => {
         setLoading(true);
         try {
-            const [pendingRes, approvedRes, rejectedRes] = await Promise.all([
+            const [pendingRes, approvedRes, rejectedRes, paymentsRes] = await Promise.all([
                 fetch('/api/registrations/pending-approvals'),
                 fetch('/api/registrations/approved-registrations'),
-                fetch('/api/registrations/rejected-registrations')
+                fetch('/api/registrations/rejected-registrations'),
+                fetch('/api/registrations/pending-payments')
             ]);
             
             if (pendingRes.ok) {
@@ -49,6 +61,10 @@ export const ApprovalsTab: React.FC = () => {
             if (rejectedRes.ok) {
                 const data = await rejectedRes.json();
                 setRejectedList(data.registrations || []);
+            }
+            if (paymentsRes.ok) {
+                const data = await paymentsRes.json();
+                setPaymentsList(data.registrations || []);
             }
         } catch (err) {
             console.error('Error fetching registrations:', err);
@@ -129,6 +145,26 @@ export const ApprovalsTab: React.FC = () => {
         }
     };
 
+    const handleVerifyPayment = async (registrationId: number) => {
+        setVerifying(registrationId);
+        try {
+            const res = await fetch(`/api/registrations/${registrationId}/verify-payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (res.ok) {
+                setPaymentsList(prev => prev.filter(p => p.id !== registrationId));
+            } else {
+                alert('Failed to verify payment. Please try again.');
+            }
+        } catch (err) {
+            console.error('Error verifying payment:', err);
+            alert('An error occurred. Please try again.');
+        } finally {
+            setVerifying(null);
+        }
+    };
+
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleString('en-GB', {
             day: 'numeric',
@@ -139,7 +175,7 @@ export const ApprovalsTab: React.FC = () => {
         });
     };
 
-    const currentList = activeTab === 'pending' ? pendingList : activeTab === 'approved' ? approvedList : rejectedList;
+    const currentList = activeTab === 'pending' ? pendingList : activeTab === 'approved' ? approvedList : activeTab === 'rejected' ? rejectedList : [];
 
     const getStatusBadge = (status?: string) => {
         if (status === 'confirmed') return <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-semibold rounded-full">Confirmed</span>;
@@ -150,11 +186,10 @@ export const ApprovalsTab: React.FC = () => {
     return (
         <>
             <div className="bg-white rounded-3xl shadow-soft overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500">
-                {/* Header */}
                 <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div>
-                        <h2 className="text-lg font-bold text-slate-900">Registration Approvals</h2>
-                        <p className="text-sm text-slate-500">Manage pending, approved, and rejected registrations</p>
+                        <h2 className="text-lg font-bold text-slate-900">Registrations</h2>
+                        <p className="text-sm text-slate-500">Manage approvals, rejections, and payment verification</p>
                     </div>
                     <button
                         onClick={fetchAllData}
@@ -166,7 +201,6 @@ export const ApprovalsTab: React.FC = () => {
                     </button>
                 </div>
 
-                {/* Tabs */}
                 <div className="border-b border-gray-100">
                     <div className="flex">
                         <button
@@ -190,16 +224,91 @@ export const ApprovalsTab: React.FC = () => {
                             <XCircle className="w-4 h-4 inline mr-1.5" />
                             Rejected ({rejectedList.length})
                         </button>
+                        <button
+                            onClick={() => setActiveTab('payments')}
+                            className={`flex-1 px-4 py-3 text-sm font-medium transition-colors border-b-2 ${activeTab === 'payments' ? 'border-amber-500 text-amber-600 bg-amber-50/50' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
+                        >
+                            <CreditCard className="w-4 h-4 inline mr-1.5" />
+                            Awaiting Payment ({paymentsList.length})
+                        </button>
                     </div>
                 </div>
 
-                {/* Table Content */}
                 <div className="overflow-x-auto">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-12 text-slate-400">
                             <RefreshCw className="w-8 h-8 animate-spin mb-3" />
                             <p>Loading registrations...</p>
                         </div>
+                    ) : activeTab === 'payments' ? (
+                        paymentsList.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                                <CheckCircle className="w-12 h-12 mb-3 text-emerald-400" />
+                                <p className="text-lg font-medium text-slate-600">All caught up!</p>
+                                <p className="text-sm">No pending payments to verify</p>
+                            </div>
+                        ) : (
+                            <div className="p-6 space-y-4">
+                                {paymentsList.map((payment) => (
+                                    <div
+                                        key={payment.id}
+                                        className="bg-gradient-to-r from-amber-50 to-white border border-amber-100 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                                    >
+                                        <div className="flex-grow">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="px-2 py-0.5 bg-amber-100 text-amber-700 text-xs font-semibold rounded-full flex items-center gap-1">
+                                                    <Clock className="w-3 h-3" />
+                                                    Awaiting Verification
+                                                </span>
+                                                <span className="text-xs text-slate-400">REG-{payment.id}</span>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <User className="w-4 h-4 text-slate-400" />
+                                                    <span className="font-semibold text-slate-900">{payment.fullName}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Mail className="w-4 h-4 text-slate-400" />
+                                                    <span className="text-sm text-slate-600">{payment.email}</span>
+                                                </div>
+                                                {payment.firmName && (
+                                                    <div className="flex items-center gap-2">
+                                                        <Building className="w-4 h-4 text-slate-400" />
+                                                        <span className="text-sm text-slate-600">{payment.firmName}</span>
+                                                    </div>
+                                                )}
+                                                <div className="flex items-center gap-2">
+                                                    <CreditCard className="w-4 h-4 text-slate-400" />
+                                                    <span className="text-sm font-medium text-slate-700">GHS 150.00</span>
+                                                </div>
+                                            </div>
+                                            <p className="text-xs text-slate-400 mt-2">
+                                                Submitted: {formatDate(payment.registeredAt)}
+                                            </p>
+                                        </div>
+                                        <div className="flex-shrink-0">
+                                            <button
+                                                onClick={() => handleVerifyPayment(payment.id)}
+                                                disabled={verifying === payment.id}
+                                                className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            >
+                                                {verifying === payment.id ? (
+                                                    <>
+                                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                                        Verifying...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <CheckCircle className="w-4 h-4" />
+                                                        Verify Payment
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )
                     ) : currentList.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 text-slate-400">
                             {activeTab === 'pending' && <Clock className="w-12 h-12 mb-3 text-orange-300" />}
@@ -281,13 +390,11 @@ export const ApprovalsTab: React.FC = () => {
                     )}
                 </div>
 
-                {/* Footer */}
                 <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 text-xs text-gray-500">
-                    <span>Total: {pendingList.length} pending, {approvedList.length} approved, {rejectedList.length} rejected</span>
+                    <span>Total: {pendingList.length} pending, {approvedList.length} approved, {rejectedList.length} rejected, {paymentsList.length} awaiting payment</span>
                 </div>
             </div>
 
-            {/* View Details Modal */}
             {viewModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 animate-in fade-in zoom-in-95 duration-200">
@@ -355,7 +462,6 @@ export const ApprovalsTab: React.FC = () => {
                 </div>
             )}
 
-            {/* Reject Modal */}
             {rejectModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
