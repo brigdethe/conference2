@@ -188,7 +188,6 @@
                     return;
                 }
 
-                event.preventDefault();
                 event.stopPropagation();
                 touchFired = true;
                 toggleMenu();
@@ -196,7 +195,7 @@
                     touchFired = false;
                 }, TOUCH_GHOST_CLICK_BLOCK_MS);
             },
-            { passive: false }
+            { passive: true }
         );
 
         document.addEventListener("keydown", (event) => {
