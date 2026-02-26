@@ -9,13 +9,11 @@
                 <link rel="stylesheet" href="/assets/shared/inline/css/8d392f85d1e1.css" />
                 <link rel="stylesheet" href="/assets/shared/inline/css/color-overrides.css" />
                 <style>
-                    .navbar_logo-link {
-                        width: 6.5rem;
-                    }
-
-                    .navbar_logo {
-                        width: 100%;
-                        height: auto;
+                    .navbar_logo-link { width: 6.5rem; }
+                    .navbar_logo { width: 100%; height: auto; }
+                    @media (max-width: 991px) {
+                        .navbar_menu.tablet-down { opacity: 0; max-height: 0; pointer-events: none; overflow: hidden; }
+                        body[data-menu-visible="true"] .navbar_menu.tablet-down { display: flex !important; opacity: 1; transform: translateY(0); max-height: calc(100dvh - 10rem); pointer-events: auto; overflow: auto; }
                     }
                 </style>
             </div>
