@@ -146,10 +146,20 @@
             }
             body.setAttribute("data-menu-visible", "true");
             setExpandedState(true);
+            mobileMenu.style.setProperty("display", "flex", "important");
+            mobileMenu.style.setProperty("opacity", "1", "important");
+            mobileMenu.style.setProperty("max-height", "calc(100dvh - 5rem)", "important");
+            mobileMenu.style.setProperty("overflow", "auto", "important");
+            mobileMenu.style.setProperty("pointer-events", "auto", "important");
         }
 
         function closeMenu() {
             resetMenuState();
+            mobileMenu.style.removeProperty("display");
+            mobileMenu.style.removeProperty("opacity");
+            mobileMenu.style.removeProperty("max-height");
+            mobileMenu.style.removeProperty("overflow");
+            mobileMenu.style.removeProperty("pointer-events");
         }
 
         function toggleMenu() {

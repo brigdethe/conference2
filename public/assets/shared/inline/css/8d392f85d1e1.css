@@ -65,6 +65,8 @@ body[data-scrolled="true"] .navbar_link.w--current {
         display: flex;
         flex-direction: column;
         align-items: stretch;
+        height: auto !important;
+        overflow: visible !important;
     }
 
     .navbar_menu.tablet-down {
