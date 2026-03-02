@@ -31,7 +31,10 @@
                             <input class="footer_inquiry-input" type="text" name="name" placeholder="Full Name"
                                 required />
                             <input class="footer_inquiry-input" type="email" name="email" placeholder="Email Address (Optional)" />
-                            <input class="footer_inquiry-input" type="text" name="ticketCode" id="ticketCodeInput" placeholder="Ticket Code (Required for registered attendees)" maxlength="4" />
+                            <div class="footer_inquiry-field-group">
+                                <input class="footer_inquiry-input" type="text" name="ticketCode" id="ticketCodeInput" placeholder="Ticket Code" maxlength="4" />
+                                <small class="footer_inquiry-help-text" id="ticketCodeHelp">Required for registered attendees - questions will be prioritized</small>
+                            </div>
                             <textarea class="footer_inquiry-input footer_inquiry-textarea" name="message" rows="4"
                                 placeholder="What question would you like addressed at the seminar?" required id="messageTextarea"></textarea>
                             <button class="footer_inquiry-submit" type="submit" id="footerSubmitBtn">Submit Question</button>
@@ -185,6 +188,20 @@
 
     .footer_inquiry-input[required]:placeholder-shown {
         border-bottom-color: rgba(231, 135, 69, 0.7);
+    }
+
+    .footer_inquiry-field-group {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .footer_inquiry-help-text {
+        color: rgba(248, 242, 232, 0.6);
+        font-size: 0.85rem;
+        line-height: 1.3;
+        margin: 0;
     }
 
     .footer_inquiry-textarea {
@@ -641,6 +658,11 @@
         if (ticketCodeInput) {
             ticketCodeInput.setAttribute('required', '');
         }
+        // Initialize help text
+        var ticketCodeHelp = document.getElementById('ticketCodeHelp');
+        if (ticketCodeHelp) {
+            ticketCodeHelp.textContent = 'Required for registered attendees - questions will be prioritized';
+        }
         
         tabs.forEach(function(tab) {
             tab.addEventListener('click', function() {
@@ -655,15 +677,17 @@
                     messageTextarea.placeholder = 'What question would you like addressed at the seminar?';
                     submitBtn.textContent = 'Submit Question';
                     if (titleEl) titleEl.textContent = 'Submit Your Question';
-                    ticketCodeInput.placeholder = 'Ticket Code (Required for registered attendees)';
+                    ticketCodeInput.placeholder = 'Ticket Code';
                     ticketCodeInput.setAttribute('required', '');
+                    document.getElementById('ticketCodeHelp').textContent = 'Required for registered attendees - questions will be prioritized';
                 } else {
                     hiddenInput.value = 'General Inquiry';
                     messageTextarea.placeholder = 'How can we help you?';
                     submitBtn.textContent = 'Submit Inquiry';
                     if (titleEl) titleEl.textContent = 'Send an Inquiry';
-                    ticketCodeInput.placeholder = 'Ticket Code (Optional)';
+                    ticketCodeInput.placeholder = 'Ticket Code';
                     ticketCodeInput.removeAttribute('required');
+                    document.getElementById('ticketCodeHelp').textContent = 'Optional - helps us identify your registration';
                 }
             });
         });
