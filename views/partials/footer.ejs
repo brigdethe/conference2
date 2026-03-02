@@ -30,10 +30,8 @@
                             <input type="hidden" name="inquiryType" id="inquiryTypeHidden" value="Seminar Question" />
                             <input class="footer_inquiry-input" type="text" name="name" placeholder="Full Name"
                                 required />
-                            <input class="footer_inquiry-input" type="email" name="email" placeholder="Email Address"
-                                required />
-                            <input class="footer_inquiry-input" type="text" name="organization"
-                                placeholder="Company / Law Firm (Optional)" />
+                            <input class="footer_inquiry-input" type="email" name="email" placeholder="Email Address (Optional)" />
+                            <input class="footer_inquiry-input" type="text" name="ticketCode" placeholder="Ticket Code (Optional)" maxlength="4" />
                             <textarea class="footer_inquiry-input footer_inquiry-textarea" name="message" rows="4"
                                 placeholder="What question would you like addressed at the seminar?" required id="messageTextarea"></textarea>
                             <button class="footer_inquiry-submit" type="submit" id="footerSubmitBtn">Submit Question</button>
@@ -679,23 +677,43 @@
                 
                 var formData = new FormData(form);
                 var entries = Object.fromEntries(formData.entries());
-                var data = {
-                    name: entries.name,
-                    email: entries.email,
-                    organization: entries.organization || '',
-                    inquiry_type: entries.inquiryType,
-                    message: entries.message
-                };
+                var inquiryType = entries.inquiryType;
+                
+                var data, endpoint, successMessage;
+                
+                if (inquiryType === 'Seminar Question') {
+                    // Submit as seminar question
+                    data = {
+                        name: entries.name,
+                        email: entries.email || null,
+                        ticket_code: entries.ticketCode || null,
+                        question_text: entries.message,
+                        session_number: 0 // General session
+                    };
+                    endpoint = '/api/questions/';
+                    successMessage = 'Thank you! Your question has been submitted for the seminar.';
+                } else {
+                    // Submit as general inquiry
+                    data = {
+                        name: entries.name,
+                        email: entries.email || '',
+                        organization: '',
+                        inquiry_type: entries.inquiryType,
+                        message: entries.message
+                    };
+                    endpoint = '/api/inquiries';
+                    successMessage = 'Thank you! Your inquiry has been submitted. We will get back to you soon.';
+                }
                 
                 try {
-                    var response = await fetch('/api/inquiries', {
+                    var response = await fetch(endpoint, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
                     
                     if (response.ok) {
-                        showInquiryToast('Thank you! Your inquiry has been submitted. We will get back to you soon.', 'success');
+                        showInquiryToast(successMessage, 'success');
                         btn.textContent = 'Submitted!';
                         btn.style.background = '#2e7d32';
                         form.reset();
@@ -708,7 +726,7 @@
                         throw new Error('Failed to submit');
                     }
                 } catch (err) {
-                    showInquiryToast('Failed to submit inquiry. Please try again.', 'error');
+                    showInquiryToast('Failed to submit. Please try again.', 'error');
                     btn.textContent = 'Error - Try Again';
                     btn.style.background = '#c62828';
                     setTimeout(function() {
