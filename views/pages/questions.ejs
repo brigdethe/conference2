@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html data-wf-domain="www.cmc.com" data-wf-page="68ef56bcac74e051fd691b20" data-wf-site="68eee3b7aa1d9628fd1f8ee0"
+    lang="en">
+
+<head>
+    <%- include('../partials/google-analytics') %>
+    <meta charset="utf-8" />
+    <title>Ghana Competition Law & Policy Seminar | Q&A Session</title>
+    <meta content="Submit your questions for the Q&A sessions at the Ghana Competition Law & Policy Seminar"
+        name="description" />
+    <meta content="Ghana Competition Law & Policy Seminar | Q&A Session" property="og:title" />
+    <meta content="Submit your questions for the Q&A sessions at the Ghana Competition Law & Policy Seminar"
+        property="og:description" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <link href="/assets/shared/external/css/style-68eee3b7aa1d9628fd1f8ee0.css" rel="stylesheet" type="text/css" />
+    <link href="https://ik.imagekit.io/dr5fryhth/conference/imglogo?updatedAt=1769778325875" rel="shortcut icon"
+        type="image/x-icon" />
+    <link rel="stylesheet" href="/assets/shared/inline/css/51d673a284dc.css" />
+    <style>
+        .questions-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .session-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .session-card {
+            background: #fff;
+            border: 2px solid #d8cbb8;
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .session-card:hover {
+            border-color: #e78745;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(231, 135, 69, 0.15);
+        }
+
+        .session-card.active {
+            border-color: #e78745;
+            background: linear-gradient(135deg, #fffdf9 0%, #f8f2e8 100%);
+        }
+
+        .session-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #5b3426;
+            margin-bottom: 0.5rem;
+        }
+
+        .session-time {
+            color: #7b6a5e;
+            font-size: 0.95rem;
+        }
+
+        .question-form {
+            background: #fff;
+            border: 1px solid #d8cbb8;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #5b3426;
+        }
+
+        .form-input,
+        .form-textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d8cbb8;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #e78745;
+            box-shadow: 0 0 0 3px rgba(231, 135, 69, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .submit-btn {
+            background: #e78745;
+            color: #fff;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: #d67333;
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-box h3 {
+            color: #0066cc;
+            margin-bottom: 0.5rem;
+        }
+
+        .info-box p {
+            color: #004499;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .questions-container {
+                padding: 1rem;
+            }
+
+            .session-selector {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body class="body-4">
+    <div class="page-wrapper">
+        <div class="global-styles">
+            <div class="style-overrides w-embed">
+                <link rel="stylesheet" href="/assets/shared/inline/css/24bd467568d8.css" />
+            </div>
+        </div>
+
+        <%- include('../partials/navbar') %>
+
+        <div class="main-wrapper">
+            <section class="section">
+                <div class="padding-global">
+                    <div class="questions-container">
+                        <h1 style="text-align: center; color: #5b3426; margin-bottom: 1rem;">Q&A Session</h1>
+                        <p style="text-align: center; color: #7b6a5e; margin-bottom: 2rem;">
+                            Submit your questions for the seminar sessions. Registered attendees can include their ticket code for better tracking.
+                        </p>
+
+                        <div class="info-box">
+                            <h3>Why provide your ticket code?</h3>
+                            <p>If you're a registered attendee, providing your 4-character ticket code helps us:
+                                link your questions to your registration, identify your organization/firm, and prioritize questions from confirmed attendees.</p>
+                        </div>
+
+                        <div class="session-selector">
+                            <div class="session-card" data-session="1">
+                                <div class="session-title">Session II</div>
+                                <div class="session-time">10:30AM - 11:55AM</div>
+                                <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #7b6a5e;">Peter Alexiadis</div>
+                            </div>
+                            <div class="session-card" data-session="2">
+                                <div class="session-title">Session III</div>
+                                <div class="session-time">12:00PM - 1:30PM</div>
+                                <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #7b6a5e;">Prof. David Bailey (KC)</div>
+                            </div>
+                            <div class="session-card" data-session="3">
+                                <div class="session-title">Session IV</div>
+                                <div class="session-time">2:00PM - 3:00PM</div>
+                                <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #7b6a5e;">Panel Discussion</div>
+                            </div>
+                            <div class="session-card" data-session="0">
+                                <div class="session-title">General</div>
+                                <div class="session-time">Any Session</div>
+                                <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #7b6a5e;">Questions about the seminar</div>
+                            </div>
+                        </div>
+
+                        <div class="question-form">
+                            <h2 style="color: #5b3426; margin-bottom: 1.5rem;">Submit Your Question</h2>
+                            
+                            <div id="messageContainer"></div>
+
+                            <form id="questionForm">
+                                <div class="form-group">
+                                    <label class="form-label" for="sessionSelect">Select Session *</label>
+                                    <select class="form-input" id="sessionSelect" required>
+                                        <option value="">Please select a session...</option>
+                                        <option value="1">Session II - Peter Alexiadis (10:30AM - 11:55AM)</option>
+                                        <option value="2">Session III - Prof. David Bailey (KC) (12:00PM - 1:30PM)</option>
+                                        <option value="3">Session IV - Panel Discussion (2:00PM - 3:00PM)</option>
+                                        <option value="0">General - Any Session</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="ticketCode">Ticket Code (Optional)</label>
+                                    <input type="text" class="form-input" id="ticketCode" maxlength="4" 
+                                           placeholder="Enter your 4-character ticket code">
+                                    <small style="color: #7b6a5e;">If you're registered, enter your ticket code to link your question</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="name">Your Name *</label>
+                                    <input type="text" class="form-input" id="name" required placeholder="Enter your full name">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="email">Email (Optional)</label>
+                                    <input type="email" class="form-input" id="email" placeholder="your.email@example.com">
+                                    <small style="color: #7b6a5e;">Only if you'd like to receive updates about your question</small>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" for="question">Your Question *</label>
+                                    <textarea class="form-textarea" id="question" required 
+                                              placeholder="Type your question here..."></textarea>
+                                </div>
+
+                                <button type="submit" class="submit-btn" id="submitBtn">
+                                    Submit Question
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <%- include('../partials/footer') %>
+    </div>
+
+    <script>
+        // Session card selection
+        const sessionCards = document.querySelectorAll('.session-card');
+        const sessionSelect = document.getElementById('sessionSelect');
+
+        sessionCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const session = card.dataset.session;
+                sessionSelect.value = session;
+                
+                // Update active state
+                sessionCards.forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+            });
+        });
+
+        // Update active card when select changes
+        sessionSelect.addEventListener('change', () => {
+            sessionCards.forEach(card => {
+                card.classList.remove('active');
+                if (card.dataset.session === sessionSelect.value) {
+                    card.classList.add('active');
+                }
+            });
+        });
+
+        // Form submission
+        const questionForm = document.getElementById('questionForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const messageContainer = document.getElementById('messageContainer');
+
+        questionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            // Clear previous messages
+            messageContainer.innerHTML = '';
+            
+            // Get form data
+            const formData = {
+                session_number: parseInt(sessionSelect.value),
+                ticket_code: document.getElementById('ticketCode').value.trim() || null,
+                name: document.getElementById('name').value.trim(),
+                email: document.getElementById('email').value.trim() || null,
+                question_text: document.getElementById('question').value.trim()
+            };
+            
+            try {
+                const response = await fetch('/api/questions/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Success
+                    messageContainer.innerHTML = `
+                        <div class="success-message">
+                            <strong>Question submitted successfully!</strong><br>
+                            Your question has been received and will be reviewed during the selected session.
+                            ${formData.ticket_code ? '<br>Your ticket has been linked to your question.' : ''}
+                        </div>
+                    `;
+                    
+                    // Reset form
+                    questionForm.reset();
+                    sessionCards.forEach(card => card.classList.remove('active'));
+                } else {
+                    // Error
+                    messageContainer.innerHTML = `
+                        <div class="error-message">
+                            <strong>Error:</strong> ${data.detail || 'Failed to submit question. Please try again.'}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                // Network error
+                messageContainer.innerHTML = `
+                    <div class="error-message">
+                        <strong>Error:</strong> Unable to submit question. Please check your connection and try again.
+                    </div>
+                `;
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Question';
+            }
+        });
+
+        // Auto-format ticket code to uppercase
+        document.getElementById('ticketCode').addEventListener('input', (e) => {
+            e.target.value = e.target.value.toUpperCase();
+        });
+    </script>
+</body>
+
+</html>

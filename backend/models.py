@@ -88,6 +88,20 @@ class Inquiry(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class Question(Base):
+    __tablename__ = "questions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticket_code = Column(String(4), nullable=True)  # Optional - can link to registration
+    name = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=True)
+    question_text = Column(Text, nullable=False)
+    session_number = Column(Integer, nullable=True)  # Which session this question is for
+    is_answered = Column(Integer, default=0)  # 0 = not answered, 1 = answered
+    created_at = Column(DateTime, default=datetime.utcnow)
+    answered_at = Column(DateTime, nullable=True)
+
+
 class AdminNotificationRecipient(Base):
     __tablename__ = "admin_notification_recipients"
 

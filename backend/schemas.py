@@ -147,6 +147,30 @@ class InquiryCreate(BaseModel):
     message: str
 
 
+class QuestionCreate(BaseModel):
+    ticket_code: Optional[str] = None
+    name: str
+    email: Optional[str] = None
+    question_text: str
+    session_number: Optional[int] = None
+
+
+class QuestionResponse(BaseModel):
+    id: int
+    ticket_code: Optional[str]
+    name: str
+    email: Optional[str]
+    question_text: str
+    session_number: Optional[int]
+    is_answered: bool
+    created_at: datetime
+    answered_at: Optional[datetime] = None
+    registration_info: Optional[dict] = None  # To store linked registration info if available
+
+    class Config:
+        from_attributes = True
+
+
 class InquiryResponse(BaseModel):
     id: int
     name: str

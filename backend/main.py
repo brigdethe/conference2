@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, Base
-from routers import firms, registrations, payments, settings, tickets, notifications, inquiries
+from routers import firms, registrations, payments, settings, tickets, notifications, inquiries, questions
 
 Base.metadata.create_all(bind=engine)
 
@@ -37,6 +37,7 @@ app.include_router(settings.router)
 app.include_router(tickets.router)
 app.include_router(notifications.router)
 app.include_router(inquiries.router)
+app.include_router(questions.router)
 
 
 @app.get("/")
