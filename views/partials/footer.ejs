@@ -31,7 +31,7 @@
                             <input class="footer_inquiry-input" type="text" name="name" placeholder="Full Name"
                                 required />
                             <input class="footer_inquiry-input" type="email" name="email" placeholder="Email Address (Optional)" />
-                            <input class="footer_inquiry-input" type="text" name="ticketCode" placeholder="Ticket Code (Optional)" maxlength="4" />
+                            <input class="footer_inquiry-input" type="text" name="ticketCode" id="ticketCodeInput" placeholder="Ticket Code (Required for registered attendees)" maxlength="4" />
                             <textarea class="footer_inquiry-input footer_inquiry-textarea" name="message" rows="4"
                                 placeholder="What question would you like addressed at the seminar?" required id="messageTextarea"></textarea>
                             <button class="footer_inquiry-submit" type="submit" id="footerSubmitBtn">Submit Question</button>
@@ -177,6 +177,14 @@
     .footer_inquiry-input:focus {
         outline: none;
         border-color: #e78745;
+    }
+
+    .footer_inquiry-input[required] {
+        border-bottom-color: rgba(231, 135, 69, 0.5);
+    }
+
+    .footer_inquiry-input[required]:placeholder-shown {
+        border-bottom-color: rgba(231, 135, 69, 0.7);
     }
 
     .footer_inquiry-textarea {
@@ -628,22 +636,34 @@
         
         if (!tabs.length) return;
         
+        // Initialize ticket code field as required since default tab is seminar question
+        var ticketCodeInput = document.getElementById('ticketCodeInput');
+        if (ticketCodeInput) {
+            ticketCodeInput.setAttribute('required', '');
+        }
+        
         tabs.forEach(function(tab) {
             tab.addEventListener('click', function() {
                 tabs.forEach(function(t) { t.classList.remove('active'); });
                 tab.classList.add('active');
                 
                 var tabType = tab.getAttribute('data-tab');
+                var ticketCodeInput = document.getElementById('ticketCodeInput');
+                
                 if (tabType === 'question') {
                     hiddenInput.value = 'Seminar Question';
                     messageTextarea.placeholder = 'What question would you like addressed at the seminar?';
                     submitBtn.textContent = 'Submit Question';
                     if (titleEl) titleEl.textContent = 'Submit Your Question';
+                    ticketCodeInput.placeholder = 'Ticket Code (Required for registered attendees)';
+                    ticketCodeInput.setAttribute('required', '');
                 } else {
                     hiddenInput.value = 'General Inquiry';
                     messageTextarea.placeholder = 'How can we help you?';
                     submitBtn.textContent = 'Submit Inquiry';
                     if (titleEl) titleEl.textContent = 'Send an Inquiry';
+                    ticketCodeInput.placeholder = 'Ticket Code (Optional)';
+                    ticketCodeInput.removeAttribute('required');
                 }
             });
         });
@@ -682,16 +702,24 @@
                 var data, endpoint, successMessage;
                 
                 if (inquiryType === 'Seminar Question') {
+                    // Validate ticket code for seminar questions
+                    if (!entries.ticketCode || entries.ticketCode.trim() === '') {
+                        showInquiryToast('Please provide your ticket code. Registered attendees\' questions will be prioritized.', 'error');
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                        return;
+                    }
+                    
                     // Submit as seminar question
                     data = {
                         name: entries.name,
                         email: entries.email || null,
-                        ticket_code: entries.ticketCode || null,
+                        ticket_code: entries.ticketCode.trim(),
                         question_text: entries.message,
                         session_number: 0 // General session
                     };
                     endpoint = '/api/questions/';
-                    successMessage = 'Thank you! Your question has been submitted for the seminar.';
+                    successMessage = 'Thank you! Your question has been submitted. Registered attendees\' questions will be prioritized.';
                 } else {
                     // Submit as general inquiry
                     data = {
