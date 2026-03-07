@@ -43,7 +43,7 @@
                     <div class="footer_legal-wrapper">
                         <div class="detail">© 2026 Competition & Marketing Center Ltd.</div>
                         <div class="detail">
-                            <a href="https://fredrickagyare.is-a.dev/" target="_blank">Site by Agyare Fredrick</a>
+                            <a href="https://fredrickagyare.is-a.dev/" target="_blank">Site Created & Managed By Agyare Fredrick</a>
                         </div>
                     </div>
                 </div>
@@ -318,6 +318,51 @@
         opacity: 0.92;
     }
 
+    .fab-nudge-tooltip {
+        position: absolute;
+        bottom: calc(100% + 10px);
+        right: 0;
+        background: #fff;
+        color: #1f2d4f;
+        padding: 0.6rem 1rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+        opacity: 0;
+        transform: translateY(6px);
+        pointer-events: none;
+        transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .fab-nudge-tooltip::after {
+        content: '';
+        position: absolute;
+        bottom: -6px;
+        right: 20px;
+        width: 12px;
+        height: 12px;
+        background: #fff;
+        transform: rotate(45deg);
+        box-shadow: 3px 3px 6px rgba(0,0,0,0.06);
+    }
+
+    .fab-nudge-tooltip.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    @keyframes fab-pulse {
+        0%, 100% { box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+        50% { box-shadow: 0 8px 28px rgba(31,45,79,0.45), 0 0 0 6px rgba(31,45,79,0.12); }
+    }
+
+    .get-tickets-fab.is-pulsing {
+        animation: fab-pulse 1.2s ease-in-out 2;
+    }
+
     .get-tickets-fab__icon {
         display: inline-flex;
         width: 1rem;
@@ -529,6 +574,7 @@
     }
 </style>
 <button type="button" class="get-tickets-fab" id="openTicketsModal" aria-label="Get Tickets">
+    <span class="fab-nudge-tooltip" id="fabNudgeTooltip"></span>
     <span class="get-tickets-fab__icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -549,7 +595,7 @@
         <form class="tickets-modal__form">
             <div style="position: relative;">
                 <input class="tickets-modal__input" type="text" name="accessCode" id="ticketsAccessCodeInput"
-                    placeholder="Firm Access Code (Optional)" autocomplete="off" />
+                    placeholder="Access Code (Optional)" autocomplete="off" />
                 <div id="ticketsCodeValidation" style="margin-top: 4px; font-size: 0.8rem;"></div>
             </div>
             <input class="tickets-modal__input" type="text" name="firstName" placeholder="First Name" required />
@@ -839,6 +885,45 @@
                 closeModal();
             }
         });
+
+        // Periodic tooltip nudge on FAB
+        (function () {
+            var tooltip = document.getElementById('fabNudgeTooltip');
+            if (!tooltip) return;
+            var messages = [
+                'Secure your spot today!',
+                'Limited seats available',
+                'Register now \u2192',
+                'Don\u2019t miss out!'
+            ];
+            var msgIdx = 0;
+            var nudgeInterval = null;
+
+            function showNudge() {
+                if (modal.classList.contains('is-open')) return;
+                tooltip.textContent = messages[msgIdx];
+                msgIdx = (msgIdx + 1) % messages.length;
+                tooltip.classList.add('is-visible');
+                openBtn.classList.add('is-pulsing');
+                setTimeout(function () {
+                    tooltip.classList.remove('is-visible');
+                    openBtn.classList.remove('is-pulsing');
+                }, 4000);
+            }
+
+            // First nudge after 8s, then every 30s
+            setTimeout(function () {
+                showNudge();
+                nudgeInterval = setInterval(showNudge, 30000);
+            }, 8000);
+
+            // Stop nudging once user opens the modal
+            openBtn.addEventListener('click', function () {
+                tooltip.classList.remove('is-visible');
+                openBtn.classList.remove('is-pulsing');
+                if (nudgeInterval) { clearInterval(nudgeInterval); nudgeInterval = null; }
+            });
+        })();
 
         var ticketsForm = modal.querySelector('.tickets-modal__form');
         var ticketsAccessCode = document.getElementById('ticketsAccessCodeInput');

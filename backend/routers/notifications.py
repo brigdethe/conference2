@@ -2,14 +2,18 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
+import html
 import httpx
 import io
 import base64
 import qrcode
 import asyncio
+import logging
 
 from database import get_db
 from models import Settings, AdminNotificationRecipient
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/notifications", tags=["notifications"])
 
@@ -104,7 +108,7 @@ async def send_email_internal(
             )
             return True
     except Exception as e:
-        print(f"Email send error: {e}")
+        logger.error("Email send error: %s", e)
         return False
 
 
@@ -132,7 +136,7 @@ async def send_sms_internal(db: Session, to: str, message: str) -> bool:
             )
             return response.status_code == 200
     except Exception as e:
-        print(f"SMS send error: {e}")
+        logger.error("SMS send error: %s", e)
         return False
 
 
@@ -175,13 +179,13 @@ async def send_ticket_notification(
                         <p style="color: #666; font-size: 16px; margin: 0;">We look forward to hosting you.</p>
                     </div>
                     
-                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {full_name},</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name)},</p>
                     <p style="font-size: 16px; line-height: 1.6; color: #444;">Your registration for the Ghana Competition Law Seminar has been successfully confirmed. Below is your official ticket.</p>
                     
                     <!-- Ticket Card -->
                     <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center;">
                         <p style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 5px;">Ticket Code</p>
-                        <p style="color: #1a365d; font-size: 32px; font-weight: 700; letter-spacing: 2px; margin: 0 0 20px; font-family: monospace;">{ticket_code}</p>
+                        <p style="color: #1a365d; font-size: 32px; font-weight: 700; letter-spacing: 2px; margin: 0 0 20px; font-family: monospace;">{html.escape(ticket_code)}</p>
                         
                         <div style="background-color: #fff; padding: 15px; display: inline-block; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                             <img src="cid:qrcode" alt="QR Code" style="width: 180px; height: 180px; display: block;" />
@@ -216,7 +220,7 @@ async def send_ticket_notification(
                         </table>
                     </div>
                     
-                    {f'<div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid #edf2f7; font-size: 14px; color: #666;"><strong>Organization:</strong> {org_name}</div>' if org_name else ''}
+                    {f'<div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid #edf2f7; font-size: 14px; color: #666;"><strong>Organization:</strong> {html.escape(org_name)}</div>' if org_name else ''}
                 </div>
                 
                 <!-- Footer -->
@@ -286,7 +290,7 @@ async def send_ticket_notification(
                         timeout=15
                     )
         except Exception as e:
-            print(f"Ticket email error: {e}")
+            logger.error("Ticket email error: %s", e)
     
     # SMS
     if sms_enabled and phone:
@@ -334,19 +338,19 @@ async def send_admin_payment_notification(
                         <table style="width: 100%; border-collapse: collapse;">
                             <tr>
                                 <td style="padding: 8px 0; color: #64748b; font-size: 14px; width: 100px;">Name</td>
-                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{full_name}</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{html.escape(full_name)}</td>
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Email</td>
-                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{email}</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{html.escape(email)}</td>
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Phone</td>
-                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{phone or 'N/A'}</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{html.escape(phone) if phone else 'N/A'}</td>
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Organization</td>
-                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{org_name or 'N/A'}</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{html.escape(org_name) if org_name else 'N/A'}</td>
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Amount</td>
@@ -402,7 +406,7 @@ async def send_pending_approval_notification(
                         <h2 style="color: #d97706; margin: 0 0 10px; font-size: 20px;">Registration Pending</h2>
                     </div>
                     
-                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {full_name},</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name)},</p>
                     <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you for registering. Your application has been received and is currently under review.</p>
                     
                     <div style="background-color: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center;">
@@ -471,26 +475,26 @@ async def send_admin_approval_needed_notification(
                         <table style="width: 100%; border-collapse: collapse;">
                             <tr>
                                 <td style="padding: 8px 0; color: #64748b; font-size: 14px; width: 100px;">Name</td>
-                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{full_name}</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{html.escape(full_name)}</td>
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Email</td>
-                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{email}</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{html.escape(email)}</td>
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Phone</td>
-                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{phone or 'N/A'}</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{html.escape(phone) if phone else 'N/A'}</td>
                             </tr>
                             <tr>
                                 <td style="padding: 8px 0; color: #64748b; font-size: 14px;">Organization</td>
-                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{org_name or 'N/A'}</td>
+                                <td style="padding: 8px 0; color: #1e293b; font-weight: 500;">{html.escape(org_name) if org_name else 'N/A'}</td>
                             </tr>
                         </table>
                         
                         <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
                             <p style="color: #64748b; font-size: 14px; margin: 0 0 5px;">Reason for Attending:</p>
                             <div style="background-color: #ffffff; padding: 10px; border-radius: 4px; border: 1px solid #e2e8f0; font-style: italic; color: #475569; font-size: 14px;">
-                                {reason or 'Not provided'}
+                                {html.escape(reason) if reason else 'Not provided'}
                             </div>
                         </div>
                     </div>
@@ -548,7 +552,7 @@ async def send_approval_with_payment_link(
                         <h2 style="color: #059669; margin: 0 0 10px; font-size: 20px;">Registration Approved</h2>
                     </div>
                     
-                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {full_name},</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name)},</p>
                     <p style="font-size: 16px; line-height: 1.6; color: #444;">Great news! Your registration for the Ghana Competition Law Seminar has been approved.</p>
                     
                     <div style="background-color: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 8px; padding: 25px; margin: 30px 0; text-align: center;">
@@ -600,7 +604,7 @@ async def send_rejection_notification(
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
                 <p style="color: #64748b; font-size: 14px; margin: 0 0 5px;">Reason:</p>
                 <div style="background-color: #fef2f2; padding: 10px; border-radius: 4px; border: 1px solid #fecaca; color: #b91c1c; font-size: 14px;">
-                    {reason}
+                    {html.escape(reason)}
                 </div>
             </div>
             """
@@ -622,7 +626,7 @@ async def send_rejection_notification(
                         <h2 style="color: #dc2626; margin: 0 0 10px; font-size: 20px;">Registration Update</h2>
                     </div>
                     
-                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {full_name},</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name)},</p>
                     <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you for your interest in the Ghana Competition Law Seminar.</p>
                     
                     <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center;">
@@ -738,7 +742,7 @@ async def send_sms(data: SMSRequest, db: Session = Depends(get_db)):
 
 
 class TestEmailRequest(BaseModel):
-    email: str = "agyarefredrick22@gmail.com"
+    email: str
 
 
 @router.post("/test-email")

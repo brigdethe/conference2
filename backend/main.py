@@ -1,33 +1,63 @@
-from fastapi import FastAPI
+import os
+import logging
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from database import engine, Base
 from routers import firms, registrations, payments, settings, tickets, notifications, inquiries, questions
 
+logger = logging.getLogger(__name__)
+
 Base.metadata.create_all(bind=engine)
+
+BACKEND_API_KEY = os.environ.get("BACKEND_API_KEY", "")
+IS_PRODUCTION = os.environ.get("ENVIRONMENT", "development") == "production"
+
+# Disable docs in production
+docs_url = None if IS_PRODUCTION else "/docs"
+redoc_url = None if IS_PRODUCTION else "/redoc"
+openapi_url = None if IS_PRODUCTION else "/openapi.json"
 
 app = FastAPI(
     title="Conference Registration API",
     description="Backend API for Ghana Competition Law Seminar registration system",
-    version="1.0.0"
+    version="1.0.0",
+    docs_url=docs_url,
+    redoc_url=redoc_url,
+    openapi_url=openapi_url,
 )
+
+
+class APIKeyMiddleware(BaseHTTPMiddleware):
+    """Require X-API-Key header on all /api/ routes when BACKEND_API_KEY is set."""
+    async def dispatch(self, request: Request, call_next):
+        # Allow health check without auth
+        if request.url.path in ("/", "/api/health"):
+            return await call_next(request)
+        # If API key is configured, enforce it
+        if BACKEND_API_KEY:
+            provided_key = request.headers.get("X-API-Key", "")
+            if provided_key != BACKEND_API_KEY:
+                logger.warning("Rejected request to %s — invalid or missing API key from %s",
+                               request.url.path, request.client.host if request.client else "unknown")
+                return JSONResponse(status_code=403, content={"detail": "Forbidden"})
+        return await call_next(request)
+
+
+app.add_middleware(APIKeyMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3001",
-        "http://localhost:5000",
         "http://127.0.0.1:3001",
-        "http://127.0.0.1:5000",
-        "http://167.71.143.67",
-        "https://cmcghana.duckdns.org",
-        "http://cmcghana.duckdns.org",
         "https://seminar.cmc-ghana.com",
-        "http://seminar.cmc-ghana.com",
     ],
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-API-Key"],
 )
 
 app.include_router(firms.router)

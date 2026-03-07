@@ -17,3 +17,8 @@ frontend-final/dist-ssr
 .idea
 .DS_Store
 AW.md
+
+# Sensitive data files
+data.json
+Firms_Codes_And_Slots.csv
+update_firm_codes.py

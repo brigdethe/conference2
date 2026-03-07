@@ -189,7 +189,7 @@ Admin views via GET /api/inquiries (requires auth)
 
 ```
 Admin logs in:
-  POST /api/admin/login (username: admin, password: sem!9bli$$)
+  POST /api/admin/login (credentials from environment variables)
          │
          ▼
 Admin views pending registrations:

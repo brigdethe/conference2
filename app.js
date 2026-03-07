@@ -9,9 +9,17 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'conf2026-secret-key-change-in-production';
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'sem!9bli$$';
+const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const BACKEND_API_KEY = process.env.BACKEND_API_KEY || '';
+
+if (!process.env.SESSION_SECRET) {
+  console.warn('WARNING: SESSION_SECRET not set. Using random secret — sessions will not persist across restarts.');
+}
+if (!ADMIN_PASSWORD) {
+  console.warn('WARNING: ADMIN_PASSWORD not set. Admin login will be disabled until it is configured.');
+}
 
 app.use(cookieParser());
 app.use(express.json());
@@ -74,6 +82,14 @@ const generalLimiter = rateLimit({
   legacyHeaders: false
 });
 
+const inquiryLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { error: 'Too many submissions. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 // Strict rate limiter for ticket verification to prevent brute-force attacks
 // Only 5 attempts per 15 minutes per IP
 const ticketVerifyLimiter = rateLimit({
@@ -109,6 +125,15 @@ function requireAdmin(req, res, next) {
   return res.status(401).json({ error: 'Unauthorized. Please login.' });
 }
 
+function requireOwnerOrAdmin(req, res, next) {
+  const id = parseInt(req.params.id);
+  if (req.session && req.session.isAdmin) return next();
+  if (req.session && Array.isArray(req.session.ownedRegistrations) && req.session.ownedRegistrations.includes(id)) {
+    return next();
+  }
+  return res.status(403).json({ error: 'Forbidden. You do not own this registration.' });
+}
+
 function checkHoneypot(req, res, next) {
   if (req.body.website && req.body.website.trim() !== '') {
     return res.status(400).json({ error: 'Invalid submission detected.' });
@@ -118,12 +143,16 @@ function checkHoneypot(req, res, next) {
 
 async function fetchBackend(endpoint, options = {}) {
   const url = `${BACKEND_URL}${endpoint}`;
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+  if (BACKEND_API_KEY) {
+    headers['X-API-Key'] = BACKEND_API_KEY;
+  }
   const response = await fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+    headers,
   });
   return response;
 }
@@ -165,6 +194,12 @@ app.get('/api/firms', async (req, res) => {
   try {
     const response = await fetchBackend('/api/firms');
     const data = await response.json();
+    // Strip sensitive fields from public response (codes, emails)
+    // Admin panel uses /api/firms/activity instead
+    if (Array.isArray(data)) {
+      const sanitized = data.map(({ code, email, ...rest }) => rest);
+      return res.json(sanitized);
+    }
     res.json(data);
   } catch (error) {
     console.error('Error fetching firms:', error);
@@ -180,18 +215,6 @@ app.get('/api/firms/activity', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error fetching firm activity:', error);
     res.status(500).json({ error: 'Failed to fetch firm activity' });
-  }
-});
-
-app.get('/api/registration/:id/ticket', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const response = await fetchBackend(`/api/registrations/${id}/ticket`);
-    const data = await response.json();
-    res.json(data);
-  } catch (error) {
-    console.error('Error fetching ticket:', error);
-    res.status(500).json({ error: 'Failed to fetch ticket' });
   }
 });
 
@@ -248,7 +271,7 @@ app.post('/api/ticket-pdf', async (req, res) => {
     doc.font('Helvetica-Bold')
       .fontSize(10)
       .fillColor(BROWN)
-      .text('Ghana Competition Law Seminar', 0, 18 * MM, { align: 'center' });
+      .text('Competition Policy & Law Seminar', 0, 18 * MM, { align: 'center' });
 
     doc.font('Helvetica')
       .fontSize(7.5)
@@ -304,11 +327,22 @@ app.post('/api/ticket-pdf', async (req, res) => {
   }
 });
 
-app.get('/api/settings', async (req, res) => {
+app.get('/api/settings', requireAdmin, async (req, res) => {
   try {
     const response = await fetchBackend('/api/settings');
     const data = await response.json();
     if (!response.ok) return res.status(response.status).json(data);
+    // Mask sensitive values in response
+    const SENSITIVE_KEYS = ['smtp_password', 'arkesel_api_key'];
+    if (Array.isArray(data)) {
+      const masked = data.map(item => {
+        if (SENSITIVE_KEYS.includes(item.key) && item.value) {
+          return { ...item, value: item.value.length > 0 ? '••••••••' : '' };
+        }
+        return item;
+      });
+      return res.json(masked);
+    }
     res.json(data);
   } catch (error) {
     console.error('Error fetching settings:', error);
@@ -338,7 +372,7 @@ app.get('/api/inquiries', requireAdmin, async (req, res) => {
   }
 });
 
-app.post('/api/inquiries', async (req, res) => {
+app.post('/api/inquiries', inquiryLimiter, async (req, res) => {
   try {
     const response = await fetchBackend('/api/inquiries', {
       method: 'POST',
@@ -423,7 +457,26 @@ app.post('/api/register', registrationLimiter, checkHoneypot, async (req, res) =
       return res.status(response.status).json(data);
     }
 
-    res.json(data);
+    // Track registration ownership in session
+    if (data.registration && data.registration.id) {
+      if (!req.session.ownedRegistrations) {
+        req.session.ownedRegistrations = [];
+      }
+      req.session.ownedRegistrations.push(data.registration.id);
+    }
+
+    // Return only essential fields — do not expose ticket_code, qr_data, email, phone in network response
+    res.json({
+      success: data.success,
+      status: data.status,
+      message: data.message,
+      registration: data.registration ? {
+        id: data.registration.id,
+        status: data.registration.status,
+        ticket_type: data.registration.ticket_type,
+        firm_name: data.registration.firm_name
+      } : undefined
+    });
   } catch (error) {
     console.error('Error registering:', error);
     res.status(500).json({ error: 'Failed to register' });
@@ -622,7 +675,6 @@ app.get('/api/registration/:id/ticket', async (req, res) => {
       ticket_code: registration.ticket_code,
       qr_image: qrImage,
       full_name: registration.full_name,
-      email: registration.email,
       firm_name: registration.firm_name
     });
   } catch (error) {
@@ -670,8 +722,8 @@ app.get('/api/tickets/verify/:ticketCode', ticketVerifyLimiter, async (req, res)
   }
 });
 
-// Ticket check-in endpoint (proxy to backend)
-app.post('/api/tickets/checkin', async (req, res) => {
+// Ticket check-in endpoint (proxy to backend) - admin only
+app.post('/api/tickets/checkin', requireAdmin, async (req, res) => {
   try {
     const response = await fetchBackend('/api/tickets/checkin', {
       method: 'POST',
