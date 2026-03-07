@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
@@ -33,6 +34,27 @@ app.use('/onboarding', express.static(path.join(__dirname, 'frontend-final', 'di
 app.use('/admin', express.static(path.join(__dirname, 'quantro-main', 'dist')));
 app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'quantro-main', 'dist', 'index.html')));
 app.get('/admin/*', (req, res) => res.sendFile(path.join(__dirname, 'quantro-main', 'dist', 'index.html')));
+
+// Protected document serving
+const DOCUMENTS_DIR = path.join(__dirname, 'documents');
+const documentCatalog = JSON.parse(fs.readFileSync(path.join(DOCUMENTS_DIR, 'catalog.json'), 'utf8'));
+
+app.get('/api/documents', (req, res) => {
+  res.json(documentCatalog.map(d => ({ slug: d.slug, title: d.title, description: d.description })));
+});
+
+app.get('/api/documents/:slug', (req, res) => {
+  const doc = documentCatalog.find(d => d.slug === req.params.slug);
+  if (!doc) return res.status(404).json({ error: 'Document not found' });
+  const filePath = path.join(DOCUMENTS_DIR, doc.filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File not found' });
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'inline');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  fs.createReadStream(filePath).pipe(res);
+});
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));

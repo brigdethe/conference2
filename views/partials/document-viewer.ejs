@@ -1,0 +1,265 @@
+<style>
+    .doc-viewer {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: none;
+        background: rgba(0, 0, 0, 0.85);
+        -webkit-user-select: none;
+        user-select: none;
+    }
+
+    .doc-viewer.is-open {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .doc-viewer__toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.6rem 1.2rem;
+        background: #1f2d4f;
+        color: #fff;
+        flex-shrink: 0;
+    }
+
+    .doc-viewer__title {
+        font-weight: 600;
+        font-size: 0.95rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 60%;
+    }
+
+    .doc-viewer__controls {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .doc-viewer__btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: #fff;
+        padding: 0.35rem 0.7rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: background 0.2s;
+    }
+
+    .doc-viewer__btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    .doc-viewer__page-info {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.8);
+        min-width: 80px;
+        text-align: center;
+    }
+
+    .doc-viewer__close {
+        background: none;
+        border: none;
+        color: #fff;
+        font-size: 1.6rem;
+        cursor: pointer;
+        padding: 0 0.3rem;
+        line-height: 1;
+    }
+
+    .doc-viewer__body {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 1.5rem 0;
+        gap: 1rem;
+        position: relative;
+    }
+
+    .doc-viewer__canvas-wrap {
+        position: relative;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        background: #fff;
+        max-width: 95vw;
+    }
+
+    .doc-viewer__canvas-wrap canvas {
+        display: block;
+        max-width: 100%;
+        height: auto;
+    }
+
+    .doc-viewer__shield {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        cursor: default;
+    }
+
+    .doc-viewer__loading {
+        color: #fff;
+        font-size: 1.1rem;
+        padding: 3rem;
+        text-align: center;
+    }
+
+    @media print {
+        .doc-viewer,
+        .doc-viewer * {
+            display: none !important;
+        }
+    }
+
+    @media (max-width: 600px) {
+        .doc-viewer__title {
+            max-width: 40%;
+            font-size: 0.82rem;
+        }
+
+        .doc-viewer__btn {
+            padding: 0.3rem 0.5rem;
+            font-size: 0.78rem;
+        }
+    }
+</style>
+
+<div class="doc-viewer" id="docViewer">
+    <div class="doc-viewer__toolbar">
+        <span class="doc-viewer__title" id="docViewerTitle"></span>
+        <div class="doc-viewer__controls">
+            <button class="doc-viewer__btn" id="docViewerZoomOut" title="Zoom Out">&#8722;</button>
+            <span class="doc-viewer__page-info" id="docViewerPageInfo"></span>
+            <button class="doc-viewer__btn" id="docViewerZoomIn" title="Zoom In">&#43;</button>
+            <button class="doc-viewer__close" id="docViewerClose" title="Close">&times;</button>
+        </div>
+    </div>
+    <div class="doc-viewer__body" id="docViewerBody">
+        <div class="doc-viewer__loading" id="docViewerLoading">Loading document...</div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+    (function () {
+        var viewer = document.getElementById('docViewer');
+        var body = document.getElementById('docViewerBody');
+        var titleEl = document.getElementById('docViewerTitle');
+        var pageInfo = document.getElementById('docViewerPageInfo');
+        var loading = document.getElementById('docViewerLoading');
+        var closeBtn = document.getElementById('docViewerClose');
+        var zoomInBtn = document.getElementById('docViewerZoomIn');
+        var zoomOutBtn = document.getElementById('docViewerZoomOut');
+
+        if (!viewer) return;
+
+        var pdfDoc = null;
+        var currentScale = 1.3;
+        var MIN_SCALE = 0.5;
+        var MAX_SCALE = 3.0;
+        var SCALE_STEP = 0.2;
+        var renderedPages = [];
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        function clearPages() {
+            renderedPages.forEach(function (el) { el.remove(); });
+            renderedPages = [];
+        }
+
+        function renderPage(page) {
+            var viewport = page.getViewport({ scale: currentScale });
+            var wrap = document.createElement('div');
+            wrap.className = 'doc-viewer__canvas-wrap';
+            var canvas = document.createElement('canvas');
+            var ctx = canvas.getContext('2d');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            wrap.appendChild(canvas);
+            var shield = document.createElement('div');
+            shield.className = 'doc-viewer__shield';
+            wrap.appendChild(shield);
+            body.appendChild(wrap);
+            renderedPages.push(wrap);
+            return page.render({ canvasContext: ctx, viewport: viewport }).promise;
+        }
+
+        function renderAllPages() {
+            clearPages();
+            loading.style.display = 'block';
+            loading.textContent = 'Rendering...';
+            var chain = Promise.resolve();
+            for (var i = 1; i <= pdfDoc.numPages; i++) {
+                (function (pageNum) {
+                    chain = chain.then(function () {
+                        return pdfDoc.getPage(pageNum).then(renderPage);
+                    });
+                })(i);
+            }
+            chain.then(function () {
+                loading.style.display = 'none';
+                pageInfo.textContent = pdfDoc.numPages + ' page' + (pdfDoc.numPages > 1 ? 's' : '');
+            });
+        }
+
+        function openViewer(slug, title) {
+            titleEl.textContent = title || 'Document';
+            viewer.classList.add('is-open');
+            document.body.style.overflow = 'hidden';
+            loading.style.display = 'block';
+            loading.textContent = 'Loading document...';
+            pageInfo.textContent = '';
+            clearPages();
+
+            pdfjsLib.getDocument('/api/documents/' + slug).promise.then(function (pdf) {
+                pdfDoc = pdf;
+                renderAllPages();
+            }).catch(function () {
+                loading.textContent = 'Failed to load document.';
+            });
+        }
+
+        function closeViewer() {
+            viewer.classList.remove('is-open');
+            document.body.style.overflow = '';
+            clearPages();
+            pdfDoc = null;
+        }
+
+        closeBtn.addEventListener('click', closeViewer);
+
+        zoomInBtn.addEventListener('click', function () {
+            if (currentScale < MAX_SCALE) {
+                currentScale = Math.min(currentScale + SCALE_STEP, MAX_SCALE);
+                if (pdfDoc) renderAllPages();
+            }
+        });
+
+        zoomOutBtn.addEventListener('click', function () {
+            if (currentScale > MIN_SCALE) {
+                currentScale = Math.max(currentScale - SCALE_STEP, MIN_SCALE);
+                if (pdfDoc) renderAllPages();
+            }
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (!viewer.classList.contains('is-open')) return;
+            if (e.key === 'Escape') { closeViewer(); return; }
+            if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S' || e.key === 'p' || e.key === 'P' || e.key === 'c' || e.key === 'C')) {
+                e.preventDefault();
+            }
+        });
+
+        viewer.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+        viewer.addEventListener('dragstart', function (e) { e.preventDefault(); });
+
+        window.openDocumentViewer = openViewer;
+        window.closeDocumentViewer = closeViewer;
+    })();
+</script>

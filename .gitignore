@@ -22,3 +22,6 @@ AW.md
 data.json
 Firms_Codes_And_Slots.csv
 update_firm_codes.py
+
+# Root-level PDFs (served from documents/ folder)
+/Competition-policy-and-law-concept.pdf
