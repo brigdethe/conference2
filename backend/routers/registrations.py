@@ -565,6 +565,70 @@ async def reject_registration(
     }
 
 
+@router.post("/{registration_id}/manual-confirm")
+async def manual_confirm_registration(registration_id: int, db: Session = Depends(get_db)):
+    """Manually confirm a registration (for known attendees who don't need to pay)"""
+    from routers.notifications import send_ticket_notification, send_manual_confirmation_notification
+    
+    registration = db.query(Registration).filter(
+        Registration.id == registration_id
+    ).first()
+    if not registration:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    
+    if registration.status == "confirmed":
+        return {"success": True, "message": "Already confirmed"}
+    
+    # Allow confirmation from pending_payment, awaiting_verification, or pending_approval
+    allowed_statuses = ["pending_payment", "awaiting_verification", "pending_approval"]
+    if registration.status not in allowed_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot confirm from status '{registration.status}'. Must be one of: {', '.join(allowed_statuses)}"
+        )
+    
+    # Generate ticket if not exists
+    if not registration.ticket_code:
+        ticket_code = generate_ticket_code()
+        while db.query(Registration).filter(
+            Registration.ticket_code == ticket_code
+        ).first():
+            ticket_code = generate_ticket_code()
+        
+        qr_data = generate_qr_data(
+            ticket_code=ticket_code,
+            registration_id=registration.id,
+            full_name=registration.full_name,
+            firm_name=registration.firm.name if registration.firm else None
+        )
+        
+        registration.ticket_code = ticket_code
+        registration.qr_data = qr_data
+    
+    from_status = registration.status
+    registration.status = "confirmed"
+    registration.ticket_type = "Complimentary"  # Mark as complimentary since no payment
+    db.commit()
+    _log_registration_status(registration.id, from_status, "confirmed", registration.email)
+    
+    # Send confirmation email with ticket
+    await send_manual_confirmation_notification(
+        db=db,
+        email=registration.email,
+        phone=registration.phone,
+        full_name=registration.full_name,
+        ticket_code=registration.ticket_code,
+        qr_data=registration.qr_data,
+        org_name=registration.firm.name if registration.firm else registration.company
+    )
+    
+    return {
+        "success": True,
+        "message": "Registration confirmed. Ticket sent to attendee.",
+        "ticket_code": registration.ticket_code
+    }
+
+
 @router.delete("/{registration_id}")
 def delete_registration(registration_id: int, db: Session = Depends(get_db)):
     """Delete a registration. If it's a confirmed Access Code registration, free up the slot."""

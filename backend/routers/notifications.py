@@ -655,6 +655,157 @@ async def send_rejection_notification(
         )
 
 
+async def send_manual_confirmation_notification(
+    db: Session,
+    email: str,
+    phone: str,
+    full_name: str,
+    ticket_code: str,
+    qr_data: str,
+    org_name: str = None
+):
+    """Send confirmation email when admin manually confirms a registration (complimentary)"""
+    email_enabled = get_setting(db, "notifications_email_enabled", "true") == "true"
+    sms_enabled = get_setting(db, "notifications_sms_enabled", "true") == "true"
+    
+    # Generate QR code image
+    qr_bytes = generate_qr_image(qr_data)
+    
+    if email_enabled and email:
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+                <!-- Header -->
+                <div style="background-color: #1a365d; padding: 30px 20px; text-align: center;">
+                    <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Ghana Competition Law Seminar</h1>
+                </div>
+                
+                <!-- Content -->
+                <div style="padding: 40px 30px;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: #059669; margin: 0 0 10px; font-size: 20px;">Registration Confirmed</h2>
+                        <p style="color: #666; font-size: 16px; margin: 0;">Your attendance has been confirmed!</p>
+                    </div>
+                    
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name)},</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">We are pleased to confirm your registration for the Ghana Competition Law Seminar. Your attendance has been approved as a <strong>complimentary guest</strong>.</p>
+                    
+                    <!-- Ticket Card -->
+                    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; margin: 30px 0; text-align: center;">
+                        <p style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 5px;">Ticket Code</p>
+                        <p style="color: #1a365d; font-size: 32px; font-weight: 700; letter-spacing: 2px; margin: 0 0 20px; font-family: monospace;">{html.escape(ticket_code)}</p>
+                        
+                        <div style="background-color: #fff; padding: 15px; display: inline-block; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                            <img src="cid:qrcode" alt="QR Code" style="width: 180px; height: 180px; display: block;" />
+                        </div>
+                        <p style="color: #64748b; font-size: 13px; margin-top: 15px;">Please present this QR code at check-in.</p>
+                    </div>
+                    
+                    <!-- Event Details -->
+                    <div style="border-top: 1px solid #edf2f7; padding-top: 25px; margin-top: 25px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding-bottom: 15px; width: 24px; vertical-align: top;">📅</td>
+                                <td style="padding-bottom: 15px; color: #444; font-weight: 500;">
+                                    <div style="font-size: 14px; color: #64748b;">Date</div>
+                                    Wednesday, March 25, 2026
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 15px; width: 24px; vertical-align: top;">⏰</td>
+                                <td style="padding-bottom: 15px; color: #444; font-weight: 500;">
+                                    <div style="font-size: 14px; color: #64748b;">Time</div>
+                                    9:00 AM - 3:15 PM
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding-bottom: 0; width: 24px; vertical-align: top;">📍</td>
+                                <td style="padding-bottom: 0; color: #444; font-weight: 500;">
+                                    <div style="font-size: 14px; color: #64748b;">Venue</div>
+                                    Mövenpick Ambassador Hotel, Accra
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    {f'<div style="margin-top: 25px; padding-top: 25px; border-top: 1px solid #edf2f7; font-size: 14px; color: #666;"><strong>Organization:</strong> {html.escape(org_name)}</div>' if org_name else ''}
+                </div>
+                
+                <!-- Footer -->
+                <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                    <p style="margin: 0;">&copy; 2026 Ghana Competition Law Seminar. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        try:
+            import aiosmtplib
+            from email.mime.text import MIMEText
+            from email.mime.multipart import MIMEMultipart
+            from email.mime.image import MIMEImage
+            from email.utils import formataddr
+            
+            smtp_email = get_setting(db, "smtp_email")
+            smtp_password = get_setting(db, "smtp_password")
+            sender_name = get_setting(db, "smtp_sender_name", "Ghana Competition Law Seminar")
+            
+            if smtp_email and smtp_password:
+                message = MIMEMultipart("related")
+                message["From"] = formataddr((sender_name, smtp_email))
+                message["To"] = email
+                message["Subject"] = f"Your Conference Ticket - {ticket_code}"
+                
+                html_part = MIMEText(html_body, "html")
+                message.attach(html_part)
+                
+                qr_image = MIMEImage(qr_bytes)
+                qr_image.add_header("Content-ID", "<qrcode>")
+                qr_image.add_header("Content-Disposition", "inline", filename=f"ticket-{ticket_code}.png")
+                message.attach(qr_image)
+                
+                qr_attachment = MIMEImage(qr_bytes)
+                qr_attachment.add_header("Content-Disposition", "attachment", filename=f"ticket-{ticket_code}.png")
+                message.attach(qr_attachment)
+                
+                try:
+                    await asyncio.wait_for(
+                        aiosmtplib.send(
+                            message,
+                            hostname="smtp.gmail.com",
+                            port=465,
+                            use_tls=True,
+                            username=smtp_email,
+                            password=smtp_password
+                        ),
+                        timeout=15
+                    )
+                except:
+                    await asyncio.wait_for(
+                        aiosmtplib.send(
+                            message,
+                            hostname="smtp.gmail.com",
+                            port=587,
+                            start_tls=True,
+                            username=smtp_email,
+                            password=smtp_password
+                        ),
+                        timeout=15
+                    )
+        except Exception as e:
+            logger.error("Manual confirmation email error: %s", e)
+    
+    if sms_enabled and phone:
+        sms_message = f"GCLS 2026: Confirmed! Ticket: {ticket_code}. Venue: Movenpick Hotel, Accra. Mar 25, 9am. Present code at check-in."
+        await send_sms_internal(db, phone, sms_message)
+
+
 class EmailRequest(BaseModel):
     to: str
     subject: str
@@ -888,3 +1039,399 @@ async def test_sms(data: Optional[TestSMSRequest] = None, db: Session = Depends(
                 return {"success": False, "message": f"SMS send failed: {sms_data.get('message', sms_res.text)}"}
     except Exception as e:
         return {"success": False, "message": str(e)}
+
+
+# ============== REMINDER EMAIL TEMPLATES ==============
+
+REMINDER_TEMPLATES = {
+    "questions_reminder": {
+        "subject": "Submit Your Questions Before the Seminar",
+        "template": "questions"
+    },
+    "invite_others": {
+        "subject": "Invite Your Colleagues to the Ghana Competition Law Seminar",
+        "template": "invite"
+    },
+    "event_reminder": {
+        "subject": "Reminder: Ghana Competition Law Seminar - March 25, 2026",
+        "template": "reminder"
+    }
+}
+
+
+def get_reminder_email_html(template_type: str, full_name: str, ticket_code: str = None) -> str:
+    """Generate HTML for reminder emails based on template type"""
+    
+    base_url = "https://seminar.cmc-ghana.com"
+    
+    if template_type == "questions":
+        content = f"""
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name)},</p>
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">We are excited to welcome you to the <strong>Ghana Competition Law Seminar</strong> on March 25, 2026.</p>
+        
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">To make the most of this event, we encourage you to <strong>submit any questions</strong> you would like our expert speakers to address during the sessions.</p>
+        
+        <div style="background-color: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 25px; margin: 30px 0; text-align: center;">
+            <p style="color: #0369a1; margin: 0 0 15px; font-weight: 500;">Have questions for our speakers?</p>
+            <a href="{base_url}/questions" style="display: inline-block; background-color: #0284c7; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Submit Your Questions
+            </a>
+        </div>
+        
+        <p style="font-size: 14px; line-height: 1.6; color: #666;">Your questions will help shape the discussions and ensure the seminar addresses the topics most relevant to you.</p>
+        """
+    elif template_type == "invite":
+        content = f"""
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name)},</p>
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">We are thrilled that you will be joining us at the <strong>Ghana Competition Law Seminar</strong>!</p>
+        
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">Do you have colleagues or contacts who would benefit from this seminar? We encourage you to <strong>invite them to register</strong> and join this important discussion on Ghana's competition law landscape.</p>
+        
+        <div style="background-color: #fdf4ff; border: 1px solid #d946ef; border-radius: 8px; padding: 25px; margin: 30px 0; text-align: center;">
+            <p style="color: #a21caf; margin: 0 0 15px; font-weight: 500;">Share the opportunity!</p>
+            <a href="{base_url}/contact/#registration" style="display: inline-block; background-color: #c026d3; color: white; padding: 14px 30px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                Registration Page
+            </a>
+        </div>
+        
+        <p style="font-size: 14px; line-height: 1.6; color: #666;">Simply share this link with your network: <a href="{base_url}" style="color: #0284c7;">{base_url}</a></p>
+        """
+    else:  # reminder
+        content = f"""
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name)},</p>
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">This is a friendly reminder that the <strong>Ghana Competition Law Seminar</strong> is approaching!</p>
+        
+        <div style="background-color: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 8px; padding: 25px; margin: 30px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 10px 0; color: #065f46; font-weight: 500;">
+                        <strong>📅 Date:</strong> Wednesday, March 25, 2026
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 0; color: #065f46; font-weight: 500;">
+                        <strong>⏰ Time:</strong> 9:00 AM - 3:15 PM
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 0; color: #065f46; font-weight: 500;">
+                        <strong>📍 Venue:</strong> Mövenpick Ambassador Hotel, Independence Avenue, Accra
+                    </td>
+                </tr>
+                {f'<tr><td style="padding: 10px 0; color: #065f46; font-weight: 500;"><strong>🎫 Your Ticket:</strong> {html.escape(ticket_code)}</td></tr>' if ticket_code else ''}
+            </table>
+        </div>
+        
+        <p style="font-size: 14px; line-height: 1.6; color: #666;">Please remember to bring your ticket QR code for check-in. We look forward to seeing you!</p>
+        """
+    
+    return f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,700" rel="stylesheet">
+        <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Roboto', Arial, Helvetica, sans-serif; background-color: #f4f4f4; color: #0B141B;">
+        <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #ffffff;">
+            <tr>
+                <td align="center">
+                    <table border="0" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%;">
+                        <!-- Header with Date -->
+                        <tr>
+                            <td align="center" style="padding: 20px 0 10px 0;">
+                                <p style="font-size: 12px; color: #666; margin: 0;"><strong>25 March 2026</strong><br>
+                                <span style="color: #1a365d;">Mövenpick Ambassador Hotel, Accra</span></p>
+                            </td>
+                        </tr>
+                        
+                        <!-- Logo/Header Image -->
+                        <tr>
+                            <td align="center" style="padding: 10px 20px;">
+                                <div style="background-color: #1a365d; padding: 25px; border-radius: 8px;">
+                                    <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 600;">Ghana Competition Law Seminar</h1>
+                                    <p style="color: #94a3b8; margin: 10px 0 0 0; font-size: 14px;">Laying a Sound Foundation for a New Era</p>
+                                </div>
+                            </td>
+                        </tr>
+                        
+                        <!-- Buttons Row -->
+                        <tr>
+                            <td align="center" style="padding: 20px;">
+                                <table border="0" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td style="padding: 0 10px;">
+                                            <a href="{base_url}/#statement" style="display: inline-block; background-color: #1a365d; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px; font-size: 13px; font-weight: bold;">Agenda</a>
+                                        </td>
+                                        <td style="padding: 0 10px;">
+                                            <a href="{base_url}/#team-section" style="display: inline-block; background-color: #7c3aed; color: white; padding: 10px 25px; text-decoration: none; border-radius: 5px; font-size: 13px; font-weight: bold;">Speakers</a>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        
+                        <!-- Main Content -->
+                        <tr>
+                            <td style="padding: 30px;">
+                                {content}
+                            </td>
+                        </tr>
+                        
+                        <!-- Footer -->
+                        <tr>
+                            <td style="background-color: #1a365d; padding: 30px; text-align: center;">
+                                <p style="color: #ffffff; font-size: 14px; margin: 0 0 10px 0;"><strong>Competition & Markets Center Ghana</strong></p>
+                                <p style="color: #94a3b8; font-size: 12px; margin: 0;">
+                                    If you have any questions, please contact us at<br>
+                                    <a href="mailto:info@cmc-ghana.com" style="color: #60a5fa;">info@cmc-ghana.com</a>
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>
+    """
+
+
+class ReminderEmailRequest(BaseModel):
+    template: str  # "questions_reminder", "invite_others", "event_reminder"
+    test_email: Optional[str] = None  # If provided, send only to this email for testing
+
+
+class RegistrationReportRequest(BaseModel):
+    test_only: Optional[bool] = False  # If true, only send to test email
+
+
+@router.post("/send-reminder")
+async def send_reminder_email(data: ReminderEmailRequest, db: Session = Depends(get_db)):
+    """Send reminder emails to all confirmed attendees or test email"""
+    from models import Registration
+    
+    if data.template not in REMINDER_TEMPLATES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid template. Must be one of: {', '.join(REMINDER_TEMPLATES.keys())}"
+        )
+    
+    template_info = REMINDER_TEMPLATES[data.template]
+    subject = template_info["subject"]
+    template_type = template_info["template"]
+    
+    # If test email provided, only send to that
+    if data.test_email:
+        html_body = get_reminder_email_html(template_type, "Test User", "TEST")
+        success = await send_email_internal(db, data.test_email, subject, html_body)
+        return {
+            "success": success,
+            "message": f"Test email sent to {data.test_email}" if success else "Failed to send test email",
+            "sent_count": 1 if success else 0
+        }
+    
+    # Get all confirmed registrations
+    registrations = db.query(Registration).filter(
+        Registration.status == "confirmed"
+    ).all()
+    
+    if not registrations:
+        return {"success": True, "message": "No confirmed attendees to send to", "sent_count": 0}
+    
+    sent_count = 0
+    failed_count = 0
+    
+    for reg in registrations:
+        if reg.email:
+            html_body = get_reminder_email_html(template_type, reg.full_name, reg.ticket_code)
+            success = await send_email_internal(db, reg.email, subject, html_body)
+            if success:
+                sent_count += 1
+            else:
+                failed_count += 1
+    
+    return {
+        "success": True,
+        "message": f"Reminder emails sent: {sent_count} successful, {failed_count} failed",
+        "sent_count": sent_count,
+        "failed_count": failed_count,
+        "total_attendees": len(registrations)
+    }
+
+
+@router.get("/reminder-templates")
+def get_reminder_templates():
+    """Get available reminder email templates"""
+    return {
+        "templates": [
+            {
+                "id": "questions_reminder",
+                "name": "Submit Questions Reminder",
+                "description": "Remind attendees they can submit questions before the seminar"
+            },
+            {
+                "id": "invite_others",
+                "name": "Invite Others",
+                "description": "Encourage attendees to invite colleagues to register"
+            },
+            {
+                "id": "event_reminder",
+                "name": "Event Reminder",
+                "description": "General reminder about the upcoming event with details"
+            }
+        ]
+    }
+
+
+@router.post("/send-registration-report")
+async def send_registration_report(
+    data: Optional[RegistrationReportRequest] = None,
+    db: Session = Depends(get_db)
+):
+    """Send registration report with CSV to admin emails"""
+    from models import Registration
+    import csv
+    import io
+    from datetime import datetime
+    
+    # Admin recipients for the report
+    REPORT_RECIPIENTS = [
+        "kofi.datsa@gmail.com",
+        "eleanor.sarpong@yahoo.com",
+        "agyarefredrick22@gmail.com",
+        "george.attopany@databankgroup.com"
+    ]
+    
+    # If test_only, only send to test email
+    if data and data.test_only:
+        REPORT_RECIPIENTS = ["agyarefredrick22@gmail.com"]
+    
+    # Get all registrations
+    registrations = db.query(Registration).order_by(Registration.created_at.desc()).all()
+    
+    # Count by status
+    confirmed_count = sum(1 for r in registrations if r.status == "confirmed")
+    pending_payment_count = sum(1 for r in registrations if r.status == "pending_payment")
+    awaiting_verification_count = sum(1 for r in registrations if r.status == "awaiting_verification")
+    pending_approval_count = sum(1 for r in registrations if r.status == "pending_approval")
+    total_count = len(registrations)
+    
+    # Generate CSV
+    csv_buffer = io.StringIO()
+    csv_writer = csv.writer(csv_buffer)
+    csv_writer.writerow([
+        "ID", "Full Name", "Email", "Phone", "Job Title", "Company/Organization",
+        "Status", "Ticket Type", "Ticket Code", "Registered At"
+    ])
+    
+    for reg in registrations:
+        org = reg.firm.name if reg.firm else reg.company
+        csv_writer.writerow([
+            reg.id,
+            reg.full_name,
+            reg.email,
+            reg.phone or "",
+            reg.job_title or "",
+            org or "",
+            reg.status,
+            reg.ticket_type,
+            reg.ticket_code or "",
+            reg.created_at.strftime("%Y-%m-%d %H:%M") if reg.created_at else ""
+        ])
+    
+    csv_content = csv_buffer.getvalue().encode('utf-8')
+    csv_buffer.close()
+    
+    # Generate report date
+    report_date = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    
+    # Email HTML
+    html_body = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4; color: #333;">
+        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
+            <div style="background-color: #1a365d; padding: 30px 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Registration Report</h1>
+                <p style="color: #94a3b8; margin: 10px 0 0 0; font-size: 14px;">Ghana Competition Law Seminar</p>
+            </div>
+            
+            <div style="padding: 40px 30px;">
+                <p style="font-size: 14px; color: #666; margin-bottom: 25px;">Report generated: {report_date}</p>
+                
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; margin-bottom: 25px;">
+                    <h3 style="color: #1a365d; margin: 0 0 20px 0; font-size: 18px;">Registration Summary</h3>
+                    
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #64748b;">Total Registrations</td>
+                            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #1e293b; font-weight: 600; text-align: right; font-size: 20px;">{total_count}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #059669;">✓ Confirmed</td>
+                            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #059669; font-weight: 600; text-align: right;">{confirmed_count}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #d97706;">⏳ Pending Payment</td>
+                            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #d97706; font-weight: 600; text-align: right;">{pending_payment_count}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #0284c7;">🔍 Awaiting Verification</td>
+                            <td style="padding: 12px 0; border-bottom: 1px solid #e2e8f0; color: #0284c7; font-weight: 600; text-align: right;">{awaiting_verification_count}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px 0; color: #7c3aed;">📋 Pending Approval</td>
+                            <td style="padding: 12px 0; color: #7c3aed; font-weight: 600; text-align: right;">{pending_approval_count}</td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <p style="font-size: 14px; color: #666;">
+                    📎 The full attendee list is attached as a CSV file.
+                </p>
+            </div>
+            
+            <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
+                <p style="margin: 0;">&copy; 2026 Ghana Competition Law Seminar. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    """
+    
+    # Send to all recipients
+    sent_count = 0
+    failed_recipients = []
+    
+    filename = f"registrations_{datetime.utcnow().strftime('%Y%m%d_%H%M')}.csv"
+    
+    for recipient in REPORT_RECIPIENTS:
+        success = await send_email_internal(
+            db,
+            recipient,
+            f"Registration Report - {confirmed_count} Confirmed Attendees",
+            html_body,
+            attachments=[(filename, csv_content, "text/csv")]
+        )
+        if success:
+            sent_count += 1
+        else:
+            failed_recipients.append(recipient)
+    
+    return {
+        "success": sent_count > 0,
+        "message": f"Report sent to {sent_count}/{len(REPORT_RECIPIENTS)} recipients",
+        "sent_count": sent_count,
+        "failed_recipients": failed_recipients,
+        "stats": {
+            "total": total_count,
+            "confirmed": confirmed_count,
+            "pending_payment": pending_payment_count,
+            "awaiting_verification": awaiting_verification_count,
+            "pending_approval": pending_approval_count
+        }
+    }
