@@ -416,6 +416,16 @@ export const RegistrationsTab: React.FC = () => {
                                                         </button>
                                                     </>
                                                 )}
+                                                {activeTab === 'approved' && reg.status === 'pending_payment' && (
+                                                    <button
+                                                        onClick={() => handleManualConfirm(reg.id, reg.fullName)}
+                                                        disabled={manualConfirming === reg.id}
+                                                        className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 flex items-center gap-1"
+                                                        title="Confirm as complimentary (no payment required)"
+                                                    >
+                                                        {manualConfirming === reg.id ? <RefreshCw className="w-3 h-3 animate-spin" /> : <><Gift className="w-3 h-3" /> Confirm</>}
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => handleDelete(reg.id, reg.fullName)}
                                                     disabled={processing === reg.id}
