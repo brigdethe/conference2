@@ -1063,26 +1063,27 @@ def get_reminder_email_html(template_type: str, full_name: str, ticket_code: str
     """Generate HTML for reminder emails based on template type"""
     
     base_url = "https://seminar.cmc-ghana.com"
-    logo_url = "https://ik.imagekit.io/dr5fryhth/conferencenew/cmc-logo.png"
-    header_image = "https://ik.imagekit.io/dr5fryhth/conferencenew/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg"
+    logo_url = "https://ik.imagekit.io/dr5fryhth/conference/logo2.svg?updatedAt=1769833653837"
+    
+    # Correct speaker image URLs from the website
+    peter_img = "https://ik.imagekit.io/dr5fryhth/conferencenew/f8aaed81-30d8-45c8-ad76-f4ca676449da.JPG?updatedAt=1770796073766"
+    david_img = "https://ik.imagekit.io/dr5fryhth/conferencenew/d6633b22-b0b5-40c1-8a9b-3fa75074dc9c.JPG?updatedAt=1770796068105"
     
     # Speaker images
-    speakers_html = """
+    speakers_html = f"""
     <div style="margin: 25px 0;">
         <p style="font-size: 14px; color: #64748b; margin-bottom: 15px; text-align: center;"><strong>Featured Speakers</strong></p>
         <table border="0" cellpadding="0" cellspacing="0" width="100%">
             <tr>
-                <td align="center" width="33%" style="padding: 10px;">
-                    <img src="https://ik.imagekit.io/dr5fryhth/peter" alt="Peter Alexiadis" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" />
+                <td align="center" width="50%" style="padding: 10px;">
+                    <img src="{peter_img}" alt="Peter Alexiadis" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;" />
                     <p style="font-size: 12px; color: #1a365d; margin: 8px 0 0 0; font-weight: 600;">Peter Alexiadis</p>
+                    <p style="font-size: 10px; color: #64748b; margin: 2px 0 0 0;">Gibson Dunn, Brussels</p>
                 </td>
-                <td align="center" width="33%" style="padding: 10px;">
-                    <img src="https://ik.imagekit.io/dr5fryhth/david" alt="Prof. David Bailey" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" />
-                    <p style="font-size: 12px; color: #1a365d; margin: 8px 0 0 0; font-weight: 600;">Prof. David Bailey</p>
-                </td>
-                <td align="center" width="33%" style="padding: 10px;">
-                    <img src="https://ik.imagekit.io/dr5fryhth/appiah" alt="Appiah Adomako" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" />
-                    <p style="font-size: 12px; color: #1a365d; margin: 8px 0 0 0; font-weight: 600;">Appiah Adomako</p>
+                <td align="center" width="50%" style="padding: 10px;">
+                    <img src="{david_img}" alt="Prof. David Bailey KC" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;" />
+                    <p style="font-size: 12px; color: #1a365d; margin: 8px 0 0 0; font-weight: 600;">Prof. David Bailey KC</p>
+                    <p style="font-size: 10px; color: #64748b; margin: 2px 0 0 0;">King's College London</p>
                 </td>
             </tr>
         </table>
