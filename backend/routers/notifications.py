@@ -1063,6 +1063,31 @@ def get_reminder_email_html(template_type: str, full_name: str, ticket_code: str
     """Generate HTML for reminder emails based on template type"""
     
     base_url = "https://seminar.cmc-ghana.com"
+    logo_url = "https://ik.imagekit.io/dr5fryhth/conferencenew/cmc-logo.png"
+    header_image = "https://ik.imagekit.io/dr5fryhth/conferencenew/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg"
+    
+    # Speaker images
+    speakers_html = """
+    <div style="margin: 25px 0;">
+        <p style="font-size: 14px; color: #64748b; margin-bottom: 15px; text-align: center;"><strong>Featured Speakers</strong></p>
+        <table border="0" cellpadding="0" cellspacing="0" width="100%">
+            <tr>
+                <td align="center" width="33%" style="padding: 10px;">
+                    <img src="https://ik.imagekit.io/dr5fryhth/peter" alt="Peter Alexiadis" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" />
+                    <p style="font-size: 12px; color: #1a365d; margin: 8px 0 0 0; font-weight: 600;">Peter Alexiadis</p>
+                </td>
+                <td align="center" width="33%" style="padding: 10px;">
+                    <img src="https://ik.imagekit.io/dr5fryhth/david" alt="Prof. David Bailey" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" />
+                    <p style="font-size: 12px; color: #1a365d; margin: 8px 0 0 0; font-weight: 600;">Prof. David Bailey</p>
+                </td>
+                <td align="center" width="33%" style="padding: 10px;">
+                    <img src="https://ik.imagekit.io/dr5fryhth/appiah" alt="Appiah Adomako" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" />
+                    <p style="font-size: 12px; color: #1a365d; margin: 8px 0 0 0; font-weight: 600;">Appiah Adomako</p>
+                </td>
+            </tr>
+        </table>
+    </div>
+    """
     
     if template_type == "questions":
         content = f"""
@@ -1079,6 +1104,8 @@ def get_reminder_email_html(template_type: str, full_name: str, ticket_code: str
         </div>
         
         <p style="font-size: 14px; line-height: 1.6; color: #666;">Your questions will help shape the discussions and ensure the seminar addresses the topics most relevant to you.</p>
+        
+        {speakers_html}
         """
     elif template_type == "invite":
         content = f"""
@@ -1145,10 +1172,19 @@ def get_reminder_email_html(template_type: str, full_name: str, ticket_code: str
                             </td>
                         </tr>
                         
-                        <!-- Logo/Header Image -->
+                        <!-- Logo Image -->
                         <tr>
                             <td align="center" style="padding: 10px 20px;">
-                                <div style="background-color: #1a365d; padding: 25px; border-radius: 8px;">
+                                <a href="{base_url}" style="text-decoration: none;">
+                                    <img src="{logo_url}" alt="Ghana Competition Law Seminar" style="max-width: 280px; height: auto; display: block;" />
+                                </a>
+                            </td>
+                        </tr>
+                        
+                        <!-- Header Banner -->
+                        <tr>
+                            <td align="center" style="padding: 10px 20px;">
+                                <div style="background: linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%); padding: 25px; border-radius: 8px; position: relative; overflow: hidden;">
                                     <h1 style="color: #ffffff; margin: 0; font-size: 22px; font-weight: 600;">Ghana Competition Law Seminar</h1>
                                     <p style="color: #94a3b8; margin: 10px 0 0 0; font-size: 14px;">Laying a Sound Foundation for a New Era</p>
                                 </div>
@@ -1181,6 +1217,7 @@ def get_reminder_email_html(template_type: str, full_name: str, ticket_code: str
                         <!-- Footer -->
                         <tr>
                             <td style="background-color: #1a365d; padding: 30px; text-align: center;">
+                                <img src="{logo_url}" alt="CMC Ghana" style="max-width: 150px; height: auto; margin-bottom: 15px;" />
                                 <p style="color: #ffffff; font-size: 14px; margin: 0 0 10px 0;"><strong>Competition & Markets Center Ghana</strong></p>
                                 <p style="color: #94a3b8; font-size: 12px; margin: 0;">
                                     If you have any questions, please contact us at<br>
