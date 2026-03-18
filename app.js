@@ -626,6 +626,67 @@ app.delete('/api/registrations/:id', requireAdmin, async (req, res) => {
   }
 });
 
+app.post('/api/registrations/:id/manual-confirm', requireAdmin, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const response = await fetchBackend(`/api/registrations/${id}/manual-confirm`, {
+      method: 'POST',
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error manually confirming registration:', error);
+    res.status(500).json({ error: 'Failed to confirm registration' });
+  }
+});
+
+app.post('/api/notifications/send-reminder', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/notifications/send-reminder', {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error sending reminder:', error);
+    res.status(500).json({ error: 'Failed to send reminder' });
+  }
+});
+
+app.post('/api/notifications/send-registration-report', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/notifications/send-registration-report', {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error sending registration report:', error);
+    res.status(500).json({ error: 'Failed to send registration report' });
+  }
+});
+
 app.get('/api/registrations/approved-registrations', requireAdmin, async (req, res) => {
   try {
     const response = await fetchBackend('/api/registrations/approved-registrations');

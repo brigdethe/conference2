@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, CheckCircle, XCircle, Clock, User, Mail, Building, Briefcase, MessageSquare, Eye, Trash2, CreditCard } from 'lucide-react';
+import { RefreshCw, CheckCircle, XCircle, Clock, User, Mail, Building, Briefcase, MessageSquare, Eye, Trash2, CreditCard, Gift } from 'lucide-react';
 
 interface Registration {
     id: number;
@@ -35,6 +35,7 @@ export const RegistrationsTab: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState<number | null>(null);
     const [verifying, setVerifying] = useState<number | null>(null);
+    const [manualConfirming, setManualConfirming] = useState<number | null>(null);
     const [rejectModal, setRejectModal] = useState<{ id: number; name: string } | null>(null);
     const [rejectReason, setRejectReason] = useState('');
     const [activeTab, setActiveTab] = useState<TabType>('pending');
@@ -165,6 +166,30 @@ export const RegistrationsTab: React.FC = () => {
         }
     };
 
+    const handleManualConfirm = async (registrationId: number, name: string) => {
+        if (!window.confirm(`Confirm ${name} as a complimentary attendee? They will receive a confirmation email with their ticket.`)) return;
+        
+        setManualConfirming(registrationId);
+        try {
+            const res = await fetch(`/api/registrations/${registrationId}/manual-confirm`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (res.ok) {
+                fetchAllData();
+                alert(`${name} has been confirmed and notified!`);
+            } else {
+                const data = await res.json();
+                alert(data.detail || data.error || 'Failed to confirm. Please try again.');
+            }
+        } catch (err) {
+            console.error('Error manually confirming:', err);
+            alert('An error occurred. Please try again.');
+        } finally {
+            setManualConfirming(null);
+        }
+    };
+
     const formatDate = (dateStr: string) => {
         return new Date(dateStr).toLocaleString('en-GB', {
             day: 'numeric',
@@ -286,11 +311,29 @@ export const RegistrationsTab: React.FC = () => {
                                                 Submitted: {formatDate(payment.registeredAt)}
                                             </p>
                                         </div>
-                                        <div className="flex-shrink-0">
+                                        <div className="flex-shrink-0 flex flex-col md:flex-row gap-2">
+                                            <button
+                                                onClick={() => handleManualConfirm(payment.id, payment.fullName)}
+                                                disabled={manualConfirming === payment.id || verifying === payment.id}
+                                                className="w-full md:w-auto px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                                                title="Confirm without payment (Complimentary)"
+                                            >
+                                                {manualConfirming === payment.id ? (
+                                                    <>
+                                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                                        Confirming...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Gift className="w-4 h-4" />
+                                                        Complimentary
+                                                    </>
+                                                )}
+                                            </button>
                                             <button
                                                 onClick={() => handleVerifyPayment(payment.id)}
-                                                disabled={verifying === payment.id}
-                                                className="w-full md:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                disabled={verifying === payment.id || manualConfirming === payment.id}
+                                                className="w-full md:w-auto px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                                             >
                                                 {verifying === payment.id ? (
                                                     <>

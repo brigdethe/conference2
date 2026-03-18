@@ -1249,6 +1249,12 @@ async def send_reminder_email(data: ReminderEmailRequest, db: Session = Depends(
     """Send reminder emails to all confirmed attendees or test email"""
     from models import Registration
     
+    # Admin recipients who also receive reminder emails
+    ADMIN_REMINDER_RECIPIENTS = [
+        "kofi.datsa@gmail.com",
+        "eleanor.sarpong@yahoo.com"
+    ]
+    
     if data.template not in REMINDER_TEMPLATES:
         raise HTTPException(
             status_code=400,
@@ -1289,12 +1295,25 @@ async def send_reminder_email(data: ReminderEmailRequest, db: Session = Depends(
             else:
                 failed_count += 1
     
+    # Also send to admin recipients
+    admin_sent = 0
+    admin_failed = 0
+    for admin_email in ADMIN_REMINDER_RECIPIENTS:
+        html_body = get_reminder_email_html(template_type, "Admin", None)
+        success = await send_email_internal(db, admin_email, f"[Admin Copy] {subject}", html_body)
+        if success:
+            admin_sent += 1
+        else:
+            admin_failed += 1
+    
     return {
         "success": True,
-        "message": f"Reminder emails sent: {sent_count} successful, {failed_count} failed",
+        "message": f"Reminder emails sent: {sent_count} to attendees, {admin_sent} to admins",
         "sent_count": sent_count,
         "failed_count": failed_count,
-        "total_attendees": len(registrations)
+        "total_attendees": len(registrations),
+        "admin_sent": admin_sent,
+        "admin_failed": admin_failed
     }
 
 

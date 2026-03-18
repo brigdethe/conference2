@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Save, Mail, MessageSquare, CreditCard, Loader2, Plus, Trash2, Bell, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Save, Mail, MessageSquare, CreditCard, Loader2, Plus, Trash2, Bell, ToggleLeft, ToggleRight, Send, FileText, Users } from 'lucide-react';
 
 interface SettingValue {
   key: string;
@@ -37,6 +37,8 @@ export const SettingsTab: React.FC = () => {
   const [newRecipientType, setNewRecipientType] = useState<'email' | 'phone'>('email');
   const [newRecipientValue, setNewRecipientValue] = useState('');
   const [addingRecipient, setAddingRecipient] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState<string | null>(null);
+  const [sendingReport, setSendingReport] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
@@ -176,6 +178,52 @@ export const SettingsTab: React.FC = () => {
 
   const updateSetting = (key: string, value: string) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const sendReminderEmail = async (template: string, testOnly: boolean = false) => {
+    setSendingReminder(template);
+    setMessage(null);
+    try {
+      const body: { template: string; test_email?: string } = { template };
+      if (testOnly) {
+        body.test_email = 'agyarefredrick22@gmail.com';
+      }
+      const res = await fetch('/api/notifications/send-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      setMessage({
+        type: data.success ? 'success' : 'error',
+        text: data.message || (data.success ? 'Emails sent!' : 'Failed to send'),
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to send reminder emails' });
+    } finally {
+      setSendingReminder(null);
+    }
+  };
+
+  const sendRegistrationReport = async (testOnly: boolean = false) => {
+    setSendingReport(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/notifications/send-registration-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_only: testOnly }),
+      });
+      const data = await res.json();
+      setMessage({
+        type: data.success ? 'success' : 'error',
+        text: data.message || (data.success ? 'Report sent!' : 'Failed to send report'),
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to send registration report' });
+    } finally {
+      setSendingReport(false);
+    }
   };
 
   if (isLoading) {
@@ -500,6 +548,143 @@ export const SettingsTab: React.FC = () => {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Email Tools Section */}
+        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-soft lg:col-span-2">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-lg bg-purple-100 p-2">
+              <Send className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-900">Email Tools</h3>
+              <p className="text-xs text-slate-500">Send reminder emails to attendees and reports to admins</p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Reminder Emails */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <h4 className="font-medium text-slate-900 mb-3 flex items-center gap-2">
+                <Mail className="h-4 w-4 text-slate-600" />
+                Reminder Emails
+              </h4>
+              <p className="text-xs text-slate-500 mb-4">Send preset reminder emails to all confirmed attendees</p>
+              
+              <div className="space-y-2">
+                <div className="flex items-center justify-between rounded-lg bg-white border border-slate-200 p-3">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">Submit Questions</p>
+                    <p className="text-xs text-slate-500">Remind attendees to submit questions</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => sendReminderEmail('questions_reminder', true)}
+                      disabled={sendingReminder !== null}
+                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Test
+                    </button>
+                    <button
+                      onClick={() => sendReminderEmail('questions_reminder', false)}
+                      disabled={sendingReminder !== null}
+                      className="flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {sendingReminder === 'questions_reminder' && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Send All
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-white border border-slate-200 p-3">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">Invite Others</p>
+                    <p className="text-xs text-slate-500">Encourage inviting colleagues</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => sendReminderEmail('invite_others', true)}
+                      disabled={sendingReminder !== null}
+                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Test
+                    </button>
+                    <button
+                      onClick={() => sendReminderEmail('invite_others', false)}
+                      disabled={sendingReminder !== null}
+                      className="flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-1 text-xs font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+                    >
+                      {sendingReminder === 'invite_others' && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Send All
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-white border border-slate-200 p-3">
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">Event Reminder</p>
+                    <p className="text-xs text-slate-500">General event reminder with details</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => sendReminderEmail('event_reminder', true)}
+                      disabled={sendingReminder !== null}
+                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      Test
+                    </button>
+                    <button
+                      onClick={() => sendReminderEmail('event_reminder', false)}
+                      disabled={sendingReminder !== null}
+                      className="flex items-center gap-1 rounded-lg bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {sendingReminder === 'event_reminder' && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Send All
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Registration Report */}
+            <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <h4 className="font-medium text-slate-900 mb-3 flex items-center gap-2">
+                <FileText className="h-4 w-4 text-slate-600" />
+                Registration Report
+              </h4>
+              <p className="text-xs text-slate-500 mb-4">Send registration summary with CSV to admin team</p>
+              
+              <div className="rounded-lg bg-white border border-slate-200 p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <Users className="h-8 w-8 text-slate-400" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">Send Report to Admins</p>
+                    <p className="text-xs text-slate-500">Includes attendee count and CSV attachment</p>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 mb-3">
+                  Recipients: kofi.datsa@gmail.com, eleanor.sarpong@yahoo.com, agyarefredrick22@gmail.com, george.attopany@databankgroup.com
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => sendRegistrationReport(true)}
+                    disabled={sendingReport}
+                    className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Test (Fredrick only)
+                  </button>
+                  <button
+                    onClick={() => sendRegistrationReport(false)}
+                    disabled={sendingReport}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+                  >
+                    {sendingReport && <Loader2 className="h-4 w-4 animate-spin" />}
+                    Send to All
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
