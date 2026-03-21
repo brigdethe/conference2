@@ -1251,8 +1251,7 @@ async def send_reminder_email(data: ReminderEmailRequest, db: Session = Depends(
     
     # Admin recipients who also receive reminder emails
     ADMIN_REMINDER_RECIPIENTS = [
-        "kofi.datsa@gmail.com",
-        "eleanor.sarpong@yahoo.com"
+        "kofi.datsa@gmail.com"
     ]
     
     if data.template not in REMINDER_TEMPLATES:
@@ -1355,7 +1354,6 @@ async def send_registration_report(
     # Admin recipients for the report
     REPORT_RECIPIENTS = [
         "kofi.datsa@gmail.com",
-        "eleanor.sarpong@yahoo.com",
         "agyarefredrick22@gmail.com",
         "george.attopany@databankgroup.com"
     ]
