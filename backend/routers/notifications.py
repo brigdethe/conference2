@@ -1055,6 +1055,10 @@ REMINDER_TEMPLATES = {
     "event_reminder": {
         "subject": "Reminder: Ghana Competition Law Seminar - March 25, 2026",
         "template": "reminder"
+    },
+    "final_reminder": {
+        "subject": "Tomorrow: Ghana Competition Law Seminar - Final Reminder",
+        "template": "final"
     }
 }
 
@@ -1123,6 +1127,46 @@ def get_reminder_email_html(template_type: str, full_name: str, ticket_code: str
         </div>
         
         <p style="font-size: 14px; line-height: 1.6; color: #666;">Simply share this link with your network: <a href="{base_url}" style="color: #0284c7;">{base_url}</a></p>
+        """
+    elif template_type == "final":
+        content = f"""
+        <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name)},</p>
+        <p style="font-size: 16px; line-height: 1.6; color: #444;"><strong>The Ghana Competition Law Seminar is TOMORROW!</strong> We are excited to have you join us for this landmark event.</p>
+        
+        <div style="background-color: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 25px; margin: 30px 0;">
+            <p style="color: #92400e; font-size: 18px; font-weight: bold; margin: 0 0 15px 0; text-align: center;">📢 FINAL REMINDER</p>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 10px 0; color: #92400e; font-weight: 500;">
+                        <strong>📅 Date:</strong> Tomorrow - Wednesday, March 25, 2026
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 0; color: #92400e; font-weight: 500;">
+                        <strong>⏰ Time:</strong> 9:00 AM - 3:15 PM (Registration starts at 9:00 AM)
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding: 10px 0; color: #92400e; font-weight: 500;">
+                        <strong>📍 Venue:</strong> Mövenpick Ambassador Hotel, Independence Avenue, Accra
+                    </td>
+                </tr>
+                {f'<tr><td style="padding: 10px 0; color: #92400e; font-weight: 600;"><strong>🎫 Your Ticket Code:</strong> {html.escape(ticket_code)}</td></tr>' if ticket_code else ''}
+            </table>
+        </div>
+        
+        <div style="background-color: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <p style="color: #166534; font-weight: 600; margin: 0 0 10px 0;">✅ What to bring:</p>
+            <ul style="color: #166534; margin: 0; padding-left: 20px;">
+                <li style="margin-bottom: 5px;">Your ticket QR code (on your phone or printed)</li>
+                <li style="margin-bottom: 5px;">Business cards for networking</li>
+                <li>A notepad for the insightful discussions</li>
+            </ul>
+        </div>
+        
+        <p style="font-size: 14px; line-height: 1.6; color: #666;">We look forward to welcoming you tomorrow! If you have any last-minute questions, please contact us at <a href="mailto:info@cmc-ghana.com" style="color: #0284c7;">info@cmc-ghana.com</a></p>
+        
+        {speakers_html}
         """
     else:  # reminder
         content = f"""

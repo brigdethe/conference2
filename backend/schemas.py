@@ -23,6 +23,7 @@ class LawFirmResponse(BaseModel):
     required_registrations: int = 1
     is_law_firm: bool = False
     logo_url: Optional[str] = None
+    is_active: bool = True
 
     class Config:
         from_attributes = True
@@ -117,6 +118,7 @@ class FirmActivityResponse(BaseModel):
     free_slots_remaining: int
     last_registration_at: Optional[datetime]
     registrations: list[RegistrationResponse]
+    is_active: bool = True
 
     class Config:
         from_attributes = True

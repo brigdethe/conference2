@@ -34,7 +34,8 @@ def get_firms(db: Session = Depends(get_db)):
             free_slots_remaining=max(0, (firm.required_registrations or 1) - confirmed_count),
             required_registrations=firm.required_registrations or 1,
             is_law_firm=bool(firm.is_law_firm),
-            logo_url=firm.logo_url
+            logo_url=firm.logo_url,
+            is_active=bool(getattr(firm, 'is_active', 1))
         ))
     return result
 
@@ -126,7 +127,8 @@ def get_firms_activity(db: Session = Depends(get_db)):
             pending_payment=pending,
             free_slots_remaining=max(0, (firm.required_registrations or 1) - confirmed_access),
             last_registration_at=registrations[0].created_at if registrations else None,
-            registrations=reg_responses
+            registrations=reg_responses,
+            is_active=bool(getattr(firm, 'is_active', 1))
         ))
     
     return {"firms": firm_activities, "total": len(firm_activities)}
@@ -158,7 +160,8 @@ def get_firm_by_code(code: str, db: Session = Depends(get_db)):
         free_slots_remaining=max(0, (firm.required_registrations or 1) - confirmed_count),
         required_registrations=firm.required_registrations or 1,
         is_law_firm=bool(firm.is_law_firm),
-        logo_url=firm.logo_url
+        logo_url=firm.logo_url,
+        is_active=bool(getattr(firm, 'is_active', 1))
     )
 
 
@@ -202,7 +205,8 @@ def update_firm(firm_id: int, firm_data: LawFirmUpdate, db: Session = Depends(ge
         free_slots_remaining=max(0, (firm.required_registrations or 1) - confirmed_count),
         required_registrations=firm.required_registrations or 1,
         is_law_firm=bool(firm.is_law_firm),
-        logo_url=firm.logo_url
+        logo_url=firm.logo_url,
+        is_active=bool(getattr(firm, 'is_active', 1))
     )
 
 
@@ -224,3 +228,43 @@ def delete_firm(firm_id: int, db: Session = Depends(get_db)):
     db.delete(firm)
     db.commit()
     return {"success": True}
+
+
+@router.post("/{firm_id}/deactivate")
+def deactivate_firm_code(firm_id: int, db: Session = Depends(get_db)):
+    """Deactivate a single access code so it can no longer be used for registration"""
+    firm = db.query(LawFirm).filter(LawFirm.id == firm_id).first()
+    if not firm:
+        raise HTTPException(status_code=404, detail="Firm not found")
+    
+    firm.is_active = 0
+    db.commit()
+    return {"success": True, "message": f"Access code {firm.code} for {firm.name} has been deactivated"}
+
+
+@router.post("/{firm_id}/activate")
+def activate_firm_code(firm_id: int, db: Session = Depends(get_db)):
+    """Reactivate an access code"""
+    firm = db.query(LawFirm).filter(LawFirm.id == firm_id).first()
+    if not firm:
+        raise HTTPException(status_code=404, detail="Firm not found")
+    
+    firm.is_active = 1
+    db.commit()
+    return {"success": True, "message": f"Access code {firm.code} for {firm.name} has been activated"}
+
+
+@router.post("/deactivate-all")
+def deactivate_all_codes(db: Session = Depends(get_db)):
+    """Deactivate all access codes at once"""
+    count = db.query(LawFirm).filter(LawFirm.is_active == 1).update({"is_active": 0})
+    db.commit()
+    return {"success": True, "message": f"Deactivated {count} access codes"}
+
+
+@router.post("/activate-all")
+def activate_all_codes(db: Session = Depends(get_db)):
+    """Activate all access codes at once"""
+    count = db.query(LawFirm).filter(LawFirm.is_active == 0).update({"is_active": 1})
+    db.commit()
+    return {"success": True, "message": f"Activated {count} access codes"}

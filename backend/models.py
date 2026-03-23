@@ -14,6 +14,7 @@ class LawFirm(Base):
     required_registrations = Column(Integer, default=1)
     is_law_firm = Column(Integer, default=0)  # 0 = organization, 1 = law firm
     logo_url = Column(Text, nullable=True)
+    is_active = Column(Integer, default=1)  # 1 = active, 0 = deactivated
     created_at = Column(DateTime, default=datetime.utcnow)
 
     registrations = relationship("Registration", back_populates="firm")

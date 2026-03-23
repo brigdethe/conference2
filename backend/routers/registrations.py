@@ -232,6 +232,10 @@ async def create_registration(
         if not firm:
             raise HTTPException(status_code=400, detail="Invalid Access Code")
         
+        # Check if access code is active
+        if not getattr(firm, 'is_active', 1):
+            raise HTTPException(status_code=400, detail="This access code has been deactivated")
+        
         confirmed_count = db.query(Registration).filter(
             Registration.firm_id == firm.id,
             Registration.status == "confirmed",
