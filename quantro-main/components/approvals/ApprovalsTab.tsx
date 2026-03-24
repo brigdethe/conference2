@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, CheckCircle, XCircle, Clock, User, Mail, Building, Briefcase, MessageSquare, Eye, Trash2, CreditCard, Gift } from 'lucide-react';
+import { RefreshCw, CheckCircle, XCircle, Clock, User, Mail, Building, Briefcase, MessageSquare, Eye, Trash2, CreditCard, Gift, Download } from 'lucide-react';
 
 interface Registration {
     id: number;
@@ -200,6 +200,35 @@ export const RegistrationsTab: React.FC = () => {
         });
     };
 
+    const exportToExcel = (list: Registration[], filename: string) => {
+        const headers = ['Name', 'Email', 'Phone', 'Organization', 'Job Title', 'Reason for Attending', 'Registered At'];
+        const rows = list.map(reg => [
+            reg.fullName,
+            reg.email,
+            reg.phone || '',
+            reg.firmName || reg.company || '',
+            reg.jobTitle || '',
+            reg.reasonForAttending || '',
+            formatDate(reg.registeredAt)
+        ]);
+        
+        // Create CSV content with proper escaping
+        const csvContent = [
+            headers.join(','),
+            ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        ].join('\n');
+        
+        // Add BOM for Excel to recognize UTF-8
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${filename}-${new Date().toISOString().split('T')[0]}.csv`;
+        link.click();
+        URL.revokeObjectURL(url);
+    };
+
     const currentList = activeTab === 'pending' ? pendingList : activeTab === 'approved' ? approvedList : activeTab === 'rejected' ? rejectedList : [];
 
     const getStatusBadge = (status?: string) => {
@@ -216,14 +245,25 @@ export const RegistrationsTab: React.FC = () => {
                         <h2 className="text-lg font-bold text-slate-900">Registrations</h2>
                         <p className="text-sm text-slate-500">Manage approvals, rejections, and payment verification</p>
                     </div>
-                    <button
-                        onClick={fetchAllData}
-                        disabled={loading}
-                        className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-2"
-                    >
-                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                        Refresh
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {currentList.length > 0 && (
+                            <button
+                                onClick={() => exportToExcel(currentList, `${activeTab}-registrations`)}
+                                className="px-4 py-2 rounded-xl text-sm font-medium bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors flex items-center gap-2"
+                            >
+                                <Download className="w-4 h-4" />
+                                Export Excel
+                            </button>
+                        )}
+                        <button
+                            onClick={fetchAllData}
+                            disabled={loading}
+                            className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-2"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </button>
+                    </div>
                 </div>
 
                 <div className="border-b border-gray-100">
