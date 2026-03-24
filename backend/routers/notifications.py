@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, List
@@ -10,7 +10,7 @@ import qrcode
 import asyncio
 import logging
 
-from database import get_db
+from database import get_db, SessionLocal
 from models import Settings, AdminNotificationRecipient
 
 logger = logging.getLogger(__name__)
@@ -1302,8 +1302,42 @@ class RegistrationReportRequest(BaseModel):
     test_only: Optional[bool] = False  # If true, only send to test email
 
 
+async def send_bulk_reminder_emails_task(
+    template_type: str,
+    subject: str,
+    registrations_data: List[dict],
+    attachments: List[tuple],
+    admin_recipients: List[str]
+):
+    """Background task to send bulk reminder emails"""
+    db = SessionLocal()
+    try:
+        sent_count = 0
+        failed_count = 0
+        
+        for reg_data in registrations_data:
+            if reg_data.get("email"):
+                html_body = get_reminder_email_html(template_type, reg_data["full_name"], reg_data.get("ticket_code"))
+                success = await send_email_internal(db, reg_data["email"], subject, html_body, attachments)
+                if success:
+                    sent_count += 1
+                else:
+                    failed_count += 1
+        
+        # Also send to admin recipients
+        for admin_email in admin_recipients:
+            html_body = get_reminder_email_html(template_type, "Admin", None)
+            await send_email_internal(db, admin_email, f"[Admin Copy] {subject}", html_body, attachments)
+        
+        logger.info(f"Bulk reminder emails completed: {sent_count} sent, {failed_count} failed")
+    except Exception as e:
+        logger.error(f"Error in bulk email task: {e}")
+    finally:
+        db.close()
+
+
 @router.post("/send-reminder")
-async def send_reminder_email(data: ReminderEmailRequest, db: Session = Depends(get_db)):
+async def send_reminder_email(data: ReminderEmailRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     """Send reminder emails to all confirmed attendees or test email"""
     from models import Registration
     import os
@@ -1332,7 +1366,7 @@ async def send_reminder_email(data: ReminderEmailRequest, db: Session = Depends(
                 pdf_content = f.read()
             attachments = [("CMC_Program.pdf", pdf_content, "application/pdf")]
     
-    # If test email provided, only send to that
+    # If test email provided, only send to that (synchronous for immediate feedback)
     if data.test_email:
         html_body = get_reminder_email_html(template_type, "Test User", "TEST")
         success = await send_email_internal(db, data.test_email, subject, html_body, attachments)
@@ -1350,37 +1384,28 @@ async def send_reminder_email(data: ReminderEmailRequest, db: Session = Depends(
     if not registrations:
         return {"success": True, "message": "No confirmed attendees to send to", "sent_count": 0}
     
-    sent_count = 0
-    failed_count = 0
+    # Extract registration data for background task
+    registrations_data = [
+        {"email": reg.email, "full_name": reg.full_name, "ticket_code": reg.ticket_code}
+        for reg in registrations if reg.email
+    ]
     
-    for reg in registrations:
-        if reg.email:
-            html_body = get_reminder_email_html(template_type, reg.full_name, reg.ticket_code)
-            success = await send_email_internal(db, reg.email, subject, html_body, attachments)
-            if success:
-                sent_count += 1
-            else:
-                failed_count += 1
-    
-    # Also send to admin recipients
-    admin_sent = 0
-    admin_failed = 0
-    for admin_email in ADMIN_REMINDER_RECIPIENTS:
-        html_body = get_reminder_email_html(template_type, "Admin", None)
-        success = await send_email_internal(db, admin_email, f"[Admin Copy] {subject}", html_body, attachments)
-        if success:
-            admin_sent += 1
-        else:
-            admin_failed += 1
+    # Queue the bulk email sending as a background task
+    background_tasks.add_task(
+        send_bulk_reminder_emails_task,
+        template_type,
+        subject,
+        registrations_data,
+        attachments or [],
+        ADMIN_REMINDER_RECIPIENTS
+    )
     
     return {
         "success": True,
-        "message": f"Reminder emails sent: {sent_count} to attendees, {admin_sent} to admins",
-        "sent_count": sent_count,
-        "failed_count": failed_count,
+        "message": f"Sending {len(registrations_data)} reminder emails in background. Check logs for completion status.",
+        "sent_count": len(registrations_data),
         "total_attendees": len(registrations),
-        "admin_sent": admin_sent,
-        "admin_failed": admin_failed
+        "background": True
     }
 
 
