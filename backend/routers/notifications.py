@@ -598,17 +598,6 @@ async def send_rejection_notification(
     email_enabled = get_setting(db, "notifications_email_enabled", "true") == "true"
     
     if email_enabled and email:
-        reason_html = ""
-        if reason:
-            reason_html = f"""
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
-                <p style="color: #64748b; font-size: 14px; margin: 0 0 5px;">Reason:</p>
-                <div style="background-color: #fef2f2; padding: 10px; border-radius: 4px; border: 1px solid #fecaca; color: #b91c1c; font-size: 14px;">
-                    {html.escape(reason)}
-                </div>
-            </div>
-            """
-            
         html_body = f"""
         <!DOCTYPE html>
         <html>
@@ -622,22 +611,16 @@ async def send_rejection_notification(
                 </div>
                 
                 <div style="padding: 40px 30px;">
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <h2 style="color: #dc2626; margin: 0 0 10px; font-size: 20px;">Registration Update</h2>
-                    </div>
-                    
                     <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name)},</p>
-                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you for your interest in the Ghana Competition Law Seminar.</p>
                     
-                    <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 20px; margin: 25px 0; text-align: center;">
-                        <p style="color: #991b1b; margin: 0;">We regret to inform you that we are unable to approve your registration at this time.</p>
-                    </div>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you for your interest in the seminar on Ghana's new era of competition law.</p>
                     
-                    {reason_html}
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Due to high demand, we have reached maximum capacity for this seminar.</p>
                     
-                    <p style="margin-top: 30px; font-size: 14px; color: #666; text-align: center;">
-                        If you have any questions or believe this is an error, please contact us.
-                    </p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you again for your interest.</p>
+                    
+                    <p style="font-size: 16px; line-height: 1.6; color: #444; margin-top: 30px;">Best regards,</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444; font-weight: 600;">Event Organizers</p>
                 </div>
                 
                 <div style="background-color: #f8fafc; padding: 20px; text-align: center; font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0;">
@@ -650,7 +633,7 @@ async def send_rejection_notification(
         
         await send_email_internal(
             db, email,
-            "Registration Update - Ghana Competition Law Seminar",
+            "Ghana Competition Law Seminar",
             html_body
         )
 
