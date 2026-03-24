@@ -611,13 +611,13 @@ async def send_rejection_notification(
                 </div>
                 
                 <div style="padding: 40px 30px;">
-                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name)},</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(full_name.split()[0])},</p>
                     
-                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you for your interest in the seminar on Ghana's new era of competition law.</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you for your interest in our seminar on Ghana's new era of competition law.</p>
                     
-                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Due to high demand, we have reached maximum capacity for this seminar.</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">We truly appreciate the overwhelming response to this event. Unfortunately, we have now reached full capacity and are unable to accommodate additional registrations.</p>
                     
-                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you again for your interest.</p>
+                    <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you once again for your interest and understanding.</p>
                     
                     <p style="font-size: 16px; line-height: 1.6; color: #444; margin-top: 30px;">Best regards,</p>
                     <p style="font-size: 16px; line-height: 1.6; color: #444; font-weight: 600;">Event Organizers</p>
