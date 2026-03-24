@@ -240,6 +240,63 @@ app.get('/api/firms/activity', requireAdmin, async (req, res) => {
   }
 });
 
+// Access code deactivation endpoints
+app.post('/api/firms/:firmId/deactivate', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend(`/api/firms/${req.params.firmId}/deactivate`, {
+      method: 'POST',
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error deactivating access code:', error);
+    res.status(500).json({ error: 'Failed to deactivate access code' });
+  }
+});
+
+app.post('/api/firms/:firmId/activate', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend(`/api/firms/${req.params.firmId}/activate`, {
+      method: 'POST',
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error activating access code:', error);
+    res.status(500).json({ error: 'Failed to activate access code' });
+  }
+});
+
+app.post('/api/firms/deactivate-all', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/firms/deactivate-all', {
+      method: 'POST',
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error deactivating all access codes:', error);
+    res.status(500).json({ error: 'Failed to deactivate all access codes' });
+  }
+});
+
+app.post('/api/firms/activate-all', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/api/firms/activate-all', {
+      method: 'POST',
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error activating all access codes:', error);
+    res.status(500).json({ error: 'Failed to activate all access codes' });
+  }
+});
+
 app.get('/api/registration/:id/status', async (req, res) => {
   const { id } = req.params;
   try {

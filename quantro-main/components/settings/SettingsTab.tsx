@@ -643,6 +643,30 @@ export const SettingsTab: React.FC = () => {
                     </button>
                   </div>
                 </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-amber-50 border-2 border-amber-300 p-3">
+                  <div>
+                    <p className="text-sm font-medium text-amber-900">🔔 Final Reminder (Tomorrow!)</p>
+                    <p className="text-xs text-amber-700">Ticket code, QR instructions, program PDF attached</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => sendReminderEmail('final_reminder', true)}
+                      disabled={sendingReminder !== null}
+                      className="rounded-lg border border-amber-300 bg-white px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      Test
+                    </button>
+                    <button
+                      onClick={() => sendReminderEmail('final_reminder', false)}
+                      disabled={sendingReminder !== null}
+                      className="flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                    >
+                      {sendingReminder === 'final_reminder' && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Send All
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -1151,22 +1151,36 @@ def get_reminder_email_html(template_type: str, full_name: str, ticket_code: str
                         <strong>📍 Venue:</strong> Mövenpick Ambassador Hotel, Independence Avenue, Accra
                     </td>
                 </tr>
-                {f'<tr><td style="padding: 10px 0; color: #92400e; font-weight: 600;"><strong>🎫 Your Ticket Code:</strong> {html.escape(ticket_code)}</td></tr>' if ticket_code else ''}
             </table>
+        </div>
+        
+        {f'''<div style="background-color: #1a365d; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center;">
+            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 8px 0;">YOUR TICKET CODE</p>
+            <p style="color: #ffffff; font-size: 28px; font-weight: bold; margin: 0; letter-spacing: 4px; font-family: monospace;">{html.escape(ticket_code)}</p>
+        </div>''' if ticket_code else ''}
+        
+        <div style="background-color: #fef2f2; border: 2px solid #ef4444; border-radius: 8px; padding: 20px; margin: 20px 0;">
+            <p style="color: #dc2626; font-weight: 700; margin: 0 0 10px 0; font-size: 16px;">⚠️ IMPORTANT: Entry Requirements</p>
+            <p style="color: #7f1d1d; margin: 0; line-height: 1.6;">
+                You <strong>MUST</strong> present your <strong>QR code</strong> or <strong>ticket code</strong> at the gate to gain entry. 
+                Please have it ready on your phone or printed. Without it, you may experience delays at check-in.
+            </p>
         </div>
         
         <div style="background-color: #f0fdf4; border: 1px solid #22c55e; border-radius: 8px; padding: 20px; margin: 20px 0;">
             <p style="color: #166534; font-weight: 600; margin: 0 0 10px 0;">✅ What to bring:</p>
             <ul style="color: #166534; margin: 0; padding-left: 20px;">
-                <li style="margin-bottom: 5px;">Your ticket QR code (on your phone or printed)</li>
+                <li style="margin-bottom: 5px;"><strong>Your ticket QR code or ticket code</strong> (required for entry)</li>
                 <li style="margin-bottom: 5px;">Business cards for networking</li>
                 <li>A notepad for the insightful discussions</li>
             </ul>
         </div>
         
-        <p style="font-size: 14px; line-height: 1.6; color: #666;">We look forward to welcoming you tomorrow! If you have any last-minute questions, please contact us at <a href="mailto:info@cmc-ghana.com" style="color: #0284c7;">info@cmc-ghana.com</a></p>
-        
         {speakers_html}
+        
+        <p style="font-size: 14px; line-height: 1.6; color: #666; margin-top: 20px;">We look forward to welcoming you tomorrow! If you have any last-minute questions, please contact us at <a href="mailto:info@cmc-ghana.com" style="color: #0284c7;">info@cmc-ghana.com</a></p>
+        
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 15px; text-align: center;"><em>Please find the event program attached to this email.</em></p>
         """
     else:  # reminder
         content = f"""
@@ -1292,6 +1306,7 @@ class RegistrationReportRequest(BaseModel):
 async def send_reminder_email(data: ReminderEmailRequest, db: Session = Depends(get_db)):
     """Send reminder emails to all confirmed attendees or test email"""
     from models import Registration
+    import os
     
     # Admin recipients who also receive reminder emails
     ADMIN_REMINDER_RECIPIENTS = [
@@ -1308,17 +1323,26 @@ async def send_reminder_email(data: ReminderEmailRequest, db: Session = Depends(
     subject = template_info["subject"]
     template_type = template_info["template"]
     
+    # Prepare PDF attachment for final_reminder
+    attachments = None
+    if template_type == "final":
+        pdf_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "..", "CMC Program Press.pdf")
+        if os.path.exists(pdf_path):
+            with open(pdf_path, "rb") as f:
+                pdf_content = f.read()
+            attachments = [("CMC_Program.pdf", pdf_content, "application/pdf")]
+    
     # If test email provided, only send to that
     if data.test_email:
         html_body = get_reminder_email_html(template_type, "Test User", "TEST")
-        success = await send_email_internal(db, data.test_email, subject, html_body)
+        success = await send_email_internal(db, data.test_email, subject, html_body, attachments)
         return {
             "success": success,
             "message": f"Test email sent to {data.test_email}" if success else "Failed to send test email",
             "sent_count": 1 if success else 0
         }
     
-    # Get all confirmed registrations
+    # Get all confirmed registrations (approved attendees only)
     registrations = db.query(Registration).filter(
         Registration.status == "confirmed"
     ).all()
@@ -1332,7 +1356,7 @@ async def send_reminder_email(data: ReminderEmailRequest, db: Session = Depends(
     for reg in registrations:
         if reg.email:
             html_body = get_reminder_email_html(template_type, reg.full_name, reg.ticket_code)
-            success = await send_email_internal(db, reg.email, subject, html_body)
+            success = await send_email_internal(db, reg.email, subject, html_body, attachments)
             if success:
                 sent_count += 1
             else:
@@ -1343,7 +1367,7 @@ async def send_reminder_email(data: ReminderEmailRequest, db: Session = Depends(
     admin_failed = 0
     for admin_email in ADMIN_REMINDER_RECIPIENTS:
         html_body = get_reminder_email_html(template_type, "Admin", None)
-        success = await send_email_internal(db, admin_email, f"[Admin Copy] {subject}", html_body)
+        success = await send_email_internal(db, admin_email, f"[Admin Copy] {subject}", html_body, attachments)
         if success:
             admin_sent += 1
         else:
@@ -1379,6 +1403,11 @@ def get_reminder_templates():
                 "id": "event_reminder",
                 "name": "Event Reminder",
                 "description": "General reminder about the upcoming event with details"
+            },
+            {
+                "id": "final_reminder",
+                "name": "Final Reminder (Event Tomorrow)",
+                "description": "Final reminder with ticket code, QR instructions, and program PDF attachment"
             }
         ]
     }

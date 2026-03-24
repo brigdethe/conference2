@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { Plus, Building2, Copy, Check, LayoutGrid, List, Download, Trash2, X, Users, Loader2, Pencil, Filter } from 'lucide-react';
+import { Plus, Building2, Copy, Check, LayoutGrid, List, Download, Trash2, X, Users, Loader2, Pencil, Filter, Power, PowerOff } from 'lucide-react';
 
 interface Registration {
   id: number;
@@ -25,6 +25,7 @@ interface Firm {
   required_registrations: number;
   is_law_firm: boolean;
   logo_url: string | null;
+  is_active: boolean;
 }
 
 interface FirmDetail {
@@ -69,6 +70,8 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
   const [editIsLawFirm, setEditIsLawFirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [filterType, setFilterType] = useState<'all' | 'law_firm' | 'organization'>('all');
+  const [togglingId, setTogglingId] = useState<number | null>(null);
+  const [isTogglingAll, setIsTogglingAll] = useState(false);
 
   const filteredFirms = useMemo(() => {
     if (filterType === 'all') return firms;
@@ -200,6 +203,51 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
     }
   };
 
+  const handleToggleActive = async (firmId: number, isActive: boolean, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setTogglingId(firmId);
+    try {
+      const endpoint = isActive ? 'deactivate' : 'activate';
+      const res = await fetch(`/api/firms/${firmId}/${endpoint}`, { 
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || err.error || `Failed to ${endpoint} access code`);
+      }
+      fetchFirms();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to toggle access code');
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
+  const handleToggleAllCodes = async (deactivate: boolean) => {
+    const action = deactivate ? 'deactivate' : 'activate';
+    if (!confirm(`Are you sure you want to ${action} ALL access codes? ${deactivate ? 'No one will be able to register with access codes until reactivated.' : ''}`)) return;
+    
+    setIsTogglingAll(true);
+    try {
+      const res = await fetch(`/api/firms/${action}-all`, { 
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || err.error || `Failed to ${action} all codes`);
+      }
+      const data = await res.json();
+      alert(data.message || `All codes ${action}d successfully`);
+      fetchFirms();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : `Failed to ${action} all codes`);
+    } finally {
+      setIsTogglingAll(false);
+    }
+  };
+
   const handleFirmClick = async (firmCode: string) => {
     setIsLoadingDetail(true);
     try {
@@ -269,6 +317,25 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
               <LayoutGrid className="h-4 w-4" />
             </button>
           </div>
+          {firms.some(f => f.is_active) ? (
+            <button
+              onClick={() => handleToggleAllCodes(true)}
+              disabled={isTogglingAll}
+              className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 disabled:opacity-50 transition-colors"
+            >
+              {isTogglingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <PowerOff className="h-4 w-4" />}
+              Deactivate All
+            </button>
+          ) : (
+            <button
+              onClick={() => handleToggleAllCodes(false)}
+              disabled={isTogglingAll}
+              className="flex items-center gap-2 rounded-xl border border-green-200 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 hover:bg-green-100 disabled:opacity-50 transition-colors"
+            >
+              {isTogglingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
+              Activate All
+            </button>
+          )}
           <button
             onClick={exportCSV}
             disabled={firms.length === 0}
@@ -319,6 +386,7 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
                 <th className="px-4 py-4">Organization</th>
                 <th className="px-4 py-4">Type</th>
                 <th className="px-4 py-4">Access Code</th>
+                <th className="px-4 py-4">Status</th>
                 <th className="px-4 py-4">Registered</th>
                 <th className="px-4 py-4" title="Number of free registration slots allocated">Quota</th>
                 <th className="px-4 py-4">Free Slots</th>
@@ -355,7 +423,7 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
                   <td className="px-4 py-4">
                     <button
                       onClick={(e) => copyCode(firm.code, e)}
-                      className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-mono font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+                      className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-mono font-semibold transition-colors ${firm.is_active !== false ? 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100' : 'border-red-200 bg-red-50 text-red-400 line-through'}`}
                     >
                       {firm.code}
                       {copiedCode === firm.code ? (
@@ -363,6 +431,22 @@ export const FirmsTab: React.FC<FirmsTabProps> = ({ onFirmCreated }) => {
                       ) : (
                         <Copy className="h-3 w-3 text-slate-400" />
                       )}
+                    </button>
+                  </td>
+                  <td className="px-4 py-4">
+                    <button
+                      onClick={(e) => handleToggleActive(firm.id, firm.is_active !== false, e)}
+                      disabled={togglingId === firm.id}
+                      className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${firm.is_active !== false ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+                    >
+                      {togglingId === firm.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : firm.is_active !== false ? (
+                        <Power className="h-3 w-3" />
+                      ) : (
+                        <PowerOff className="h-3 w-3" />
+                      )}
+                      {firm.is_active !== false ? 'Active' : 'Inactive'}
                     </button>
                   </td>
                   <td className="px-4 py-4 text-sm text-slate-600">{firm.confirmed_count}</td>
