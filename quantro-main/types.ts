@@ -16,6 +16,7 @@ export enum TabOption {
   Firms = 'Firms',
   Attendees = 'Attendees',
   Registrations = 'Registrations',
+  Duplicates = 'Duplicates',
   CheckIn = 'Check-in',
   Inquiries = 'Inquiries',
   Settings = 'Settings'

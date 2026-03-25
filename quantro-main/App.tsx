@@ -10,6 +10,7 @@ import { TicketsTab } from './components/tickets/TicketsTab';
 import { SettingsTab } from './components/settings/SettingsTab';
 import { InquiriesTab } from './components/inquiries/InquiriesTab';
 import { RegistrationsTab } from './components/approvals/ApprovalsTab';
+import { DuplicatesTab } from './components/duplicates/DuplicatesTab';
 import { Login } from './components/Login';
 import { TabOption } from './types';
 import type { DashboardSidebarContent } from './data/dashboard';
@@ -335,6 +336,12 @@ export default function App() {
             {activeTab === TabOption.Registrations && (
               <section className="mb-8">
                 <RegistrationsTab />
+              </section>
+            )}
+
+            {activeTab === TabOption.Duplicates && (
+              <section className="mb-8">
+                <DuplicatesTab />
               </section>
             )}
 
