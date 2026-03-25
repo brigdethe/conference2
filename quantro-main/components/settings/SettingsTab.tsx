@@ -39,6 +39,7 @@ export const SettingsTab: React.FC = () => {
   const [addingRecipient, setAddingRecipient] = useState(false);
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
   const [sendingReport, setSendingReport] = useState(false);
+  const [sendingSMS, setSendingSMS] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
@@ -223,6 +224,31 @@ export const SettingsTab: React.FC = () => {
       setMessage({ type: 'error', text: 'Failed to send registration report' });
     } finally {
       setSendingReport(false);
+    }
+  };
+
+  const sendSMSTickets = async (test: boolean) => {
+    setSendingSMS(true);
+    setMessage(null);
+    try {
+      const body: { test_phone?: string } = {};
+      if (test) {
+        body.test_phone = settings.test_sms_phone || '0241293754';
+      }
+      const res = await fetch('/api/notifications/send-sms-tickets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      setMessage({
+        type: data.success ? 'success' : 'error',
+        text: data.message || (data.success ? 'SMS sent!' : 'Failed to send SMS'),
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to send SMS ticket reminders' });
+    } finally {
+      setSendingSMS(false);
     }
   };
 
@@ -663,6 +689,30 @@ export const SettingsTab: React.FC = () => {
                       className="flex items-center gap-1 rounded-lg bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
                     >
                       {sendingReminder === 'final_reminder' && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Send All
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-purple-50 border-2 border-purple-300 p-3">
+                  <div>
+                    <p className="text-sm font-medium text-purple-900">📱 SMS Ticket Reminder</p>
+                    <p className="text-xs text-purple-700">Send ticket code via SMS to all attendees</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => sendSMSTickets(true)}
+                      disabled={sendingSMS}
+                      className="rounded-lg border border-purple-300 bg-white px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-100 disabled:opacity-50"
+                    >
+                      Test
+                    </button>
+                    <button
+                      onClick={() => sendSMSTickets(false)}
+                      disabled={sendingSMS}
+                      className="flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-1 text-xs font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+                    >
+                      {sendingSMS && <Loader2 className="h-3 w-3 animate-spin" />}
                       Send All
                     </button>
                   </div>

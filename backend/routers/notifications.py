@@ -1571,3 +1571,88 @@ async def send_registration_report(
             "pending_approval": pending_approval_count
         }
     }
+
+
+class SMSTicketReminderRequest(BaseModel):
+    test_phone: Optional[str] = None  # If provided, send only to this phone for testing
+
+
+async def send_bulk_sms_tickets_task(registrations_data: List[dict]):
+    """Background task to send bulk SMS ticket reminders"""
+    db = SessionLocal()
+    try:
+        sent_count = 0
+        failed_count = 0
+        
+        for reg_data in registrations_data:
+            phone = reg_data.get("phone")
+            if phone:
+                first_name = reg_data["full_name"].split()[0] if reg_data.get("full_name") else "Attendee"
+                ticket_code = reg_data.get("ticket_code", "N/A")
+                message = f"Hi {first_name}! Your ticket code for GCLS 2026 is: {ticket_code}. Present this at check-in. Have a great time at the event!"
+                success = await send_sms_internal(db, phone, message)
+                if success:
+                    sent_count += 1
+                else:
+                    failed_count += 1
+        
+        logger.info(f"Bulk SMS tickets completed: {sent_count} sent, {failed_count} failed")
+    except Exception as e:
+        logger.error(f"Error in bulk SMS task: {e}")
+    finally:
+        db.close()
+
+
+@router.post("/send-sms-tickets")
+async def send_sms_ticket_reminders(
+    data: SMSTicketReminderRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Send SMS with ticket code to all confirmed attendees"""
+    from models import Registration
+    
+    # Check if SMS is enabled
+    sms_enabled = get_setting(db, "notifications_sms_enabled", "true") == "true"
+    if not sms_enabled:
+        raise HTTPException(status_code=400, detail="SMS notifications are disabled")
+    
+    # If test phone provided, only send to that (synchronous for immediate feedback)
+    if data.test_phone:
+        message = f"Hi Test! Your ticket code for GCLS 2026 is: TEST123. Present this at check-in. Have a great time at the event!"
+        success = await send_sms_internal(db, data.test_phone, message)
+        return {
+            "success": success,
+            "message": f"Test SMS sent to {data.test_phone}" if success else "Failed to send test SMS",
+            "sent_count": 1 if success else 0
+        }
+    
+    # Get all confirmed registrations with phone numbers
+    registrations = db.query(Registration).filter(
+        Registration.status == "confirmed",
+        Registration.phone.isnot(None),
+        Registration.phone != ""
+    ).all()
+    
+    if not registrations:
+        return {"success": True, "message": "No confirmed attendees with phone numbers to send to", "sent_count": 0}
+    
+    # Extract registration data for background task
+    registrations_data = [
+        {"phone": reg.phone, "full_name": reg.full_name, "ticket_code": reg.ticket_code}
+        for reg in registrations if reg.phone
+    ]
+    
+    # Queue the bulk SMS sending as a background task
+    background_tasks.add_task(
+        send_bulk_sms_tickets_task,
+        registrations_data
+    )
+    
+    return {
+        "success": True,
+        "message": f"Sending {len(registrations_data)} SMS ticket reminders in background. Check logs for completion status.",
+        "sent_count": len(registrations_data),
+        "total_attendees": len(registrations),
+        "background": True
+    }

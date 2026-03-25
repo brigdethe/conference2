@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { RefreshCw, Users, Mail, Phone, User, Trash2, CheckCircle, AlertTriangle, Copy, Building, Loader2, Search, Filter } from 'lucide-react';
+import { RefreshCw, Users, Mail, Phone, User, Trash2, CheckCircle, AlertTriangle, Copy, Building, Loader2, Search, Filter, EyeOff } from 'lucide-react';
 
 interface Registration {
     id: number;
@@ -28,6 +28,7 @@ export const DuplicatesTab: React.FC = () => {
     const [selectedToKeep, setSelectedToKeep] = useState<{ [groupKey: string]: number }>({});
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState<'all' | 'email' | 'phone' | 'name'>('all');
+    const [ignoredGroups, setIgnoredGroups] = useState<Set<string>>(new Set());
 
     const fetchDuplicates = async () => {
         setLoading(true);
@@ -51,6 +52,9 @@ export const DuplicatesTab: React.FC = () => {
     // Filter and search duplicates
     const filteredGroups = useMemo(() => {
         let groups = duplicateGroups;
+        
+        // Filter out ignored groups
+        groups = groups.filter(g => !ignoredGroups.has(`${g.match_type}-${g.match_value}`));
         
         // Filter by match type
         if (filterType !== 'all') {
@@ -77,9 +81,17 @@ export const DuplicatesTab: React.FC = () => {
         }
         
         return groups;
-    }, [duplicateGroups, filterType, searchQuery]);
+    }, [duplicateGroups, filterType, searchQuery, ignoredGroups]);
 
     const getGroupKey = (group: DuplicateGroup) => `${group.match_type}-${group.match_value}`;
+
+    const handleIgnoreGroup = (groupKey: string) => {
+        setIgnoredGroups(prev => new Set([...prev, groupKey]));
+    };
+
+    const handleClearIgnored = () => {
+        setIgnoredGroups(new Set());
+    };
 
     const handleSelectToKeep = (groupKey: string, regId: number) => {
         setSelectedToKeep(prev => ({ ...prev, [groupKey]: regId }));
@@ -184,14 +196,25 @@ export const DuplicatesTab: React.FC = () => {
                     </h2>
                     <p className="text-sm text-slate-500">Find and manage duplicate registrations by phone, email, or name</p>
                 </div>
-                <button
-                    onClick={fetchDuplicates}
-                    disabled={loading}
-                    className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-2"
-                >
-                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                    Refresh
-                </button>
+                <div className="flex items-center gap-2">
+                    {ignoredGroups.size > 0 && (
+                        <button
+                            onClick={handleClearIgnored}
+                            className="px-3 py-2 rounded-xl text-sm font-medium bg-amber-100 text-amber-700 hover:bg-amber-200 transition-colors flex items-center gap-2"
+                        >
+                            <EyeOff className="w-4 h-4" />
+                            Show {ignoredGroups.size} Ignored
+                        </button>
+                    )}
+                    <button
+                        onClick={fetchDuplicates}
+                        disabled={loading}
+                        className="px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors flex items-center gap-2"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
+                    </button>
+                </div>
             </div>
 
             <div className="p-6">
@@ -276,9 +299,17 @@ export const DuplicatesTab: React.FC = () => {
                                         <span className="text-sm text-slate-600 font-mono bg-white px-2 py-0.5 rounded border">
                                             {group.match_value}
                                         </span>
-                                        <span className="ml-auto text-xs text-slate-500">
+                                        <span className="text-xs text-slate-500">
                                             {group.registrations.length} registrations
                                         </span>
+                                        <button
+                                            onClick={() => handleIgnoreGroup(groupKey)}
+                                            className="ml-auto px-2 py-1 text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors flex items-center gap-1"
+                                            title="Ignore this duplicate group"
+                                        >
+                                            <EyeOff className="w-3 h-3" />
+                                            Ignore
+                                        </button>
                                     </div>
                                     
                                     <div className="divide-y divide-slate-100">
