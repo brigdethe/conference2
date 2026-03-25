@@ -674,9 +674,9 @@ def get_duplicate_registrations(db: Session = Depends(get_db)):
     from sqlalchemy import func
     from collections import defaultdict
     
-    # Get all registrations that are not rejected
+    # Get all registrations that are not rejected (include all active statuses)
     registrations = db.query(Registration).filter(
-        Registration.status.in_(["confirmed", "pending_payment", "pending_approval", "awaiting_verification"])
+        Registration.status != "rejected"
     ).all()
     
     # Group by different criteria
