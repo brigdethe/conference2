@@ -204,6 +204,99 @@ def get_rejected_registrations(db: Session = Depends(get_db)):
     return {"registrations": result, "total": len(result)}
 
 
+def _format_reg_for_duplicate(reg: Registration) -> dict:
+    """Format registration for duplicate response"""
+    return {
+        "id": reg.id,
+        "fullName": reg.full_name,
+        "email": reg.email,
+        "phone": reg.phone,
+        "company": reg.company,
+        "jobTitle": reg.job_title,
+        "status": reg.status,
+        "ticketCode": reg.ticket_code,
+        "ticketType": reg.ticket_type,
+        "firmName": reg.firm.name if reg.firm else None,
+        "registeredAt": reg.created_at.isoformat() if reg.created_at else None
+    }
+
+
+@router.get("/duplicates")
+def get_duplicate_registrations(db: Session = Depends(get_db)):
+    """Find duplicate registrations by phone, email, or name"""
+    from collections import defaultdict
+    
+    # Get all registrations that are not rejected (include all active statuses)
+    registrations = db.query(Registration).filter(
+        Registration.status != "rejected"
+    ).all()
+    
+    # Group by different criteria
+    by_email = defaultdict(list)
+    by_phone = defaultdict(list)
+    by_name = defaultdict(list)
+    
+    for reg in registrations:
+        # Group by email (case insensitive)
+        if reg.email:
+            by_email[reg.email.lower().strip()].append(reg)
+        
+        # Group by phone (normalize by removing spaces and special chars)
+        if reg.phone:
+            normalized_phone = ''.join(c for c in reg.phone if c.isdigit())
+            if len(normalized_phone) >= 9:  # Only consider valid phone numbers
+                by_phone[normalized_phone[-9:]].append(reg)  # Last 9 digits
+        
+        # Group by name (case insensitive, trimmed)
+        if reg.full_name:
+            by_name[reg.full_name.lower().strip()].append(reg)
+    
+    # Find duplicates (groups with more than 1 registration)
+    duplicate_groups = []
+    seen_ids = set()
+    
+    # Check email duplicates
+    for email, regs in by_email.items():
+        if len(regs) > 1:
+            ids = tuple(sorted(r.id for r in regs))
+            if ids not in seen_ids:
+                seen_ids.add(ids)
+                duplicate_groups.append({
+                    "match_type": "email",
+                    "match_value": email,
+                    "registrations": [_format_reg_for_duplicate(r) for r in regs]
+                })
+    
+    # Check phone duplicates
+    for phone, regs in by_phone.items():
+        if len(regs) > 1:
+            ids = tuple(sorted(r.id for r in regs))
+            if ids not in seen_ids:
+                seen_ids.add(ids)
+                duplicate_groups.append({
+                    "match_type": "phone",
+                    "match_value": phone,
+                    "registrations": [_format_reg_for_duplicate(r) for r in regs]
+                })
+    
+    # Check name duplicates
+    for name, regs in by_name.items():
+        if len(regs) > 1:
+            ids = tuple(sorted(r.id for r in regs))
+            if ids not in seen_ids:
+                seen_ids.add(ids)
+                duplicate_groups.append({
+                    "match_type": "name",
+                    "match_value": name,
+                    "registrations": [_format_reg_for_duplicate(r) for r in regs]
+                })
+    
+    return {
+        "duplicate_groups": duplicate_groups,
+        "total_groups": len(duplicate_groups)
+    }
+
+
 @router.post("", response_model=dict)
 async def create_registration(
     data: RegistrationCreate,
@@ -665,100 +758,6 @@ def delete_registration(registration_id: int, db: Session = Depends(get_db)):
         "success": True,
         "message": message,
         "slot_freed": was_confirmed_access_code
-    }
-
-
-@router.get("/duplicates")
-def get_duplicate_registrations(db: Session = Depends(get_db)):
-    """Find duplicate registrations by phone, email, or name"""
-    from sqlalchemy import func
-    from collections import defaultdict
-    
-    # Get all registrations that are not rejected (include all active statuses)
-    registrations = db.query(Registration).filter(
-        Registration.status != "rejected"
-    ).all()
-    
-    # Group by different criteria
-    by_email = defaultdict(list)
-    by_phone = defaultdict(list)
-    by_name = defaultdict(list)
-    
-    for reg in registrations:
-        # Group by email (case insensitive)
-        if reg.email:
-            by_email[reg.email.lower().strip()].append(reg)
-        
-        # Group by phone (normalize by removing spaces and special chars)
-        if reg.phone:
-            normalized_phone = ''.join(c for c in reg.phone if c.isdigit())
-            if len(normalized_phone) >= 9:  # Only consider valid phone numbers
-                by_phone[normalized_phone[-9:]].append(reg)  # Last 9 digits
-        
-        # Group by name (case insensitive, trimmed)
-        if reg.full_name:
-            by_name[reg.full_name.lower().strip()].append(reg)
-    
-    # Find duplicates (groups with more than 1 registration)
-    duplicate_groups = []
-    seen_ids = set()
-    
-    # Check email duplicates
-    for email, regs in by_email.items():
-        if len(regs) > 1:
-            ids = tuple(sorted(r.id for r in regs))
-            if ids not in seen_ids:
-                seen_ids.add(ids)
-                duplicate_groups.append({
-                    "match_type": "email",
-                    "match_value": email,
-                    "registrations": [_format_reg_for_duplicate(r) for r in regs]
-                })
-    
-    # Check phone duplicates
-    for phone, regs in by_phone.items():
-        if len(regs) > 1:
-            ids = tuple(sorted(r.id for r in regs))
-            if ids not in seen_ids:
-                seen_ids.add(ids)
-                duplicate_groups.append({
-                    "match_type": "phone",
-                    "match_value": phone,
-                    "registrations": [_format_reg_for_duplicate(r) for r in regs]
-                })
-    
-    # Check name duplicates
-    for name, regs in by_name.items():
-        if len(regs) > 1:
-            ids = tuple(sorted(r.id for r in regs))
-            if ids not in seen_ids:
-                seen_ids.add(ids)
-                duplicate_groups.append({
-                    "match_type": "name",
-                    "match_value": name,
-                    "registrations": [_format_reg_for_duplicate(r) for r in regs]
-                })
-    
-    return {
-        "duplicate_groups": duplicate_groups,
-        "total_groups": len(duplicate_groups)
-    }
-
-
-def _format_reg_for_duplicate(reg: Registration) -> dict:
-    """Format registration for duplicate response"""
-    return {
-        "id": reg.id,
-        "fullName": reg.full_name,
-        "email": reg.email,
-        "phone": reg.phone,
-        "company": reg.company,
-        "jobTitle": reg.job_title,
-        "status": reg.status,
-        "ticketCode": reg.ticket_code,
-        "ticketType": reg.ticket_type,
-        "firmName": reg.firm.name if reg.firm else None,
-        "registeredAt": reg.created_at.isoformat() if reg.created_at else None
     }
 
 

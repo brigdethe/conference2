@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { RefreshCw, Users, Mail, Phone, User, Trash2, CheckCircle, AlertTriangle, Copy, Building, Loader2 } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { RefreshCw, Users, Mail, Phone, User, Trash2, CheckCircle, AlertTriangle, Copy, Building, Loader2, Search, Filter } from 'lucide-react';
 
 interface Registration {
     id: number;
@@ -26,6 +26,8 @@ export const DuplicatesTab: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState<string | null>(null);
     const [selectedToKeep, setSelectedToKeep] = useState<{ [groupKey: string]: number }>({});
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterType, setFilterType] = useState<'all' | 'email' | 'phone' | 'name'>('all');
 
     const fetchDuplicates = async () => {
         setLoading(true);
@@ -45,6 +47,37 @@ export const DuplicatesTab: React.FC = () => {
     useEffect(() => {
         fetchDuplicates();
     }, []);
+
+    // Filter and search duplicates
+    const filteredGroups = useMemo(() => {
+        let groups = duplicateGroups;
+        
+        // Filter by match type
+        if (filterType !== 'all') {
+            groups = groups.filter(g => g.match_type === filterType);
+        }
+        
+        // Search across all fields
+        if (searchQuery.trim()) {
+            const query = searchQuery.toLowerCase().trim();
+            groups = groups.filter(group => {
+                // Check if match value contains query
+                if (group.match_value.toLowerCase().includes(query)) return true;
+                
+                // Check if any registration in the group matches
+                return group.registrations.some(reg => 
+                    reg.fullName?.toLowerCase().includes(query) ||
+                    reg.email?.toLowerCase().includes(query) ||
+                    reg.phone?.toLowerCase().includes(query) ||
+                    reg.company?.toLowerCase().includes(query) ||
+                    reg.firmName?.toLowerCase().includes(query) ||
+                    reg.ticketCode?.toLowerCase().includes(query)
+                );
+            });
+        }
+        
+        return groups;
+    }, [duplicateGroups, filterType, searchQuery]);
 
     const getGroupKey = (group: DuplicateGroup) => `${group.match_type}-${group.match_value}`;
 
@@ -162,6 +195,33 @@ export const DuplicatesTab: React.FC = () => {
             </div>
 
             <div className="p-6">
+                {/* Search and Filter Bar */}
+                <div className="mb-6 flex flex-col sm:flex-row gap-3">
+                    <div className="relative flex-grow">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <input
+                            type="text"
+                            placeholder="Search by name, email, phone, company, or ticket code..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-200 focus:border-slate-300"
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Filter className="w-4 h-4 text-slate-400" />
+                        <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value as 'all' | 'email' | 'phone' | 'name')}
+                            className="px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-slate-200"
+                        >
+                            <option value="all">All Types</option>
+                            <option value="email">Email Matches</option>
+                            <option value="phone">Phone Matches</option>
+                            <option value="name">Name Matches</option>
+                        </select>
+                    </div>
+                </div>
+
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-12 text-slate-400">
                         <RefreshCw className="w-8 h-8 animate-spin mb-3" />
@@ -173,13 +233,22 @@ export const DuplicatesTab: React.FC = () => {
                         <p className="text-lg font-medium text-slate-600">No duplicates found!</p>
                         <p className="text-sm">All registrations appear to be unique</p>
                     </div>
+                ) : filteredGroups.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                        <Search className="w-12 h-12 mb-3 text-slate-300" />
+                        <p className="text-lg font-medium text-slate-600">No matches found</p>
+                        <p className="text-sm">Try adjusting your search or filter</p>
+                    </div>
                 ) : (
                     <div className="space-y-6">
                         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
                             <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                             <div>
                                 <p className="text-sm font-medium text-amber-800">
-                                    Found {duplicateGroups.length} potential duplicate group{duplicateGroups.length > 1 ? 's' : ''}
+                                    {searchQuery || filterType !== 'all' 
+                                        ? `Showing ${filteredGroups.length} of ${duplicateGroups.length} duplicate groups`
+                                        : `Found ${duplicateGroups.length} potential duplicate group${duplicateGroups.length > 1 ? 's' : ''}`
+                                    }
                                 </p>
                                 <p className="text-xs text-amber-700 mt-1">
                                     Select which registration to keep, then delete the duplicates. The kept registration will receive their ticket again.
@@ -187,7 +256,7 @@ export const DuplicatesTab: React.FC = () => {
                             </div>
                         </div>
 
-                        {duplicateGroups.map((group, groupIndex) => {
+                        {filteredGroups.map((group, groupIndex) => {
                             const groupKey = getGroupKey(group);
                             const keepId = selectedToKeep[groupKey];
                             
@@ -294,7 +363,12 @@ export const DuplicatesTab: React.FC = () => {
             </div>
 
             <div className="bg-gray-50 px-6 py-3 border-t border-gray-100 text-xs text-gray-500">
-                <span>Total duplicate groups: {duplicateGroups.length}</span>
+                <span>
+                    {searchQuery || filterType !== 'all' 
+                        ? `Showing ${filteredGroups.length} of ${duplicateGroups.length} duplicate groups`
+                        : `Total duplicate groups: ${duplicateGroups.length}`
+                    }
+                </span>
             </div>
         </div>
     );
