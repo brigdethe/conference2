@@ -1704,13 +1704,12 @@ async def send_bulk_survey_invites_task(registrations_data: List[dict], send_sms
 <p style="font-size:16px;line-height:1.6;color:#444;">We would love to hear your feedback to help us improve future events. It only takes 2 minutes!</p>
 <div style="text-align:center;margin:30px 0;">
 <a href="{survey_url}" style="display:inline-block;background:linear-gradient(135deg,#1a365d 0%,#2d4a7c 100%);color:#fff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">Share Your Feedback</a></div>
-<p style="font-size:16px;line-height:1.6;color:#444;">As a thank you, you'll receive a <strong>Digital Souvenir</strong> from the seminar after completing the survey!</p>
-<p style="font-size:14px;line-height:1.6;color:#999;">This is your personal survey link. Your feedback is anonymous — we do not collect your name.</p>
+<p style="font-size:14px;line-height:1.6;color:#999;">This survey is <strong>completely anonymous</strong> — we do not collect your name or any identifying information. Your honest feedback helps us improve future events.</p>
 <p style="font-size:16px;line-height:1.6;color:#444;">Warm regards,<br><strong>The Competition & Markets Center Team</strong></p></div></div>
 </body></html>"""
                     
                     msg = MIMEMultipart('alternative')
-                    msg['Subject'] = "Share Your Feedback - Get Your Digital Souvenir!"
+                    msg['Subject'] = "Share Your Feedback - Ghana Competition Law Seminar"
                     msg['From'] = f"{sender_name} <{smtp_email}>"
                     msg['To'] = email
                     msg.attach(MIMEText(html_content, 'html'))
@@ -1724,7 +1723,7 @@ async def send_bulk_survey_invites_task(registrations_data: List[dict], send_sms
                     logger.error(f"Failed to send survey email to {email}: {e}")
             
             if send_sms and phone:
-                message = f"Hi {first_name}! Thank you for attending GCLS 2026. Share your feedback & get your digital souvenir: {survey_url}"
+                message = f"Hi {first_name}! Thank you for attending GCLS 2026. Please share your anonymous feedback (2 min): {survey_url}"
                 success = await send_sms_internal(db, phone, message)
                 if success:
                     sms_sent += 1
