@@ -1662,6 +1662,12 @@ class SurveyInviteRequest(BaseModel):
     test_only: bool = False
 
 
+class CustomSurveyInviteRequest(BaseModel):
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    name: str = "Attendee"
+
+
 async def send_bulk_survey_invites_task(registrations_data: List[dict], send_sms: bool = True):
     """Background task to send bulk survey invitations with unique links"""
     db = SessionLocal()
@@ -1795,4 +1801,46 @@ async def send_survey_invitations(
         "message": f"Sending unique survey links to {len(registrations_data)} attendees in background.",
         "sent_count": len(registrations_data),
         "background": True
+    }
+
+
+@router.post("/send-custom-survey-invite")
+async def send_custom_survey_invitation(
+    data: CustomSurveyInviteRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Send a survey invitation to a specific person by email and/or phone"""
+    import secrets
+
+    if not data.email and not data.phone:
+        raise HTTPException(status_code=400, detail="Please provide at least an email or phone number")
+
+    token = secrets.token_urlsafe(32)
+
+    # Store token with reg_id 0 (custom/external invite)
+    token_setting = Settings(key=f"survey_token_{token}", value="0")
+    db.add(token_setting)
+    db.commit()
+
+    send_sms = bool(data.phone)
+    registrations_data = [{
+        "email": data.email,
+        "phone": data.phone,
+        "full_name": data.name,
+        "token": token
+    }]
+
+    background_tasks.add_task(send_bulk_survey_invites_task, registrations_data, send_sms)
+
+    channels = []
+    if data.email:
+        channels.append(data.email)
+    if data.phone:
+        channels.append(data.phone)
+
+    return {
+        "success": True,
+        "message": f"Survey invite sent to {', '.join(channels)}",
+        "token": token
     }

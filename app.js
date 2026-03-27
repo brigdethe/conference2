@@ -977,6 +977,21 @@ app.post('/api/notifications/send-survey-invite', requireAdmin, async (req, res)
   }
 });
 
+app.post('/api/notifications/send-custom-survey-invite', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/notifications/send-custom-survey-invite', {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error sending custom survey invite:', error);
+    res.status(500).json({ error: 'Failed to send custom survey invite' });
+  }
+});
+
 app.get('/', (_req, res) => res.render('pages/home'));
 app.get('/contact', (_req, res) => res.render('pages/contact'));
 app.get('/feedback', (_req, res) => res.render('pages/feedback'));

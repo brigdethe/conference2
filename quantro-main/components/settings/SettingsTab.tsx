@@ -42,6 +42,10 @@ export const SettingsTab: React.FC = () => {
   const [sendingReport, setSendingReport] = useState(false);
   const [sendingSMS, setSendingSMS] = useState(false);
   const [sendingSurvey, setSendingSurvey] = useState(false);
+  const [customInviteEmail, setCustomInviteEmail] = useState('');
+  const [customInvitePhone, setCustomInvitePhone] = useState('');
+  const [customInviteName, setCustomInviteName] = useState('');
+  const [sendingCustomInvite, setSendingCustomInvite] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
@@ -251,6 +255,39 @@ export const SettingsTab: React.FC = () => {
       setMessage({ type: 'error', text: 'Failed to send SMS ticket reminders' });
     } finally {
       setSendingSMS(false);
+    }
+  };
+
+  const sendCustomSurveyInvite = async () => {
+    if (!customInviteEmail && !customInvitePhone) {
+      setMessage({ type: 'error', text: 'Please enter at least an email or phone number' });
+      return;
+    }
+    setSendingCustomInvite(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/notifications/send-custom-survey-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: customInviteEmail || null,
+          phone: customInvitePhone || null,
+          name: customInviteName || 'Attendee',
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMessage({ type: 'success', text: data.message });
+        setCustomInviteEmail('');
+        setCustomInvitePhone('');
+        setCustomInviteName('');
+      } else {
+        setMessage({ type: 'error', text: data.detail || data.message || 'Failed to send invite' });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to send custom survey invite' });
+    } finally {
+      setSendingCustomInvite(false);
     }
   };
 
@@ -792,6 +829,45 @@ export const SettingsTab: React.FC = () => {
                       Send All
                     </button>
                   </div>
+                </div>
+
+                {/* Custom Survey Invite */}
+                <div className="mt-4 rounded-xl border-2 border-indigo-200 bg-indigo-50 p-4">
+                  <h4 className="text-sm font-semibold text-indigo-900 mb-1 flex items-center gap-2">
+                    🎯 Send to Specific Person
+                  </h4>
+                  <p className="text-xs text-indigo-600 mb-3">Send a personal survey link to anyone by email and/or phone</p>
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <input
+                      type="text"
+                      value={customInviteName}
+                      onChange={(e) => setCustomInviteName(e.target.value)}
+                      placeholder="Name (optional)"
+                      className="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm placeholder-slate-400 focus:border-indigo-300 focus:outline-none"
+                    />
+                    <input
+                      type="email"
+                      value={customInviteEmail}
+                      onChange={(e) => setCustomInviteEmail(e.target.value)}
+                      placeholder="Email address"
+                      className="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm placeholder-slate-400 focus:border-indigo-300 focus:outline-none"
+                    />
+                    <input
+                      type="tel"
+                      value={customInvitePhone}
+                      onChange={(e) => setCustomInvitePhone(e.target.value)}
+                      placeholder="Phone number"
+                      className="rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm placeholder-slate-400 focus:border-indigo-300 focus:outline-none"
+                    />
+                  </div>
+                  <button
+                    onClick={sendCustomSurveyInvite}
+                    disabled={sendingCustomInvite || (!customInviteEmail && !customInvitePhone)}
+                    className="mt-3 flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                  >
+                    {sendingCustomInvite ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    Send Personal Invite
+                  </button>
                 </div>
               </div>
             </div>
