@@ -11,6 +11,7 @@ import { SettingsTab } from './components/settings/SettingsTab';
 import { InquiriesTab } from './components/inquiries/InquiriesTab';
 import { RegistrationsTab } from './components/approvals/ApprovalsTab';
 import { DuplicatesTab } from './components/duplicates/DuplicatesTab';
+import { FeedbackTab } from './components/feedback/FeedbackTab';
 import { Login } from './components/Login';
 import { TabOption } from './types';
 import type { DashboardSidebarContent } from './data/dashboard';
@@ -348,6 +349,12 @@ export default function App() {
             {activeTab === TabOption.Inquiries && (
               <section className="mb-8">
                 <InquiriesTab onSelect={(inquiry) => setActiveDetail({ kind: 'inquiry', inquiry })} />
+              </section>
+            )}
+
+            {activeTab === TabOption.Feedback && (
+              <section className="mb-8">
+                <FeedbackTab />
               </section>
             )}
 

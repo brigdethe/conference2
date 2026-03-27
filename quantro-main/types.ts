@@ -19,5 +19,6 @@ export enum TabOption {
   Duplicates = 'Duplicates',
   CheckIn = 'Check-in',
   Inquiries = 'Inquiries',
+  Feedback = 'Feedback',
   Settings = 'Settings'
 }

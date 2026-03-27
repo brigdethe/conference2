@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from database import engine, Base
-from routers import firms, registrations, payments, settings, tickets, notifications, inquiries, questions
+from routers import firms, registrations, payments, settings, tickets, notifications, inquiries, questions, feedback
 
 logger = logging.getLogger(__name__)
 
@@ -68,6 +68,7 @@ app.include_router(tickets.router)
 app.include_router(notifications.router)
 app.include_router(inquiries.router)
 app.include_router(questions.router)
+app.include_router(feedback.router)
 
 
 @app.get("/")

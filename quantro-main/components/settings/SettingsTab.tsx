@@ -40,6 +40,7 @@ export const SettingsTab: React.FC = () => {
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
   const [sendingReport, setSendingReport] = useState(false);
   const [sendingSMS, setSendingSMS] = useState(false);
+  const [sendingSurvey, setSendingSurvey] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
@@ -249,6 +250,27 @@ export const SettingsTab: React.FC = () => {
       setMessage({ type: 'error', text: 'Failed to send SMS ticket reminders' });
     } finally {
       setSendingSMS(false);
+    }
+  };
+
+  const sendSurveyInvite = async (test: boolean) => {
+    setSendingSurvey(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/notifications/send-survey-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_only: test }),
+      });
+      const data = await res.json();
+      setMessage({
+        type: data.success ? 'success' : 'error',
+        text: data.message || (data.success ? 'Survey invitations sent!' : 'Failed to send invitations'),
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to send survey invitations' });
+    } finally {
+      setSendingSurvey(false);
     }
   };
 
@@ -713,6 +735,30 @@ export const SettingsTab: React.FC = () => {
                       className="flex items-center gap-1 rounded-lg bg-purple-600 px-3 py-1 text-xs font-medium text-white hover:bg-purple-700 disabled:opacity-50"
                     >
                       {sendingSMS && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Send All
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg bg-teal-50 border-2 border-teal-300 p-3">
+                  <div>
+                    <p className="text-sm font-medium text-teal-900">📋 Survey Invitation</p>
+                    <p className="text-xs text-teal-700">Invite attendees to fill feedback survey for digital souvenir</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => sendSurveyInvite(true)}
+                      disabled={sendingSurvey}
+                      className="rounded-lg border border-teal-300 bg-white px-2 py-1 text-xs font-medium text-teal-700 hover:bg-teal-100 disabled:opacity-50"
+                    >
+                      Test
+                    </button>
+                    <button
+                      onClick={() => sendSurveyInvite(false)}
+                      disabled={sendingSurvey}
+                      className="flex items-center gap-1 rounded-lg bg-teal-600 px-3 py-1 text-xs font-medium text-white hover:bg-teal-700 disabled:opacity-50"
+                    >
+                      {sendingSurvey && <Loader2 className="h-3 w-3 animate-spin" />}
                       Send All
                     </button>
                   </div>
