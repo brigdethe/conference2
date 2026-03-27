@@ -463,6 +463,9 @@
                 } else if (data.submitted) {
                     document.getElementById('surveyCard').style.display = 'none';
                     document.getElementById('submittedScreen').classList.add('show');
+                } else {
+                    // Record that the link was opened
+                    fetch('/api/feedback/opened/' + surveyToken, { method: 'POST' }).catch(() => {});
                 }
             } catch (e) {
                 console.error('Check error:', e);

@@ -936,6 +936,28 @@ app.get('/api/feedback/export', requireAdmin, async (req, res) => {
   }
 });
 
+app.get('/api/feedback/invites', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/feedback/invites');
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching invites:', error);
+    res.status(500).json({ error: 'Failed to fetch invites' });
+  }
+});
+
+app.post('/api/feedback/opened/:token', async (req, res) => {
+  try {
+    const response = await fetchBackend(`/feedback/opened/${req.params.token}`, { method: 'POST' });
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error recording opened:', error);
+    res.status(500).json({ error: 'Failed to record opened' });
+  }
+});
+
 app.get('/api/feedback/check/:token', async (req, res) => {
   try {
     const response = await fetchBackend(`/feedback/check/${req.params.token}`);

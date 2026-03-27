@@ -1746,6 +1746,8 @@ async def send_survey_invitations(
     import secrets
     
     if data.test_only:
+        import json as json_mod
+        from datetime import datetime
         test_email = get_setting(db, "smtp_email")
         test_phone = get_setting(db, "test_sms_phone")
         token = secrets.token_urlsafe(32)
@@ -1753,6 +1755,15 @@ async def send_survey_invitations(
         # Store token -> registration mapping (use 0 for test)
         token_setting = Settings(key=f"survey_token_{token}", value="0")
         db.add(token_setting)
+        # Store invite metadata for tracking
+        invite_meta = Settings(key=f"survey_invite_{token}", value=json_mod.dumps({
+            "name": "Test User",
+            "email": test_email,
+            "phone": test_phone,
+            "type": "test",
+            "sent_at": datetime.utcnow().isoformat()
+        }))
+        db.add(invite_meta)
         db.commit()
         
         registrations_data = [{

@@ -258,6 +258,27 @@ async def export_feedback_csv(db: Session = Depends(get_db)):
     )
 
 
+@router.post("/opened/{token}")
+async def record_survey_opened(token: str, db: Session = Depends(get_db)):
+    """Record that someone opened the survey link"""
+    import json as json_mod
+    token_setting = db.query(Settings).filter(Settings.key == f"survey_token_{token}").first()
+    if not token_setting:
+        return {"ok": False}
+    
+    invite_setting = db.query(Settings).filter(Settings.key == f"survey_invite_{token}").first()
+    if invite_setting:
+        try:
+            meta = json_mod.loads(invite_setting.value)
+            if not meta.get("opened_at"):
+                meta["opened_at"] = datetime.utcnow().isoformat()
+                invite_setting.value = json_mod.dumps(meta)
+                db.commit()
+        except Exception:
+            pass
+    return {"ok": True}
+
+
 @router.get("/check/{token}")
 async def check_feedback_exists(token: str, db: Session = Depends(get_db)):
     """Check if survey token is valid and whether feedback was already submitted"""
@@ -293,6 +314,17 @@ async def get_survey_invites(db: Session = Depends(get_db)):
             FeedbackResponse.survey_token == token
         ).first()
         
+        opened_at = meta.get("opened_at")
+        is_completed = feedback is not None
+        
+        # Determine status: sent → opened → completed
+        if is_completed:
+            status = "completed"
+        elif opened_at:
+            status = "opened"
+        else:
+            status = "sent"
+        
         invites.append({
             "token": token[:8] + "...",
             "name": meta.get("name", "Unknown"),
@@ -300,21 +332,26 @@ async def get_survey_invites(db: Session = Depends(get_db)):
             "phone": meta.get("phone"),
             "type": meta.get("type", "unknown"),
             "sent_at": meta.get("sent_at"),
-            "completed": feedback is not None,
+            "opened_at": opened_at,
+            "status": status,
+            "completed": is_completed,
             "completed_at": feedback.created_at.isoformat() if feedback and feedback.created_at else None
         })
     
-    # Sort: pending first, then by sent_at descending
-    invites.sort(key=lambda x: (x["completed"], x.get("sent_at") or ""), reverse=False)
+    # Sort: pending first, opened second, completed last; then by sent_at
+    status_order = {"sent": 0, "opened": 1, "completed": 2}
+    invites.sort(key=lambda x: (status_order.get(x["status"], 0), x.get("sent_at") or ""))
     
     total = len(invites)
     completed = sum(1 for i in invites if i["completed"])
+    opened = sum(1 for i in invites if i["status"] == "opened")
     
     return {
         "invites": invites,
         "total": total,
         "completed": completed,
-        "pending": total - completed
+        "opened": opened,
+        "pending": total - completed - opened
     }
 
 

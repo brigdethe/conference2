@@ -26,8 +26,10 @@ interface SurveyInvite {
   name: string;
   email: string | null;
   phone: string | null;
-  type: 'attendee' | 'custom' | 'unknown';
+  type: 'attendee' | 'custom' | 'test' | 'unknown';
   sent_at: string | null;
+  opened_at: string | null;
+  status: 'sent' | 'opened' | 'completed';
   completed: boolean;
   completed_at: string | null;
 }
@@ -36,6 +38,7 @@ interface InviteTrackingData {
   invites: SurveyInvite[];
   total: number;
   completed: number;
+  opened: number;
   pending: number;
 }
 
@@ -48,7 +51,7 @@ export const FeedbackTab: React.FC = () => {
   const [activeView, setActiveView] = useState<'overview' | 'responses' | 'tracking' | 'analysis'>('overview');
   const [expandedResponse, setExpandedResponse] = useState<number | null>(null);
   const [inviteData, setInviteData] = useState<InviteTrackingData | null>(null);
-  const [inviteFilter, setInviteFilter] = useState<'all' | 'pending' | 'completed' | 'custom' | 'attendee'>('all');
+  const [inviteFilter, setInviteFilter] = useState<'all' | 'pending' | 'opened' | 'completed' | 'custom' | 'attendee'>('all');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -600,32 +603,43 @@ export const FeedbackTab: React.FC = () => {
               ) : (
                 <>
                   {/* Summary cards */}
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-2xl p-4 border border-indigo-100 text-center">
                       <div className="text-3xl font-bold text-indigo-700">{inviteData.total}</div>
                       <div className="text-xs font-medium text-indigo-500 mt-1">Total Sent</div>
                     </div>
                     <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl p-4 border border-emerald-100 text-center">
                       <div className="text-3xl font-bold text-emerald-700">{inviteData.completed}</div>
-                      <div className="text-xs font-medium text-emerald-500 mt-1">Completed</div>
+                      <div className="text-xs font-medium text-emerald-500 mt-1">Filled Survey</div>
                     </div>
-                    <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-2xl p-4 border border-amber-100 text-center">
-                      <div className="text-3xl font-bold text-amber-700">{inviteData.pending}</div>
-                      <div className="text-xs font-medium text-amber-500 mt-1">Pending</div>
+                    <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-2xl p-4 border border-blue-100 text-center">
+                      <div className="text-3xl font-bold text-blue-700">{inviteData.opened}</div>
+                      <div className="text-xs font-medium text-blue-500 mt-1">Opened Link</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-2xl p-4 border border-slate-200 text-center">
+                      <div className="text-3xl font-bold text-slate-600">{inviteData.pending}</div>
+                      <div className="text-xs font-medium text-slate-400 mt-1">Not Opened</div>
                     </div>
                   </div>
 
                   {/* Progress bar */}
                   <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="font-medium text-slate-700">Completion Rate</span>
-                      <span className="font-bold text-slate-900">{inviteData.total > 0 ? ((inviteData.completed / inviteData.total) * 100).toFixed(0) : 0}%</span>
+                      <span className="font-medium text-slate-700">Survey Funnel</span>
+                      <span className="font-bold text-slate-900">{inviteData.total > 0 ? ((inviteData.completed / inviteData.total) * 100).toFixed(0) : 0}% completed</span>
                     </div>
-                    <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-emerald-500 rounded-full transition-all"
-                        style={{ width: `${inviteData.total > 0 ? (inviteData.completed / inviteData.total) * 100 : 0}%` }}
-                      />
+                    <div className="h-4 bg-gray-200 rounded-full overflow-hidden flex">
+                      {inviteData.total > 0 && (
+                        <>
+                          <div className="h-full bg-emerald-500 transition-all" style={{ width: `${(inviteData.completed / inviteData.total) * 100}%` }} />
+                          <div className="h-full bg-blue-400 transition-all" style={{ width: `${(inviteData.opened / inviteData.total) * 100}%` }} />
+                        </>
+                      )}
+                    </div>
+                    <div className="flex gap-4 mt-2 text-[10px] text-slate-500">
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> Filled</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 inline-block" /> Opened</span>
+                      <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-gray-200 inline-block" /> Not opened</span>
                     </div>
                   </div>
 
@@ -633,9 +647,10 @@ export const FeedbackTab: React.FC = () => {
                   <div className="flex gap-1.5 flex-wrap">
                     {([
                       { key: 'all', label: `All (${inviteData.total})` },
-                      { key: 'pending', label: `Pending (${inviteData.pending})` },
-                      { key: 'completed', label: `Completed (${inviteData.completed})` },
-                      { key: 'custom', label: `Custom Invites` },
+                      { key: 'pending', label: `Not Opened (${inviteData.pending})` },
+                      { key: 'opened', label: `Opened (${inviteData.opened})` },
+                      { key: 'completed', label: `Filled (${inviteData.completed})` },
+                      { key: 'custom', label: `Custom` },
                       { key: 'attendee', label: `Attendees` },
                     ] as const).map((f) => (
                       <button
@@ -654,8 +669,9 @@ export const FeedbackTab: React.FC = () => {
                   <div className="space-y-2">
                     {inviteData.invites
                       .filter((inv) => {
-                        if (inviteFilter === 'pending') return !inv.completed;
-                        if (inviteFilter === 'completed') return inv.completed;
+                        if (inviteFilter === 'pending') return inv.status === 'sent';
+                        if (inviteFilter === 'opened') return inv.status === 'opened';
+                        if (inviteFilter === 'completed') return inv.status === 'completed';
                         if (inviteFilter === 'custom') return inv.type === 'custom';
                         if (inviteFilter === 'attendee') return inv.type === 'attendee';
                         return true;
@@ -664,13 +680,15 @@ export const FeedbackTab: React.FC = () => {
                         <div
                           key={i}
                           className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-                            inv.completed
-                              ? 'bg-emerald-50/50 border-emerald-100'
-                              : 'bg-white border-gray-100'
+                            inv.status === 'completed' ? 'bg-emerald-50/50 border-emerald-100' :
+                            inv.status === 'opened' ? 'bg-blue-50/50 border-blue-100' :
+                            'bg-white border-gray-100'
                           }`}
                         >
-                          {inv.completed ? (
+                          {inv.status === 'completed' ? (
                             <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                          ) : inv.status === 'opened' ? (
+                            <Clock className="w-5 h-5 text-blue-400 flex-shrink-0" />
                           ) : (
                             <XCircle className="w-5 h-5 text-slate-300 flex-shrink-0" />
                           )}
@@ -678,7 +696,9 @@ export const FeedbackTab: React.FC = () => {
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-sm font-semibold text-slate-800">{inv.name}</span>
                               <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${
-                                inv.type === 'custom' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'
+                                inv.type === 'custom' ? 'bg-indigo-100 text-indigo-600' :
+                                inv.type === 'test' ? 'bg-amber-100 text-amber-600' :
+                                'bg-slate-100 text-slate-500'
                               }`}>
                                 {inv.type}
                               </span>
@@ -689,18 +709,25 @@ export const FeedbackTab: React.FC = () => {
                             </div>
                           </div>
                           <div className="text-right flex-shrink-0">
-                            {inv.completed ? (
+                            {inv.status === 'completed' ? (
                               <div>
-                                <div className="text-xs font-semibold text-emerald-600">Completed</div>
+                                <div className="text-xs font-semibold text-emerald-600">Filled</div>
                                 <div className="text-[10px] text-emerald-400">
                                   {inv.completed_at ? new Date(inv.completed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}
                                 </div>
                               </div>
+                            ) : inv.status === 'opened' ? (
+                              <div>
+                                <div className="text-xs font-semibold text-blue-500">Opened</div>
+                                <div className="text-[10px] text-blue-400">
+                                  {inv.opened_at ? new Date(inv.opened_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : ''}
+                                </div>
+                              </div>
                             ) : (
                               <div>
-                                <div className="text-xs font-semibold text-slate-400">Pending</div>
+                                <div className="text-xs font-semibold text-slate-400">Sent</div>
                                 <div className="text-[10px] text-slate-300">
-                                  Sent {inv.sent_at ? new Date(inv.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}
+                                  {inv.sent_at ? new Date(inv.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}
                                 </div>
                               </div>
                             )}
@@ -708,8 +735,9 @@ export const FeedbackTab: React.FC = () => {
                         </div>
                       ))}
                     {inviteData.invites.filter((inv) => {
-                      if (inviteFilter === 'pending') return !inv.completed;
-                      if (inviteFilter === 'completed') return inv.completed;
+                      if (inviteFilter === 'pending') return inv.status === 'sent';
+                      if (inviteFilter === 'opened') return inv.status === 'opened';
+                      if (inviteFilter === 'completed') return inv.status === 'completed';
                       if (inviteFilter === 'custom') return inv.type === 'custom';
                       if (inviteFilter === 'attendee') return inv.type === 'attendee';
                       return true;
