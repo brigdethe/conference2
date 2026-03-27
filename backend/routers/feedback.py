@@ -140,11 +140,16 @@ async def submit_feedback(
     db.refresh(feedback)
     
     # Send thank you email to the attendee linked to this token
-    if reg_id:
+    if reg_id and reg_id != 0:
         reg = db.query(Registration).filter(Registration.id == reg_id).first()
         if reg and reg.email:
             first_name = reg.full_name.split()[0] if reg.full_name else "Attendee"
             background_tasks.add_task(send_thank_you_email, reg.email, first_name)
+    elif reg_id == 0:
+        # Test submission - send to admin/smtp email
+        smtp_email = get_setting(db, "smtp_email")
+        if smtp_email:
+            background_tasks.add_task(send_thank_you_email, smtp_email, "Test Admin")
     
     return {"success": True, "message": "Thank you for your feedback!"}
 

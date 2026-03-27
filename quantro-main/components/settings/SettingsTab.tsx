@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Save, Mail, MessageSquare, CreditCard, Loader2, Plus, Trash2, Bell, ToggleLeft, ToggleRight, Send, FileText, Users } from 'lucide-react';
+import { Save, Mail, MessageSquare, CreditCard, Loader2, Plus, Trash2, Bell, ToggleLeft, ToggleRight, Send, FileText, Users, Sparkles } from 'lucide-react';
 
 interface SettingValue {
   key: string;
@@ -27,6 +27,7 @@ export const SettingsTab: React.FC = () => {
     notifications_email_enabled: 'true',
     notifications_sms_enabled: 'true',
     max_capacity: '500',
+    groq_api_key: '',
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -502,6 +503,35 @@ export const SettingsTab: React.FC = () => {
             {testingSms && <Loader2 className="h-4 w-4 animate-spin" />}
             Test Connection
           </button>
+        </div>
+
+        <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-soft lg:col-span-2">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-lg bg-purple-100 p-2">
+              <Sparkles className="h-5 w-5 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-slate-900">AI Analysis (Groq)</h3>
+              <p className="text-xs text-slate-500">API key for AI-powered feedback analysis</p>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Groq API Key
+              </label>
+              <input
+                type="password"
+                value={settings.groq_api_key}
+                onChange={(e) => updateSetting('groq_api_key', e.target.value)}
+                placeholder="gsk_..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-slate-300 focus:outline-none focus:ring-4 focus:ring-slate-100"
+              />
+              <p className="mt-1 text-xs text-slate-400">
+                Get a free key at <a href="https://console.groq.com" target="_blank" rel="noreferrer" className="text-purple-500 underline">console.groq.com</a>
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-slate-100 bg-white p-6 shadow-soft lg:col-span-2">
