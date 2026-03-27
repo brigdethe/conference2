@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { RefreshCw, Download, Sparkles, BarChart3, MessageSquare, Users, ThumbsUp, Clock, Loader2, TrendingUp, AlertTriangle, Lightbulb, ChevronDown, ChevronUp, Hash, Star, CheckCircle, XCircle, Send, UserCheck } from 'lucide-react';
+import { RefreshCw, Download, Sparkles, BarChart3, MessageSquare, Users, ThumbsUp, Clock, Loader2, TrendingUp, AlertTriangle, Lightbulb, ChevronDown, ChevronUp, Hash, Star, CheckCircle, XCircle, Send, UserCheck, Trash2 } from 'lucide-react';
 
 interface FeedbackResponse {
   id: number;
@@ -129,6 +129,35 @@ export const FeedbackTab: React.FC = () => {
     }
   };
 
+  const handleResetFeedback = async () => {
+    const pin = prompt('Enter PIN to reset all feedback data:');
+    if (!pin) return;
+    
+    if (!confirm('This will permanently delete ALL feedback responses and invite tracking data. Are you sure?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch('/api/feedback/reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        alert(data.message || 'Feedback reset successfully');
+        fetchData();
+      } else {
+        alert(data.detail || 'Reset failed - incorrect PIN');
+      }
+    } catch (error) {
+      console.error('Reset failed:', error);
+      alert('Failed to reset feedback');
+    }
+  };
+
   // Computed metrics
   const metrics = useMemo(() => {
     if (!stats || stats.total_responses === 0) return null;
@@ -240,6 +269,13 @@ export const FeedbackTab: React.FC = () => {
                 title="Refresh"
               >
                 <RefreshCw className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleResetFeedback}
+                className="p-2 rounded-xl text-sm font-medium bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
+                title="Reset All Feedback"
+              >
+                <Trash2 className="w-4 h-4" />
               </button>
             </div>
           </div>

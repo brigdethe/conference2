@@ -92,6 +92,25 @@ export default function App() {
     setIsAuthenticated(false);
   };
 
+  const handleResolveInquiry = async (inquiryId: string) => {
+    try {
+      const res = await fetch(`/api/inquiries/${inquiryId}/resolve`, {
+        method: 'PATCH',
+        credentials: 'include'
+      });
+      if (res.ok) {
+        alert('Inquiry marked as resolved');
+        setActiveDetail(null);
+      } else {
+        const data = await res.json();
+        alert(data.detail || 'Failed to resolve inquiry');
+      }
+    } catch (err) {
+      console.error('Failed to resolve inquiry:', err);
+      alert('Failed to resolve inquiry');
+    }
+  };
+
   const fetchInvitedFirms = React.useCallback(async () => {
     setFirmsLoading(true);
     setFirmsError(null);
@@ -367,7 +386,7 @@ export default function App() {
         </div>
       </div>
 
-      <DetailsSidebar detail={activeDetail} onClose={() => setActiveDetail(null)} />
+      <DetailsSidebar detail={activeDetail} onClose={() => setActiveDetail(null)} onResolveInquiry={handleResolveInquiry} />
     </div>
   );
 }

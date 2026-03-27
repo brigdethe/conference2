@@ -984,6 +984,45 @@ app.post('/api/feedback/analyze', requireAdmin, async (req, res) => {
   }
 });
 
+app.post('/api/feedback/reset', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/feedback/reset', {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error resetting feedback:', error);
+    res.status(500).json({ error: 'Failed to reset feedback' });
+  }
+});
+
+app.patch('/api/inquiries/:id/resolve', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend(`/api/inquiries/${req.params.id}/resolve`, { method: 'PATCH' });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error resolving inquiry:', error);
+    res.status(500).json({ error: 'Failed to resolve inquiry' });
+  }
+});
+
+app.delete('/api/inquiries/:id', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend(`/api/inquiries/${req.params.id}`, { method: 'DELETE' });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error deleting inquiry:', error);
+    res.status(500).json({ error: 'Failed to delete inquiry' });
+  }
+});
+
 app.post('/api/notifications/send-survey-invite', requireAdmin, async (req, res) => {
   try {
     const response = await fetchBackend('/notifications/send-survey-invite', {

@@ -6,6 +6,7 @@ import type { DashboardSidebarContent } from '../../data/dashboard';
 interface DetailsSidebarProps {
   detail: DashboardSidebarContent | null;
   onClose: () => void;
+  onResolveInquiry?: (inquiryId: string) => void;
 }
 
 const formatDate = (value: string) => {
@@ -34,7 +35,7 @@ const DetailLine: React.FC<{ label: string; value: React.ReactNode }> = ({ label
   </div>
 );
 
-function SidebarContent({ detail }: { detail: DashboardSidebarContent }) {
+function SidebarContent({ detail, onResolveInquiry }: { detail: DashboardSidebarContent; onResolveInquiry?: (inquiryId: string) => void }) {
   if (detail.kind === 'user') {
     const user = detail.user;
     return (
@@ -300,7 +301,10 @@ function SidebarContent({ detail }: { detail: DashboardSidebarContent }) {
           <button className="flex-1 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors">
             Reply via Email
           </button>
-          <button className="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors">
+          <button 
+            onClick={() => onResolveInquiry?.(inquiry.id)}
+            className="px-4 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-50 transition-colors"
+          >
             Mark as Resolved
           </button>
         </div>
@@ -337,7 +341,7 @@ function getTitle(detail: DashboardSidebarContent): string {
   return 'Revenue Totals';
 }
 
-export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({ detail, onClose }) => {
+export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({ detail, onClose, onResolveInquiry }) => {
   useEffect(() => {
     if (!detail) return;
 
@@ -382,7 +386,7 @@ export const DetailsSidebar: React.FC<DetailsSidebarProps> = ({ detail, onClose 
             </div>
 
             <div className="h-[calc(100%-57px)] overflow-y-auto p-6 sidebar-scroll">
-              <SidebarContent detail={detail} />
+              <SidebarContent detail={detail} onResolveInquiry={onResolveInquiry} />
             </div>
 
             <style>{`

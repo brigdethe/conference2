@@ -293,6 +293,31 @@ async def check_feedback_exists(token: str, db: Session = Depends(get_db)):
     return {"valid": True, "submitted": existing is not None}
 
 
+class ResetRequest(BaseModel):
+    pin: str
+
+
+@router.post("/reset")
+async def reset_feedback(data: ResetRequest, db: Session = Depends(get_db)):
+    """Reset all feedback responses and invite tracking. Requires PIN."""
+    if data.pin != "21savage":
+        raise HTTPException(status_code=403, detail="Incorrect PIN")
+    
+    # Delete all feedback responses
+    deleted_responses = db.query(FeedbackResponse).delete()
+    
+    # Delete all survey tokens and invite metadata
+    deleted_tokens = db.query(Settings).filter(Settings.key.like("survey_token_%")).delete(synchronize_session=False)
+    deleted_invites = db.query(Settings).filter(Settings.key.like("survey_invite_%")).delete(synchronize_session=False)
+    
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": f"Reset complete. Deleted {deleted_responses} responses, {deleted_tokens} tokens, {deleted_invites} invite records."
+    }
+
+
 @router.get("/invites")
 async def get_survey_invites(db: Session = Depends(get_db)):
     """Get all survey invites with completion status"""
