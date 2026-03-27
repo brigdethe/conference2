@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { RefreshCw, Download, Sparkles, BarChart3, MessageSquare, Users, ThumbsUp, Clock, Loader2, TrendingUp, AlertTriangle, Lightbulb, ChevronDown, ChevronUp, Hash, Star } from 'lucide-react';
+import { RefreshCw, Download, Sparkles, BarChart3, MessageSquare, Users, ThumbsUp, Clock, Loader2, TrendingUp, AlertTriangle, Lightbulb, ChevronDown, ChevronUp, Hash, Star, CheckCircle, XCircle, Send, UserCheck } from 'lucide-react';
 
 interface FeedbackResponse {
   id: number;
@@ -21,21 +21,42 @@ interface FeedbackStats {
   q6_distribution: Record<string, number>;
 }
 
+interface SurveyInvite {
+  token: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  type: 'attendee' | 'custom' | 'unknown';
+  sent_at: string | null;
+  completed: boolean;
+  completed_at: string | null;
+}
+
+interface InviteTrackingData {
+  invites: SurveyInvite[];
+  total: number;
+  completed: number;
+  pending: number;
+}
+
 export const FeedbackTab: React.FC = () => {
   const [responses, setResponses] = useState<FeedbackResponse[]>([]);
   const [stats, setStats] = useState<FeedbackStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [analysis, setAnalysis] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<'overview' | 'responses' | 'analysis'>('overview');
+  const [activeView, setActiveView] = useState<'overview' | 'responses' | 'tracking' | 'analysis'>('overview');
   const [expandedResponse, setExpandedResponse] = useState<number | null>(null);
+  const [inviteData, setInviteData] = useState<InviteTrackingData | null>(null);
+  const [inviteFilter, setInviteFilter] = useState<'all' | 'pending' | 'completed' | 'custom' | 'attendee'>('all');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [responsesRes, statsRes] = await Promise.all([
+      const [responsesRes, statsRes, invitesRes] = await Promise.all([
         fetch('/api/feedback'),
-        fetch('/api/feedback/stats')
+        fetch('/api/feedback/stats'),
+        fetch('/api/feedback/invites')
       ]);
       
       if (responsesRes.ok) {
@@ -46,6 +67,11 @@ export const FeedbackTab: React.FC = () => {
       if (statsRes.ok) {
         const data = await statsRes.json();
         setStats(data);
+      }
+      
+      if (invitesRes.ok) {
+        const data = await invitesRes.json();
+        setInviteData(data);
       }
     } catch (error) {
       console.error('Failed to fetch feedback data:', error);
@@ -217,7 +243,7 @@ export const FeedbackTab: React.FC = () => {
 
           {/* Tabs */}
           <div className="flex gap-1.5 mt-4">
-            {(['overview', 'responses', ...(analysis ? ['analysis'] : [])] as const).map((tab) => (
+            {(['overview', 'responses', 'tracking', ...(analysis ? ['analysis'] : [])] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveView(tab as any)}
@@ -227,8 +253,9 @@ export const FeedbackTab: React.FC = () => {
               >
                 {tab === 'overview' && <BarChart3 className="w-4 h-4" />}
                 {tab === 'responses' && <Users className="w-4 h-4" />}
+                {tab === 'tracking' && <UserCheck className="w-4 h-4" />}
                 {tab === 'analysis' && <Sparkles className="w-4 h-4" />}
-                {tab === 'overview' ? 'Overview' : tab === 'responses' ? `Responses (${responses.length})` : 'AI Analysis'}
+                {tab === 'overview' ? 'Overview' : tab === 'responses' ? `Responses (${responses.length})` : tab === 'tracking' ? `Tracking${inviteData ? ` (${inviteData.completed}/${inviteData.total})` : ''}` : 'AI Analysis'}
               </button>
             ))}
           </div>
@@ -236,7 +263,7 @@ export const FeedbackTab: React.FC = () => {
 
         <div className="p-6">
           {/* No data state */}
-          {responses.length === 0 && activeView !== 'analysis' && (
+          {responses.length === 0 && activeView !== 'analysis' && activeView !== 'tracking' && (
             <div className="text-center py-16">
               <MessageSquare className="w-16 h-16 mx-auto mb-4 text-slate-200" />
               <h3 className="text-lg font-semibold text-slate-700 mb-2">No Feedback Yet</h3>
@@ -556,6 +583,142 @@ export const FeedbackTab: React.FC = () => {
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* ============== TRACKING VIEW ============== */}
+          {activeView === 'tracking' && (
+            <div className="space-y-4">
+              {!inviteData || inviteData.total === 0 ? (
+                <div className="text-center py-16">
+                  <Send className="w-16 h-16 mx-auto mb-4 text-slate-200" />
+                  <h3 className="text-lg font-semibold text-slate-700 mb-2">No Invites Tracked Yet</h3>
+                  <p className="text-sm text-slate-500 max-w-md mx-auto">
+                    Survey invites sent from now on will be tracked here. Send invites from the Settings tab.
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {/* Summary cards */}
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 rounded-2xl p-4 border border-indigo-100 text-center">
+                      <div className="text-3xl font-bold text-indigo-700">{inviteData.total}</div>
+                      <div className="text-xs font-medium text-indigo-500 mt-1">Total Sent</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl p-4 border border-emerald-100 text-center">
+                      <div className="text-3xl font-bold text-emerald-700">{inviteData.completed}</div>
+                      <div className="text-xs font-medium text-emerald-500 mt-1">Completed</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-2xl p-4 border border-amber-100 text-center">
+                      <div className="text-3xl font-bold text-amber-700">{inviteData.pending}</div>
+                      <div className="text-xs font-medium text-amber-500 mt-1">Pending</div>
+                    </div>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="font-medium text-slate-700">Completion Rate</span>
+                      <span className="font-bold text-slate-900">{inviteData.total > 0 ? ((inviteData.completed / inviteData.total) * 100).toFixed(0) : 0}%</span>
+                    </div>
+                    <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-500 rounded-full transition-all"
+                        style={{ width: `${inviteData.total > 0 ? (inviteData.completed / inviteData.total) * 100 : 0}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Filter buttons */}
+                  <div className="flex gap-1.5 flex-wrap">
+                    {([
+                      { key: 'all', label: `All (${inviteData.total})` },
+                      { key: 'pending', label: `Pending (${inviteData.pending})` },
+                      { key: 'completed', label: `Completed (${inviteData.completed})` },
+                      { key: 'custom', label: `Custom Invites` },
+                      { key: 'attendee', label: `Attendees` },
+                    ] as const).map((f) => (
+                      <button
+                        key={f.key}
+                        onClick={() => setInviteFilter(f.key)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          inviteFilter === f.key ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {f.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Invite list */}
+                  <div className="space-y-2">
+                    {inviteData.invites
+                      .filter((inv) => {
+                        if (inviteFilter === 'pending') return !inv.completed;
+                        if (inviteFilter === 'completed') return inv.completed;
+                        if (inviteFilter === 'custom') return inv.type === 'custom';
+                        if (inviteFilter === 'attendee') return inv.type === 'attendee';
+                        return true;
+                      })
+                      .map((inv, i) => (
+                        <div
+                          key={i}
+                          className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                            inv.completed
+                              ? 'bg-emerald-50/50 border-emerald-100'
+                              : 'bg-white border-gray-100'
+                          }`}
+                        >
+                          {inv.completed ? (
+                            <CheckCircle className="w-5 h-5 text-emerald-500 flex-shrink-0" />
+                          ) : (
+                            <XCircle className="w-5 h-5 text-slate-300 flex-shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-semibold text-slate-800">{inv.name}</span>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide ${
+                                inv.type === 'custom' ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'
+                              }`}>
+                                {inv.type}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-slate-400 mt-0.5">
+                              {inv.email && <span>{inv.email}</span>}
+                              {inv.phone && <span>{inv.phone}</span>}
+                            </div>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            {inv.completed ? (
+                              <div>
+                                <div className="text-xs font-semibold text-emerald-600">Completed</div>
+                                <div className="text-[10px] text-emerald-400">
+                                  {inv.completed_at ? new Date(inv.completed_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}
+                                </div>
+                              </div>
+                            ) : (
+                              <div>
+                                <div className="text-xs font-semibold text-slate-400">Pending</div>
+                                <div className="text-[10px] text-slate-300">
+                                  Sent {inv.sent_at ? new Date(inv.sent_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : ''}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    {inviteData.invites.filter((inv) => {
+                      if (inviteFilter === 'pending') return !inv.completed;
+                      if (inviteFilter === 'completed') return inv.completed;
+                      if (inviteFilter === 'custom') return inv.type === 'custom';
+                      if (inviteFilter === 'attendee') return inv.type === 'attendee';
+                      return true;
+                    }).length === 0 && (
+                      <p className="text-center text-sm text-slate-400 py-8">No invites match this filter</p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
 

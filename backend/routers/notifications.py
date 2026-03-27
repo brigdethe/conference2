@@ -1779,12 +1779,24 @@ async def send_survey_invitations(
     if not registrations:
         return {"success": True, "message": "No confirmed attendees to send to", "sent_count": 0}
     
+    import json as json_mod
+    from datetime import datetime
     registrations_data = []
     for reg in registrations:
         token = secrets.token_urlsafe(32)
         # Store token -> registration_id mapping
         token_setting = Settings(key=f"survey_token_{token}", value=str(reg.id))
         db.add(token_setting)
+        # Store invite metadata for tracking
+        invite_meta = Settings(key=f"survey_invite_{token}", value=json_mod.dumps({
+            "name": reg.full_name,
+            "email": reg.email,
+            "phone": reg.phone,
+            "type": "attendee",
+            "reg_id": reg.id,
+            "sent_at": datetime.utcnow().isoformat()
+        }))
+        db.add(invite_meta)
         registrations_data.append({
             "email": reg.email,
             "phone": reg.phone,
@@ -1816,11 +1828,22 @@ async def send_custom_survey_invitation(
     if not data.email and not data.phone:
         raise HTTPException(status_code=400, detail="Please provide at least an email or phone number")
 
+    import json as json_mod
+    from datetime import datetime
     token = secrets.token_urlsafe(32)
 
     # Store token with reg_id 0 (custom/external invite)
     token_setting = Settings(key=f"survey_token_{token}", value="0")
     db.add(token_setting)
+    # Store invite metadata for tracking
+    invite_meta = Settings(key=f"survey_invite_{token}", value=json_mod.dumps({
+        "name": data.name,
+        "email": data.email,
+        "phone": data.phone,
+        "type": "custom",
+        "sent_at": datetime.utcnow().isoformat()
+    }))
+    db.add(invite_meta)
     db.commit()
 
     send_sms = bool(data.phone)

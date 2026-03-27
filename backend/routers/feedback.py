@@ -272,6 +272,52 @@ async def check_feedback_exists(token: str, db: Session = Depends(get_db)):
     return {"valid": True, "submitted": existing is not None}
 
 
+@router.get("/invites")
+async def get_survey_invites(db: Session = Depends(get_db)):
+    """Get all survey invites with completion status"""
+    import json as json_mod
+    
+    # Get all invite metadata entries
+    invite_settings = db.query(Settings).filter(Settings.key.like("survey_invite_%")).all()
+    
+    invites = []
+    for inv in invite_settings:
+        token = inv.key.replace("survey_invite_", "")
+        try:
+            meta = json_mod.loads(inv.value)
+        except Exception:
+            continue
+        
+        # Check if this token has a completed feedback
+        feedback = db.query(FeedbackResponse).filter(
+            FeedbackResponse.survey_token == token
+        ).first()
+        
+        invites.append({
+            "token": token[:8] + "...",
+            "name": meta.get("name", "Unknown"),
+            "email": meta.get("email"),
+            "phone": meta.get("phone"),
+            "type": meta.get("type", "unknown"),
+            "sent_at": meta.get("sent_at"),
+            "completed": feedback is not None,
+            "completed_at": feedback.created_at.isoformat() if feedback and feedback.created_at else None
+        })
+    
+    # Sort: pending first, then by sent_at descending
+    invites.sort(key=lambda x: (x["completed"], x.get("sent_at") or ""), reverse=False)
+    
+    total = len(invites)
+    completed = sum(1 for i in invites if i["completed"])
+    
+    return {
+        "invites": invites,
+        "total": total,
+        "completed": completed,
+        "pending": total - completed
+    }
+
+
 @router.post("/analyze")
 async def analyze_feedback(db: Session = Depends(get_db)):
     """Use Groq AI to analyze feedback responses"""
