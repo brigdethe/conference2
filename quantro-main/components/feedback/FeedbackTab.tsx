@@ -3,7 +3,6 @@ import { RefreshCw, Download, Sparkles, BarChart3, MessageSquare, Users, ThumbsU
 
 interface FeedbackResponse {
   id: number;
-  email: string | null;
   q1_expectations: string;
   q2_had_unclear: string;
   q2_unclear_section: string | null;
@@ -16,11 +15,10 @@ interface FeedbackResponse {
 
 interface FeedbackStats {
   total_responses: number;
-  q1_yes_count: number;
-  q1_no_count: number;
+  q1_distribution: Record<string, number>;
   q2_had_unclear_count: number;
   q3_pace_distribution: Record<string, number>;
-  q6_rating_distribution: Record<string, number>;
+  q6_distribution: Record<string, number>;
 }
 
 export const FeedbackTab: React.FC = () => {
@@ -210,24 +208,17 @@ export const FeedbackTab: React.FC = () => {
           {activeView === 'overview' && stats && (
             <div className="space-y-6">
               {/* Stats Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-2xl p-4">
                   <div className="text-3xl font-bold text-indigo-600">{stats.total_responses}</div>
                   <div className="text-sm text-indigo-600/70 font-medium">Total Responses</div>
                 </div>
                 <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-2xl p-4">
                   <div className="text-3xl font-bold text-emerald-600 flex items-center gap-2">
-                    {stats.q1_yes_count}
+                    {(stats.q1_distribution['Good'] || 0) + (stats.q1_distribution['Amazing'] || 0)}
                     <ThumbsUp className="w-5 h-5" />
                   </div>
-                  <div className="text-sm text-emerald-600/70 font-medium">Met Expectations</div>
-                </div>
-                <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl p-4">
-                  <div className="text-3xl font-bold text-red-600 flex items-center gap-2">
-                    {stats.q1_no_count}
-                    <ThumbsDown className="w-5 h-5" />
-                  </div>
-                  <div className="text-sm text-red-600/70 font-medium">Did Not Meet</div>
+                  <div className="text-sm text-emerald-600/70 font-medium">Good or Amazing</div>
                 </div>
                 <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-2xl p-4">
                   <div className="text-3xl font-bold text-amber-600">{stats.q2_had_unclear_count}</div>
@@ -236,7 +227,37 @@ export const FeedbackTab: React.FC = () => {
               </div>
 
               {/* Charts */}
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-3 gap-6">
+                {/* Q1 Expectations (Emoji) Distribution */}
+                <div className="bg-gray-50 rounded-2xl p-5">
+                  <h3 className="font-semibold text-slate-800 mb-4">Met Expectations</h3>
+                  <div className="space-y-3">
+                    {['Amazing', 'Good', 'Okay', 'Poor', 'Terrible'].map((rating) => {
+                      const count = stats.q1_distribution[rating] || 0;
+                      const percentage = stats.total_responses > 0 ? (count / stats.total_responses) * 100 : 0;
+                      return (
+                        <div key={rating}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="font-medium text-slate-700">{getRatingEmoji(rating)} {rating}</span>
+                            <span className="text-slate-500">{count} ({percentage.toFixed(0)}%)</span>
+                          </div>
+                          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${
+                                rating === 'Amazing' ? 'bg-emerald-500' :
+                                rating === 'Good' ? 'bg-lime-500' :
+                                rating === 'Okay' ? 'bg-yellow-500' :
+                                rating === 'Poor' ? 'bg-orange-500' : 'bg-red-500'
+                              }`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Pace Distribution */}
                 <div className="bg-gray-50 rounded-2xl p-5">
                   <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
@@ -267,26 +288,26 @@ export const FeedbackTab: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Rating Distribution */}
+                {/* Q6 Likert Distribution */}
                 <div className="bg-gray-50 rounded-2xl p-5">
                   <h3 className="font-semibold text-slate-800 mb-4">Likelihood to Attend Again</h3>
                   <div className="space-y-3">
-                    {['Amazing', 'Good', 'Okay', 'Poor', 'Terrible'].map((rating) => {
-                      const count = stats.q6_rating_distribution[rating] || 0;
+                    {['Very Likely', 'Likely', 'Maybe', 'Unlikely', 'Very Unlikely'].map((val) => {
+                      const count = stats.q6_distribution[val] || 0;
                       const percentage = stats.total_responses > 0 ? (count / stats.total_responses) * 100 : 0;
                       return (
-                        <div key={rating}>
+                        <div key={val}>
                           <div className="flex justify-between text-sm mb-1">
-                            <span className="font-medium text-slate-700">{getRatingEmoji(rating)} {rating}</span>
+                            <span className="font-medium text-slate-700">{val}</span>
                             <span className="text-slate-500">{count} ({percentage.toFixed(0)}%)</span>
                           </div>
                           <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
                             <div
                               className={`h-full rounded-full transition-all ${
-                                rating === 'Amazing' ? 'bg-emerald-500' :
-                                rating === 'Good' ? 'bg-lime-500' :
-                                rating === 'Okay' ? 'bg-yellow-500' :
-                                rating === 'Poor' ? 'bg-orange-500' : 'bg-red-500'
+                                val === 'Very Likely' ? 'bg-emerald-500' :
+                                val === 'Likely' ? 'bg-lime-500' :
+                                val === 'Maybe' ? 'bg-yellow-500' :
+                                val === 'Unlikely' ? 'bg-orange-500' : 'bg-red-500'
                               }`}
                               style={{ width: `${percentage}%` }}
                             />
@@ -313,13 +334,11 @@ export const FeedbackTab: React.FC = () => {
                   <div key={response.id} className="bg-gray-50 rounded-2xl p-5 space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRatingColor(response.q6_attend_again)}`}>
-                          {getRatingEmoji(response.q6_attend_again)} {response.q6_attend_again}
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getRatingColor(response.q1_expectations)}`}>
+                          {getRatingEmoji(response.q1_expectations)} {response.q1_expectations}
                         </span>
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          response.q1_expectations === 'Yes' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                          {response.q1_expectations === 'Yes' ? '✓ Met Expectations' : '✗ Did Not Meet'}
+                        <span className="px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-700">
+                          {response.q6_attend_again}
                         </span>
                       </div>
                       <span className="text-xs text-slate-400">
@@ -332,12 +351,6 @@ export const FeedbackTab: React.FC = () => {
                         <span className="text-slate-500">Pace:</span>
                         <span className="ml-2 font-medium text-slate-700">{response.q3_pace}</span>
                       </div>
-                      {response.email && (
-                        <div>
-                          <span className="text-slate-500">Email:</span>
-                          <span className="ml-2 font-medium text-slate-700">{response.email}</span>
-                        </div>
-                      )}
                     </div>
 
                     {response.q2_had_unclear === 'Yes' && response.q2_unclear_section && (
@@ -369,9 +382,38 @@ export const FeedbackTab: React.FC = () => {
           {/* Analysis View */}
           {activeView === 'analysis' && analysis && (
             <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Sparkles className="w-5 h-5 text-purple-600" />
-                <h3 className="font-semibold text-purple-900">AI-Generated Analysis</h3>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                  <h3 className="font-semibold text-purple-900">AI-Generated Analysis</h3>
+                </div>
+                <button
+                  onClick={() => {
+                    const title = 'Feedback Analysis Report';
+                    const date = new Date().toLocaleDateString();
+                    const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+<style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;padding:20px;color:#333;line-height:1.7;}
+h1{color:#1a365d;border-bottom:3px solid #1a365d;padding-bottom:12px;margin-bottom:8px;}
+.date{color:#666;font-size:0.9rem;margin-bottom:24px;}
+.content{white-space:pre-wrap;font-size:0.95rem;}
+.footer{margin-top:40px;padding-top:16px;border-top:1px solid #ddd;font-size:0.8rem;color:#888;text-align:center;}
+@media print{body{margin:20px;}}</style></head><body>
+<h1>${title}</h1><p class="date">Generated on ${date}</p>
+<div class="content">${analysis.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+<div class="footer">Ghana Competition Law &amp; Policy Seminar 2026 — Confidential</div>
+</body></html>`;
+                    const printWindow = window.open('', '_blank');
+                    if (printWindow) {
+                      printWindow.document.write(htmlContent);
+                      printWindow.document.close();
+                      setTimeout(() => printWindow.print(), 500);
+                    }
+                  }}
+                  className="px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700 transition-colors flex items-center gap-1.5"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download PDF
+                </button>
               </div>
               <div className="prose prose-sm max-w-none text-slate-700 whitespace-pre-wrap">
                 {analysis}

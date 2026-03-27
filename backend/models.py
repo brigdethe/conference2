@@ -117,13 +117,13 @@ class FeedbackResponse(Base):
     __tablename__ = "feedback_responses"
 
     id = Column(Integer, primary_key=True, index=True)
-    device_fingerprint = Column(String(255), unique=True, nullable=False)
-    email = Column(String(255), nullable=True)  # Optional email for thank you message
-    q1_expectations = Column(String(10), nullable=False)  # "Yes" or "No"
+    survey_token = Column(String(64), unique=True, nullable=False)  # Unique token per attendee
+    registration_id = Column(Integer, ForeignKey("registrations.id"), nullable=True)
+    q1_expectations = Column(String(20), nullable=False)  # "Terrible", "Poor", "Okay", "Good", "Amazing"
     q2_had_unclear = Column(String(10), nullable=False)  # "Yes" or "No"
     q2_unclear_section = Column(Text, nullable=True)  # Text if q2 is Yes
     q3_pace = Column(String(20), nullable=False)  # "Too Slow", "Just Right", "Too Fast"
     q4_speaker_improvements = Column(Text, nullable=True)
     q5_future_topics = Column(Text, nullable=True)
-    q6_attend_again = Column(String(20), nullable=False)  # "Terrible", "Poor", "Okay", "Good", "Amazing"
+    q6_attend_again = Column(String(50), nullable=False)  # "Very Unlikely", "Unlikely", "Maybe", "Likely", "Very Likely"
     created_at = Column(DateTime, default=datetime.utcnow)

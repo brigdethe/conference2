@@ -881,6 +881,102 @@ app.post('/api/tickets/checkin', requireAdmin, async (req, res) => {
   }
 });
 
+// Feedback API proxy routes
+app.post('/api/feedback', async (req, res) => {
+  try {
+    const response = await fetchBackend('/feedback', {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error submitting feedback:', error);
+    res.status(500).json({ error: 'Failed to submit feedback' });
+  }
+});
+
+app.get('/api/feedback', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/feedback');
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching feedback:', error);
+    res.status(500).json({ error: 'Failed to fetch feedback' });
+  }
+});
+
+app.get('/api/feedback/stats', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/feedback/stats');
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching feedback stats:', error);
+    res.status(500).json({ error: 'Failed to fetch feedback stats' });
+  }
+});
+
+app.get('/api/feedback/export', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/feedback/export');
+    if (!response.ok) {
+      const data = await response.json();
+      return res.status(response.status).json(data);
+    }
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename=feedback_responses.csv');
+    const text = await response.text();
+    res.send(text);
+  } catch (error) {
+    console.error('Error exporting feedback:', error);
+    res.status(500).json({ error: 'Failed to export feedback' });
+  }
+});
+
+app.get('/api/feedback/check/:token', async (req, res) => {
+  try {
+    const response = await fetchBackend(`/feedback/check/${req.params.token}`);
+    const data = await response.json();
+    res.json(data);
+  } catch (error) {
+    console.error('Error checking feedback:', error);
+    res.status(500).json({ error: 'Failed to check feedback' });
+  }
+});
+
+app.post('/api/feedback/analyze', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/feedback/analyze', {
+      method: 'POST',
+      body: JSON.stringify(req.body || {}),
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error analyzing feedback:', error);
+    res.status(500).json({ error: 'Failed to analyze feedback' });
+  }
+});
+
+app.post('/api/notifications/send-survey-invite', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/notifications/send-survey-invite', {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error sending survey invite:', error);
+    res.status(500).json({ error: 'Failed to send survey invite' });
+  }
+});
+
 app.get('/', (_req, res) => res.render('pages/home'));
 app.get('/contact', (_req, res) => res.render('pages/contact'));
 app.get('/feedback', (_req, res) => res.render('pages/feedback'));

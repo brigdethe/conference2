@@ -1,19 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
 import csv
 import io
 import httpx
 import logging
+import secrets
 
-from database import get_db
-from models import FeedbackResponse, Settings
+from database import get_db, SessionLocal
+from models import FeedbackResponse, Settings, Registration
 
 router = APIRouter(prefix="/feedback", tags=["feedback"])
 logger = logging.getLogger(__name__)
+
+Q1_VALUES = ["Terrible", "Poor", "Okay", "Good", "Amazing"]
+Q3_VALUES = ["Too Slow", "Just Right", "Too Fast"]
+Q6_VALUES = ["Very Unlikely", "Unlikely", "Maybe", "Likely", "Very Likely"]
 
 
 def get_setting(db: Session, key: str, default: str = None) -> str:
@@ -21,82 +26,54 @@ def get_setting(db: Session, key: str, default: str = None) -> str:
     return setting.value if setting and setting.value else default
 
 
+def generate_survey_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
 class FeedbackSubmission(BaseModel):
-    device_fingerprint: str
-    email: Optional[str] = None
-    q1_expectations: str  # "Yes" or "No"
+    survey_token: str
+    q1_expectations: str  # emoji: "Terrible"..."Amazing"
     q2_had_unclear: str  # "Yes" or "No"
     q2_unclear_section: Optional[str] = None
     q3_pace: str  # "Too Slow", "Just Right", "Too Fast"
     q4_speaker_improvements: Optional[str] = None
     q5_future_topics: Optional[str] = None
-    q6_attend_again: str  # "Terrible", "Poor", "Okay", "Good", "Amazing"
+    q6_attend_again: str  # "Very Unlikely"..."Very Likely"
 
 
-class FeedbackStats(BaseModel):
-    total_responses: int
-    q1_yes_count: int
-    q1_no_count: int
-    q2_had_unclear_count: int
-    q3_pace_distribution: dict
-    q6_rating_distribution: dict
-
-
-async def send_thank_you_email(db: Session, email: str):
+async def send_thank_you_email(email: str, first_name: str):
     """Send thank you email with digital souvenir attachment placeholder"""
-    smtp_email = get_setting(db, "smtp_email")
-    smtp_password = get_setting(db, "smtp_password")
-    sender_name = get_setting(db, "smtp_sender_name", "Ghana Competition Law Seminar")
-    
-    if not smtp_email or not smtp_password:
-        logger.warning("SMTP not configured, skipping thank you email")
-        return
-    
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4; color: #333;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
-            <div style="background-color: #1a365d; padding: 30px 20px; text-align: center;">
-                <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 600;">Thank You for Your Feedback!</h1>
-            </div>
-            
-            <div style="padding: 40px 30px;">
-                <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear Attendee,</p>
-                
-                <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you for taking the time to share your feedback on the Ghana Competition Law & Policy Seminar. Your insights are invaluable in helping us improve future events.</p>
-                
-                <p style="font-size: 16px; line-height: 1.6; color: #444;">As a token of our appreciation, please find attached your <strong>Digital Souvenir</strong> from the seminar.</p>
-                
-                <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 25px 0; border-left: 4px solid #1a365d;">
-                    <p style="margin: 0; font-size: 14px; color: #666;">
-                        <strong>📎 Attachment:</strong> Digital Souvenir - Ghana Competition Law Seminar 2026
-                    </p>
-                </div>
-                
-                <p style="font-size: 16px; line-height: 1.6; color: #444;">We hope to see you at our future events!</p>
-                
-                <p style="font-size: 16px; line-height: 1.6; color: #444;">
-                    Warm regards,<br>
-                    <strong>The Competition & Markets Center Team</strong>
-                </p>
-            </div>
-            
-            <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-top: 1px solid #eee;">
-                <p style="margin: 0; font-size: 12px; color: #888;">
-                    © 2026 Competition & Marketing Center Ltd.<br>
-                    Ghana Competition Law & Policy Seminar
-                </p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    
+    db = SessionLocal()
     try:
+        smtp_email = get_setting(db, "smtp_email")
+        smtp_password = get_setting(db, "smtp_password")
+        sender_name = get_setting(db, "smtp_sender_name", "Ghana Competition Law Seminar")
+        
+        if not smtp_email or not smtp_password:
+            logger.warning("SMTP not configured, skipping thank you email")
+            return
+        
+        import html as html_mod
+        safe_name = html_mod.escape(first_name)
+        
+        html_content = f"""<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background-color:#f4f4f4;color:#333;">
+<div style="max-width:600px;margin:20px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<div style="background-color:#1a365d;padding:30px 20px;text-align:center;">
+<h1 style="color:#fff;margin:0;font-size:24px;font-weight:600;">Thank You for Your Feedback!</h1></div>
+<div style="padding:40px 30px;">
+<p style="font-size:16px;line-height:1.6;color:#444;">Dear {safe_name},</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">Thank you for taking the time to share your feedback on the Ghana Competition Law & Policy Seminar. Your insights are invaluable in helping us improve future events.</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">As a token of our appreciation, please find attached your <strong>Digital Souvenir</strong> from the seminar.</p>
+<div style="background-color:#f8f9fa;border-radius:8px;padding:20px;margin:25px 0;border-left:4px solid #1a365d;">
+<p style="margin:0;font-size:14px;color:#666;"><strong>📎 Attachment:</strong> Digital Souvenir - Ghana Competition Law Seminar 2026</p></div>
+<p style="font-size:16px;line-height:1.6;color:#444;">We hope to see you at our future events!</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">Warm regards,<br><strong>The Competition & Markets Center Team</strong></p></div>
+<div style="background-color:#f8f9fa;padding:20px;text-align:center;border-top:1px solid #eee;">
+<p style="margin:0;font-size:12px;color:#888;">© 2026 Competition & Marketing Center Ltd.</p></div></div>
+</body></html>"""
+        
         import smtplib
         from email.mime.multipart import MIMEMultipart
         from email.mime.text import MIMEText
@@ -105,7 +82,6 @@ async def send_thank_you_email(db: Session, email: str):
         msg['Subject'] = "Thank You for Your Feedback - Digital Souvenir Attached"
         msg['From'] = f"{sender_name} <{smtp_email}>"
         msg['To'] = email
-        
         msg.attach(MIMEText(html_content, 'html'))
         
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
@@ -115,6 +91,8 @@ async def send_thank_you_email(db: Session, email: str):
         logger.info(f"Thank you email sent to {email}")
     except Exception as e:
         logger.error(f"Failed to send thank you email to {email}: {e}")
+    finally:
+        db.close()
 
 
 @router.post("")
@@ -123,29 +101,31 @@ async def submit_feedback(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    """Submit feedback response - one per device"""
-    # Check if device already submitted
+    """Submit feedback response - one per survey token"""
+    # Check token already used
     existing = db.query(FeedbackResponse).filter(
-        FeedbackResponse.device_fingerprint == data.device_fingerprint
+        FeedbackResponse.survey_token == data.survey_token
     ).first()
-    
     if existing:
-        raise HTTPException(status_code=400, detail="Feedback already submitted from this device")
+        raise HTTPException(status_code=400, detail="Feedback already submitted with this link")
     
     # Validate inputs
-    if data.q1_expectations not in ["Yes", "No"]:
+    if data.q1_expectations not in Q1_VALUES:
         raise HTTPException(status_code=400, detail="Invalid value for q1_expectations")
     if data.q2_had_unclear not in ["Yes", "No"]:
         raise HTTPException(status_code=400, detail="Invalid value for q2_had_unclear")
-    if data.q3_pace not in ["Too Slow", "Just Right", "Too Fast"]:
+    if data.q3_pace not in Q3_VALUES:
         raise HTTPException(status_code=400, detail="Invalid value for q3_pace")
-    if data.q6_attend_again not in ["Terrible", "Poor", "Okay", "Good", "Amazing"]:
+    if data.q6_attend_again not in Q6_VALUES:
         raise HTTPException(status_code=400, detail="Invalid value for q6_attend_again")
     
-    # Create feedback response
+    # Find the registration linked to this token (stored in settings as token->reg_id mapping)
+    token_setting = db.query(Settings).filter(Settings.key == f"survey_token_{data.survey_token}").first()
+    reg_id = int(token_setting.value) if token_setting and token_setting.value else None
+    
     feedback = FeedbackResponse(
-        device_fingerprint=data.device_fingerprint,
-        email=data.email,
+        survey_token=data.survey_token,
+        registration_id=reg_id,
         q1_expectations=data.q1_expectations,
         q2_had_unclear=data.q2_had_unclear,
         q2_unclear_section=data.q2_unclear_section if data.q2_had_unclear == "Yes" else None,
@@ -159,9 +139,12 @@ async def submit_feedback(
     db.commit()
     db.refresh(feedback)
     
-    # Send thank you email if email provided
-    if data.email:
-        background_tasks.add_task(send_thank_you_email, db, data.email)
+    # Send thank you email to the attendee linked to this token
+    if reg_id:
+        reg = db.query(Registration).filter(Registration.id == reg_id).first()
+        if reg and reg.email:
+            first_name = reg.full_name.split()[0] if reg.full_name else "Attendee"
+            background_tasks.add_task(send_thank_you_email, reg.email, first_name)
     
     return {"success": True, "message": "Thank you for your feedback!"}
 
@@ -173,7 +156,6 @@ async def get_all_feedback(db: Session = Depends(get_db)):
     return [
         {
             "id": r.id,
-            "email": r.email,
             "q1_expectations": r.q1_expectations,
             "q2_had_unclear": r.q2_had_unclear,
             "q2_unclear_section": r.q2_unclear_section,
@@ -192,37 +174,40 @@ async def get_feedback_stats(db: Session = Depends(get_db)):
     """Get aggregated feedback statistics"""
     total = db.query(func.count(FeedbackResponse.id)).scalar() or 0
     
-    q1_yes = db.query(func.count(FeedbackResponse.id)).filter(
-        FeedbackResponse.q1_expectations == "Yes"
-    ).scalar() or 0
-    
     q2_unclear = db.query(func.count(FeedbackResponse.id)).filter(
         FeedbackResponse.q2_had_unclear == "Yes"
     ).scalar() or 0
     
+    # Q1 expectations (emoji) distribution
+    q1_dist = {}
+    for val in Q1_VALUES:
+        count = db.query(func.count(FeedbackResponse.id)).filter(
+            FeedbackResponse.q1_expectations == val
+        ).scalar() or 0
+        q1_dist[val] = count
+    
     # Q3 pace distribution
     pace_dist = {}
-    for pace in ["Too Slow", "Just Right", "Too Fast"]:
+    for pace in Q3_VALUES:
         count = db.query(func.count(FeedbackResponse.id)).filter(
             FeedbackResponse.q3_pace == pace
         ).scalar() or 0
         pace_dist[pace] = count
     
-    # Q6 rating distribution
-    rating_dist = {}
-    for rating in ["Terrible", "Poor", "Okay", "Good", "Amazing"]:
+    # Q6 attend again (Likert) distribution
+    q6_dist = {}
+    for val in Q6_VALUES:
         count = db.query(func.count(FeedbackResponse.id)).filter(
-            FeedbackResponse.q6_attend_again == rating
+            FeedbackResponse.q6_attend_again == val
         ).scalar() or 0
-        rating_dist[rating] = count
+        q6_dist[val] = count
     
     return {
         "total_responses": total,
-        "q1_yes_count": q1_yes,
-        "q1_no_count": total - q1_yes,
+        "q1_distribution": q1_dist,
         "q2_had_unclear_count": q2_unclear,
         "q3_pace_distribution": pace_dist,
-        "q6_rating_distribution": rating_dist
+        "q6_distribution": q6_dist
     }
 
 
@@ -236,10 +221,9 @@ async def export_feedback_csv(db: Session = Depends(get_db)):
     output = io.StringIO()
     writer = csv.writer(output)
     
-    # Header
     writer.writerow([
-        "ID", "Email", "Submitted At",
-        "Q1: Met Expectations", 
+        "ID", "Submitted At",
+        "Q1: Met Expectations (Emoji)", 
         "Q2: Had Unclear Section", "Q2: Unclear Section Details",
         "Q3: Presentation Pace",
         "Q4: Speaker Improvements",
@@ -247,11 +231,9 @@ async def export_feedback_csv(db: Session = Depends(get_db)):
         "Q6: Likely to Attend Again"
     ])
     
-    # Data rows
     for r in responses:
         writer.writerow([
             r.id,
-            r.email or "",
             r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else "",
             r.q1_expectations,
             r.q2_had_unclear,
@@ -271,17 +253,18 @@ async def export_feedback_csv(db: Session = Depends(get_db)):
     )
 
 
-@router.get("/check/{fingerprint}")
-async def check_feedback_exists(fingerprint: str, db: Session = Depends(get_db)):
-    """Check if feedback already submitted for this device"""
+@router.get("/check/{token}")
+async def check_feedback_exists(token: str, db: Session = Depends(get_db)):
+    """Check if survey token is valid and whether feedback was already submitted"""
+    # Check token exists
+    token_setting = db.query(Settings).filter(Settings.key == f"survey_token_{token}").first()
+    if not token_setting:
+        return {"valid": False, "submitted": False}
+    
     existing = db.query(FeedbackResponse).filter(
-        FeedbackResponse.device_fingerprint == fingerprint
+        FeedbackResponse.survey_token == token
     ).first()
-    return {"exists": existing is not None}
-
-
-class AnalyzeRequest(BaseModel):
-    pass
+    return {"valid": True, "submitted": existing is not None}
 
 
 @router.post("/analyze")
@@ -290,46 +273,33 @@ async def analyze_feedback(db: Session = Depends(get_db)):
     groq_api_key = get_setting(db, "groq_api_key")
     
     if not groq_api_key:
-        raise HTTPException(status_code=400, detail="Groq API key not configured")
+        raise HTTPException(status_code=400, detail="Groq API key not configured. Add it in Settings.")
     
-    # Get all feedback
     responses = db.query(FeedbackResponse).all()
     
     if not responses:
         raise HTTPException(status_code=400, detail="No feedback responses to analyze")
     
-    # Prepare data for analysis
-    feedback_summary = []
-    unclear_sections = []
-    speaker_improvements = []
-    future_topics = []
+    unclear_sections = [r.q2_unclear_section for r in responses if r.q2_unclear_section]
+    speaker_improvements = [r.q4_speaker_improvements for r in responses if r.q4_speaker_improvements]
+    future_topics = [r.q5_future_topics for r in responses if r.q5_future_topics]
     
-    for r in responses:
-        feedback_summary.append({
-            "met_expectations": r.q1_expectations,
-            "pace": r.q3_pace,
-            "attend_again": r.q6_attend_again
-        })
-        if r.q2_unclear_section:
-            unclear_sections.append(r.q2_unclear_section)
-        if r.q4_speaker_improvements:
-            speaker_improvements.append(r.q4_speaker_improvements)
-        if r.q5_future_topics:
-            future_topics.append(r.q5_future_topics)
+    q1_summary = ", ".join(f"{v}: {sum(1 for r in responses if r.q1_expectations == v)}" for v in Q1_VALUES)
+    q3_summary = ", ".join(f"{v}: {sum(1 for r in responses if r.q3_pace == v)}" for v in Q3_VALUES)
+    q6_summary = ", ".join(f"{v}: {sum(1 for r in responses if r.q6_attend_again == v)}" for v in Q6_VALUES)
     
-    # Build prompt
     prompt = f"""Analyze the following feedback from a Ghana Competition Law & Policy Seminar. Provide:
 1. Overall sentiment summary
 2. Key themes from the feedback
 3. Specific improvement suggestions for future events
 
-FEEDBACK DATA:
-- Total responses: {len(responses)}
-- Met expectations: {sum(1 for r in responses if r.q1_expectations == 'Yes')} Yes, {sum(1 for r in responses if r.q1_expectations == 'No')} No
-- Pace feedback: Too Slow: {sum(1 for r in responses if r.q3_pace == 'Too Slow')}, Just Right: {sum(1 for r in responses if r.q3_pace == 'Just Right')}, Too Fast: {sum(1 for r in responses if r.q3_pace == 'Too Fast')}
-- Likelihood to attend again: Terrible: {sum(1 for r in responses if r.q6_attend_again == 'Terrible')}, Poor: {sum(1 for r in responses if r.q6_attend_again == 'Poor')}, Okay: {sum(1 for r in responses if r.q6_attend_again == 'Okay')}, Good: {sum(1 for r in responses if r.q6_attend_again == 'Good')}, Amazing: {sum(1 for r in responses if r.q6_attend_again == 'Amazing')}
+FEEDBACK DATA ({len(responses)} responses):
+- Q1 "Did the seminar meet expectations?" (emoji scale): {q1_summary}
+- Q3 "Presentation pace": {q3_summary}
+- Q6 "Likelihood to attend again" (Likert): {q6_summary}
+- {len(unclear_sections)} respondents found unclear sections
 
-UNCLEAR SECTIONS MENTIONED:
+UNCLEAR SECTIONS:
 {chr(10).join(f'- {s}' for s in unclear_sections) if unclear_sections else 'None reported'}
 
 SPEAKER IMPROVEMENT SUGGESTIONS:

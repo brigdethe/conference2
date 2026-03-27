@@ -1663,7 +1663,7 @@ class SurveyInviteRequest(BaseModel):
 
 
 async def send_bulk_survey_invites_task(registrations_data: List[dict], send_sms: bool = True):
-    """Background task to send bulk survey invitations via email and SMS"""
+    """Background task to send bulk survey invitations with unique links"""
     db = SessionLocal()
     try:
         email_sent = 0
@@ -1673,41 +1673,35 @@ async def send_bulk_survey_invites_task(registrations_data: List[dict], send_sms
         smtp_password = get_setting(db, "smtp_password")
         sender_name = get_setting(db, "smtp_sender_name", "Ghana Competition Law Seminar")
         
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+        
         for reg_data in registrations_data:
             email = reg_data.get("email")
             phone = reg_data.get("phone")
+            token = reg_data.get("token")
             first_name = reg_data["full_name"].split()[0] if reg_data.get("full_name") else "Attendee"
+            survey_url = f"https://seminar.cmc-ghana.com/feedback?token={token}"
             
-            # Send email
             if email and smtp_email and smtp_password:
                 try:
-                    html_content = f"""
-                    <!DOCTYPE html>
-                    <html>
-                    <head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-                    <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f4;">
-                        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 20px; margin-bottom: 20px;">
-                            <div style="background-color: #1a365d; padding: 30px 20px; text-align: center;">
-                                <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Share Your Feedback</h1>
-                            </div>
-                            <div style="padding: 40px 30px;">
-                                <p style="font-size: 16px; line-height: 1.6; color: #444;">Dear {html.escape(first_name)},</p>
-                                <p style="font-size: 16px; line-height: 1.6; color: #444;">Thank you for attending the Ghana Competition Law & Policy Seminar! We hope you found it valuable.</p>
-                                <p style="font-size: 16px; line-height: 1.6; color: #444;">We would love to hear your feedback to help us improve future events. It only takes 2 minutes!</p>
-                                <div style="text-align: center; margin: 30px 0;">
-                                    <a href="https://seminar.cmc-ghana.com/feedback" style="display: inline-block; background: linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%); color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">Share Your Feedback</a>
-                                </div>
-                                <p style="font-size: 16px; line-height: 1.6; color: #444;">As a thank you, you'll receive a <strong>Digital Souvenir</strong> from the seminar after completing the survey!</p>
-                                <p style="font-size: 16px; line-height: 1.6; color: #444;">Warm regards,<br><strong>The Competition & Markets Center Team</strong></p>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                    """
-                    
-                    import smtplib
-                    from email.mime.multipart import MIMEMultipart
-                    from email.mime.text import MIMEText
+                    html_content = f"""<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background-color:#f4f4f4;">
+<div style="max-width:600px;margin:20px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<div style="background-color:#1a365d;padding:30px 20px;text-align:center;">
+<h1 style="color:#fff;margin:0;font-size:24px;">Share Your Feedback</h1></div>
+<div style="padding:40px 30px;">
+<p style="font-size:16px;line-height:1.6;color:#444;">Dear {html.escape(first_name)},</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">Thank you for attending the Ghana Competition Law & Policy Seminar! We hope you found it valuable.</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">We would love to hear your feedback to help us improve future events. It only takes 2 minutes!</p>
+<div style="text-align:center;margin:30px 0;">
+<a href="{survey_url}" style="display:inline-block;background:linear-gradient(135deg,#1a365d 0%,#2d4a7c 100%);color:#fff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">Share Your Feedback</a></div>
+<p style="font-size:16px;line-height:1.6;color:#444;">As a thank you, you'll receive a <strong>Digital Souvenir</strong> from the seminar after completing the survey!</p>
+<p style="font-size:14px;line-height:1.6;color:#999;">This is your personal survey link. Your feedback is anonymous — we do not collect your name.</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">Warm regards,<br><strong>The Competition & Markets Center Team</strong></p></div></div>
+</body></html>"""
                     
                     msg = MIMEMultipart('alternative')
                     msg['Subject'] = "Share Your Feedback - Get Your Digital Souvenir!"
@@ -1723,9 +1717,8 @@ async def send_bulk_survey_invites_task(registrations_data: List[dict], send_sms
                 except Exception as e:
                     logger.error(f"Failed to send survey email to {email}: {e}")
             
-            # Send SMS
             if send_sms and phone:
-                message = f"Hi {first_name}! Thank you for attending GCLS 2026. Please share your feedback at seminar.cmc-ghana.com/feedback to receive your digital souvenir!"
+                message = f"Hi {first_name}! Thank you for attending GCLS 2026. Share your feedback & get your digital souvenir: {survey_url}"
                 success = await send_sms_internal(db, phone, message)
                 if success:
                     sms_sent += 1
@@ -1743,30 +1736,36 @@ async def send_survey_invitations(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    """Send survey invitation to all confirmed attendees"""
+    """Send survey invitation with unique link to all confirmed attendees"""
     from models import Registration
+    import secrets
     
-    # If test only, send to test email/phone
     if data.test_only:
-        test_email = get_setting(db, "smtp_email")  # Send to admin email
+        test_email = get_setting(db, "smtp_email")
         test_phone = get_setting(db, "test_sms_phone")
+        token = secrets.token_urlsafe(32)
+        
+        # Store token -> registration mapping (use 0 for test)
+        token_setting = Settings(key=f"survey_token_{token}", value="0")
+        db.add(token_setting)
+        db.commit()
         
         registrations_data = [{
             "email": test_email,
             "phone": test_phone,
-            "full_name": "Test User"
+            "full_name": "Test User",
+            "token": token
         }]
         
         background_tasks.add_task(send_bulk_survey_invites_task, registrations_data, True)
         
         return {
             "success": True,
-            "message": f"Test survey invite sent to {test_email} and {test_phone}",
+            "message": f"Test survey invite sent to {test_email}",
             "sent_count": 1,
             "test": True
         }
     
-    # Get all confirmed registrations
     registrations = db.query(Registration).filter(
         Registration.status == "confirmed"
     ).all()
@@ -1774,16 +1773,26 @@ async def send_survey_invitations(
     if not registrations:
         return {"success": True, "message": "No confirmed attendees to send to", "sent_count": 0}
     
-    registrations_data = [
-        {"email": reg.email, "phone": reg.phone, "full_name": reg.full_name}
-        for reg in registrations
-    ]
+    registrations_data = []
+    for reg in registrations:
+        token = secrets.token_urlsafe(32)
+        # Store token -> registration_id mapping
+        token_setting = Settings(key=f"survey_token_{token}", value=str(reg.id))
+        db.add(token_setting)
+        registrations_data.append({
+            "email": reg.email,
+            "phone": reg.phone,
+            "full_name": reg.full_name,
+            "token": token
+        })
+    
+    db.commit()
     
     background_tasks.add_task(send_bulk_survey_invites_task, registrations_data, True)
     
     return {
         "success": True,
-        "message": f"Sending survey invitations to {len(registrations_data)} attendees in background.",
+        "message": f"Sending unique survey links to {len(registrations_data)} attendees in background.",
         "sent_count": len(registrations_data),
         "background": True
     }

@@ -6,753 +6,521 @@
     <title>Feedback Survey | Ghana Competition Law & Policy Seminar</title>
     <meta content="Share your feedback on the Ghana Competition Law & Policy Seminar" name="description" />
     <meta content="width=device-width, initial-scale=1" name="viewport" />
-    <link href="/assets/shared/external/css/style-68eee3b7aa1d9628fd1f8ee0.css" rel="stylesheet" type="text/css" />
-    <link href="https://ik.imagekit.io/dr5fryhth/conference/imglogo?updatedAt=1769778325875" rel="shortcut icon" type="image/x-icon" />
-    <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
+    <link href="https://ik.imagekit.io/dr5fryhth/conference/imglogo?updatedAt=1769778325875" rel="shortcut icon"
+        type="image/x-icon" />
     <style>
-        * {
-            box-sizing: border-box;
+        @font-face {
+            font-family: 'Neuemontreal';
+            src: url('https://cdn.prod.website-files.com/68eee3b7aa1d9628fd1f8ee0/68f15cac5a8972841fd35472_PPNeueMontreal-Regular.woff') format('woff');
+            font-weight: normal;
+            font-display: swap;
         }
-        
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-            background: linear-gradient(135deg, #1a365d 0%, #2d4a7c 50%, #1a365d 100%);
+
+        @font-face {
+            font-family: 'Seasonmix';
+            src: url('https://cdn.prod.website-files.com/68eee3b7aa1d9628fd1f8ee0/68f15cc2a525239513fc686d_SeasonMix-Regular.woff') format('woff');
+            font-weight: normal;
+            font-display: swap;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+        body, button, input, textarea, select { font-family: 'Neuemontreal', Arial, sans-serif; }
+        body { background-color: #f3f4f6; color: #1f2937; min-height: 100vh; }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            width: 100%;
             min-height: 100vh;
+        }
+
+        .left-column {
+            position: relative;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .feedback-container {
-            width: 100%;
-            max-width: 500px;
-            margin: 20px;
-            background: #fff;
-            border-radius: 24px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            overflow: hidden;
+        .left-bg {
+            position: absolute;
+            inset: 0;
+            background-image: url('https://ik.imagekit.io/dr5fryhth/conferencenew/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg?updatedAt=1770793618312');
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.35);
         }
 
-        .feedback-header {
-            background: linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%);
-            padding: 30px 24px;
-            text-align: center;
+        .left-content {
+            position: relative;
+            z-index: 2;
+            color: #fff;
+            padding: 3rem;
+            max-width: 480px;
+        }
+
+        .left-content h1 {
+            font-family: 'Seasonmix', Arial, sans-serif;
+            font-size: 2.5rem;
+            font-weight: normal;
+            margin-bottom: 1rem;
+            line-height: 1.1;
+        }
+
+        .left-content p {
+            font-size: 1.05rem;
+            opacity: 0.85;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+
+        .progress-step.active, .progress-step.done {
+            opacity: 1;
+        }
+
+        .step-circle {
+            width: 28px;
+            height: 28px;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            transition: all 0.3s;
+        }
+
+        .progress-step.active .step-circle {
+            border-color: #fbbf24;
+            background: #fbbf24;
+            color: #1a365d;
+        }
+
+        .progress-step.done .step-circle {
+            border-color: #10b981;
+            background: #10b981;
             color: #fff;
         }
 
-        .feedback-header h1 {
-            margin: 0 0 8px;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-
-        .feedback-header p {
-            margin: 0;
+        .step-label {
             font-size: 0.9rem;
-            opacity: 0.9;
+            font-weight: 500;
         }
 
-        .progress-bar {
-            height: 4px;
-            background: rgba(255,255,255,0.2);
-            position: relative;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #fbbf24;
-            transition: width 0.3s ease;
-            border-radius: 2px;
-        }
-
-        .progress-text {
-            text-align: center;
-            padding: 12px;
-            font-size: 0.85rem;
-            color: #64748b;
-            background: #f8fafc;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .question-container {
-            padding: 32px 24px;
-            min-height: 300px;
+        .right-column {
+            background: #fff;
             display: flex;
             flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .survey-card {
+            width: 100%;
+            max-width: 480px;
+            padding: 2rem 0;
         }
 
         .question-slide {
             display: none;
-            flex-direction: column;
             animation: fadeIn 0.3s ease;
         }
 
-        .question-slide.active {
-            display: flex;
-        }
+        .question-slide.active { display: block; }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(12px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .question-text {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 24px;
-            line-height: 1.4;
-        }
-
-        .options-grid {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .option-btn {
-            flex: 1;
-            min-width: 120px;
-            padding: 16px 20px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            background: #fff;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #475569;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: center;
-        }
-
-        .option-btn:hover {
-            border-color: #1a365d;
-            background: #f8fafc;
-        }
-
-        .option-btn.selected {
-            border-color: #1a365d;
-            background: #1a365d;
-            color: #fff;
-        }
-
-        .pace-options {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .pace-option {
-            padding: 14px 20px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            background: #fff;
-            font-size: 1rem;
-            font-weight: 500;
-            color: #475569;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .pace-option:hover {
-            border-color: #1a365d;
-            background: #f8fafc;
-        }
-
-        .pace-option.selected {
-            border-color: #1a365d;
-            background: #1a365d;
-            color: #fff;
-        }
-
-        .pace-icon {
-            font-size: 1.3rem;
-        }
-
-        .text-input {
-            width: 100%;
-            padding: 14px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 100px;
-            transition: border-color 0.2s;
-        }
-
-        .text-input:focus {
-            outline: none;
-            border-color: #1a365d;
-        }
-
-        .text-input::placeholder {
-            color: #94a3b8;
-        }
-
-        .conditional-field {
-            margin-top: 16px;
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .conditional-field.show {
-            display: block;
-        }
-
-        /* Emoji Rating */
-        .emoji-rating {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 20px;
-        }
-
-        .emoji-buttons {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .emoji-btn {
-            width: 56px;
-            height: 56px;
-            border: none;
-            background: transparent;
-            font-size: 2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border-radius: 16px;
-            filter: grayscale(1);
-            opacity: 0.4;
-        }
-
-        .emoji-btn:hover {
-            filter: grayscale(0.3);
-            opacity: 0.7;
-            transform: scale(1.05);
-        }
-
-        .emoji-btn.active {
-            filter: grayscale(0);
-            opacity: 1;
-            transform: scale(1.15);
-        }
-
-        .emoji-label {
-            font-size: 0.95rem;
-            font-weight: 600;
-            color: #1e293b;
-            min-height: 24px;
-            transition: all 0.3s ease;
-        }
-
-        .emoji-label.placeholder {
-            color: #94a3b8;
-            font-weight: 500;
-        }
-
-        /* Email field */
-        .email-section {
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        .email-label {
-            font-size: 0.9rem;
-            color: #64748b;
-            margin-bottom: 8px;
-        }
-
-        .email-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-family: inherit;
-        }
-
-        .email-input:focus {
-            outline: none;
-            border-color: #1a365d;
-        }
-
-        .email-note {
+        .q-number {
             font-size: 0.8rem;
-            color: #94a3b8;
-            margin-top: 6px;
-        }
-
-        /* Navigation */
-        .nav-buttons {
-            display: flex;
-            gap: 12px;
-            margin-top: auto;
-            padding-top: 24px;
-        }
-
-        .nav-btn {
-            flex: 1;
-            padding: 14px 24px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
             font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
         }
 
-        .nav-btn.back {
-            background: #f1f5f9;
-            color: #475569;
+        .q-text {
+            font-family: 'Seasonmix', Arial, sans-serif;
+            font-size: 1.5rem;
+            color: #111827;
+            margin-bottom: 1.75rem;
+            line-height: 1.25;
         }
 
-        .nav-btn.back:hover {
-            background: #e2e8f0;
+        /* Emoji Rating (Q1) */
+        .emoji-row { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 0.5rem; }
+        .emoji-btn {
+            width: 56px; height: 56px; border: none; background: transparent;
+            font-size: 2rem; cursor: pointer; border-radius: 16px;
+            filter: grayscale(1); opacity: 0.4;
+            transition: all 0.25s ease;
         }
+        .emoji-btn:hover { filter: grayscale(0.3); opacity: 0.7; transform: scale(1.08); }
+        .emoji-btn.active { filter: grayscale(0); opacity: 1; transform: scale(1.2); }
+        .emoji-label-text {
+            text-align: center; font-size: 0.9rem; font-weight: 600;
+            color: #6b7280; min-height: 24px; transition: all 0.3s;
+        }
+        .emoji-label-text.selected { color: #111827; }
 
-        .nav-btn.next {
-            background: #1a365d;
-            color: #fff;
+        /* Option buttons (Q2, Q3) */
+        .option-grid { display: flex; flex-direction: column; gap: 0.6rem; }
+        .option-btn {
+            padding: 14px 20px; border: 2px solid #e5e7eb; border-radius: 12px;
+            background: #fff; font-size: 1rem; font-weight: 500; color: #374151;
+            cursor: pointer; transition: all 0.2s; text-align: left;
+            display: flex; align-items: center; gap: 12px;
         }
+        .option-btn:hover { border-color: #6b7280; background: #f9fafb; }
+        .option-btn.selected { border-color: #1a365d; background: #1a365d; color: #fff; }
+        .option-icon { font-size: 1.2rem; }
 
-        .nav-btn.next:hover {
-            background: #2d4a7c;
+        /* Likert scale (Q6) */
+        .likert-scale { display: flex; flex-direction: column; gap: 0.5rem; }
+        .likert-btn {
+            padding: 12px 16px; border: 2px solid #e5e7eb; border-radius: 10px;
+            background: #fff; font-size: 0.95rem; font-weight: 500; color: #374151;
+            cursor: pointer; transition: all 0.2s; text-align: center;
         }
+        .likert-btn:hover { border-color: #6b7280; }
+        .likert-btn.selected { border-color: #1a365d; background: #1a365d; color: #fff; }
 
-        .nav-btn.next:disabled {
-            background: #cbd5e1;
-            cursor: not-allowed;
+        /* Text inputs */
+        .text-input {
+            width: 100%; padding: 14px 16px; border: 2px solid #e5e7eb;
+            border-radius: 12px; font-size: 1rem; font-family: inherit;
+            resize: vertical; min-height: 90px; transition: border-color 0.2s;
         }
+        .text-input:focus { outline: none; border-color: #1a365d; }
+        .text-input::placeholder { color: #9ca3af; }
 
-        .nav-btn.submit {
-            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-            color: #fff;
-        }
+        .conditional-field { display: none; margin-top: 12px; animation: fadeIn 0.3s; }
+        .conditional-field.show { display: block; }
 
-        .nav-btn.submit:hover {
-            background: linear-gradient(135deg, #047857 0%, #059669 100%);
+        /* Nav buttons */
+        .nav-row { display: flex; gap: 12px; margin-top: 2rem; }
+        .btn {
+            flex: 1; padding: 14px 20px; border: none; border-radius: 12px;
+            font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
         }
+        .btn-back { background: #f3f4f6; color: #374151; }
+        .btn-back:hover { background: #e5e7eb; }
+        .btn-next { background: #1a365d; color: #fff; }
+        .btn-next:hover { background: #2d4a7c; }
+        .btn-next:disabled { background: #d1d5db; cursor: not-allowed; }
+        .btn-submit { background: #059669; color: #fff; }
+        .btn-submit:hover { background: #047857; }
+        .btn-submit:disabled { background: #d1d5db; cursor: not-allowed; }
 
-        /* Success Screen */
-        .success-screen {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 40px 24px;
-            min-height: 400px;
+        /* Success screen */
+        .success-screen, .invalid-screen, .submitted-screen {
+            display: none; flex-direction: column; align-items: center;
+            justify-content: center; text-align: center; padding: 2rem;
         }
-
-        .success-screen.show {
-            display: flex;
-        }
+        .success-screen.show, .invalid-screen.show, .submitted-screen.show { display: flex; }
 
         .success-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 24px;
-            animation: bounceIn 0.6s ease;
+            width: 72px; height: 72px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 1.5rem; animation: pop 0.5s ease;
         }
+        @keyframes pop { 0%{transform:scale(0)} 50%{transform:scale(1.2)} 100%{transform:scale(1)} }
 
-        @keyframes bounceIn {
-            0% { transform: scale(0); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
+        .success-icon.green { background: #059669; }
+        .success-icon.yellow { background: #fbbf24; }
+        .success-icon.red { background: #ef4444; }
+        .success-icon svg { width: 36px; height: 36px; color: #fff; }
 
-        .success-icon svg {
-            width: 40px;
-            height: 40px;
-            color: #fff;
-        }
+        .success-title { font-family: 'Seasonmix', Arial, sans-serif; font-size: 1.75rem; color: #111827; margin-bottom: 0.75rem; }
+        .success-msg { font-size: 1rem; color: #6b7280; line-height: 1.6; max-width: 360px; }
 
-        .success-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #1e293b;
-            margin-bottom: 12px;
-        }
-
-        .success-message {
-            font-size: 1rem;
-            color: #64748b;
-            line-height: 1.6;
-            max-width: 300px;
-        }
-
-        .confetti {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        /* Already Submitted */
-        .already-submitted {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 40px 24px;
-            min-height: 400px;
-        }
-
-        .already-submitted.show {
-            display: flex;
-        }
-
-        .already-icon {
-            width: 80px;
-            height: 80px;
-            background: #fbbf24;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 24px;
-        }
-
-        .already-icon svg {
-            width: 40px;
-            height: 40px;
-            color: #fff;
-        }
-
-        /* Loading */
         .loading-overlay {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255,255,255,0.9);
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
+            display: none; position: absolute; inset: 0; background: rgba(255,255,255,0.85);
+            align-items: center; justify-content: center; z-index: 100;
         }
-
-        .loading-overlay.show {
-            display: flex;
-        }
-
+        .loading-overlay.show { display: flex; }
         .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #e2e8f0;
-            border-top-color: #1a365d;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            width: 36px; height: 36px; border: 3px solid #e5e7eb;
+            border-top-color: #1a365d; border-radius: 50%;
+            animation: spin 0.7s linear infinite;
         }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        /* Confetti canvas */
+        .confetti { position: fixed; inset: 0; pointer-events: none; z-index: 1000; }
 
-        /* Responsive */
-        @media (max-width: 480px) {
-            .feedback-container {
-                margin: 10px;
-                border-radius: 20px;
-            }
-
-            .question-container {
-                padding: 24px 20px;
-            }
-
-            .question-text {
-                font-size: 1rem;
-            }
-
-            .option-btn {
-                min-width: 100px;
-                padding: 14px 16px;
-            }
-
-            .emoji-btn {
-                width: 48px;
-                height: 48px;
-                font-size: 1.7rem;
-            }
+        @media (max-width: 768px) {
+            .grid-container { grid-template-columns: 1fr; }
+            .left-column { min-height: 220px; }
+            .left-content { padding: 1.5rem; }
+            .left-content h1 { font-size: 1.75rem; }
+            .progress-steps { display: none; }
+            .right-column { padding: 1.5rem; }
+            .q-text { font-size: 1.25rem; }
+            .emoji-btn { width: 44px; height: 44px; font-size: 1.6rem; }
         }
     </style>
 </head>
 
 <body>
-    <div class="feedback-container" id="feedbackContainer">
-        <div class="feedback-header">
-            <h1>Share Your Feedback</h1>
-            <p>Help us improve future seminars</p>
-        </div>
-        
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill" style="width: 16.67%"></div>
-        </div>
-        <div class="progress-text" id="progressText">Question 1 of 6</div>
-
-        <div class="question-container" id="questionContainer">
-            <!-- Question 1: Met Expectations -->
-            <div class="question-slide active" data-question="1">
-                <p class="question-text">Did the seminar meet your expectations?</p>
-                <div class="options-grid">
-                    <button type="button" class="option-btn" data-value="Yes" onclick="selectOption(this, 'q1')">Yes</button>
-                    <button type="button" class="option-btn" data-value="No" onclick="selectOption(this, 'q1')">No</button>
-                </div>
-                <div class="nav-buttons">
-                    <button type="button" class="nav-btn next" id="next1" disabled onclick="nextQuestion(2)">Next</button>
-                </div>
-            </div>
-
-            <!-- Question 2: Unclear Section -->
-            <div class="question-slide" data-question="2">
-                <p class="question-text">Was there any section of the lecture you found unclear?</p>
-                <div class="options-grid">
-                    <button type="button" class="option-btn" data-value="Yes" onclick="selectQ2Option(this, 'Yes')">Yes</button>
-                    <button type="button" class="option-btn" data-value="No" onclick="selectQ2Option(this, 'No')">No</button>
-                </div>
-                <div class="conditional-field" id="q2TextField">
-                    <textarea class="text-input" id="q2Text" placeholder="Please describe which section was unclear..."></textarea>
-                </div>
-                <div class="nav-buttons">
-                    <button type="button" class="nav-btn back" onclick="prevQuestion(1)">Back</button>
-                    <button type="button" class="nav-btn next" id="next2" disabled onclick="nextQuestion(3)">Next</button>
-                </div>
-            </div>
-
-            <!-- Question 3: Pace -->
-            <div class="question-slide" data-question="3">
-                <p class="question-text">Was the presentation too slow or too quick?</p>
-                <div class="pace-options">
-                    <button type="button" class="pace-option" data-value="Too Slow" onclick="selectOption(this, 'q3')">
-                        <span class="pace-icon">🐢</span> Too Slow
-                    </button>
-                    <button type="button" class="pace-option" data-value="Just Right" onclick="selectOption(this, 'q3')">
-                        <span class="pace-icon">👌</span> Just Right
-                    </button>
-                    <button type="button" class="pace-option" data-value="Too Fast" onclick="selectOption(this, 'q3')">
-                        <span class="pace-icon">🚀</span> Too Fast
-                    </button>
-                </div>
-                <div class="nav-buttons">
-                    <button type="button" class="nav-btn back" onclick="prevQuestion(2)">Back</button>
-                    <button type="button" class="nav-btn next" id="next3" disabled onclick="nextQuestion(4)">Next</button>
-                </div>
-            </div>
-
-            <!-- Question 4: Speaker Improvements -->
-            <div class="question-slide" data-question="4">
-                <p class="question-text">What (if any) do you think the two speakers could have done better?</p>
-                <textarea class="text-input" id="q4Text" placeholder="Share your thoughts... (optional)"></textarea>
-                <div class="nav-buttons">
-                    <button type="button" class="nav-btn back" onclick="prevQuestion(3)">Back</button>
-                    <button type="button" class="nav-btn next" onclick="nextQuestion(5)">Next</button>
-                </div>
-            </div>
-
-            <!-- Question 5: Future Topics -->
-            <div class="question-slide" data-question="5">
-                <p class="question-text">Is there any particular aspect of competition law you would like discussed at a future lecture?</p>
-                <textarea class="text-input" id="q5Text" placeholder="Suggest topics... (optional)"></textarea>
-                <div class="nav-buttons">
-                    <button type="button" class="nav-btn back" onclick="prevQuestion(4)">Back</button>
-                    <button type="button" class="nav-btn next" onclick="nextQuestion(6)">Next</button>
-                </div>
-            </div>
-
-            <!-- Question 6: Attend Again -->
-            <div class="question-slide" data-question="6">
-                <p class="question-text">How likely are you to attend another lecture by the two Professors later this year?</p>
-                <div class="emoji-rating">
-                    <div class="emoji-buttons">
-                        <button type="button" class="emoji-btn" data-value="1" data-label="Terrible" onclick="selectEmoji(this)">😔</button>
-                        <button type="button" class="emoji-btn" data-value="2" data-label="Poor" onclick="selectEmoji(this)">😕</button>
-                        <button type="button" class="emoji-btn" data-value="3" data-label="Okay" onclick="selectEmoji(this)">😐</button>
-                        <button type="button" class="emoji-btn" data-value="4" data-label="Good" onclick="selectEmoji(this)">🙂</button>
-                        <button type="button" class="emoji-btn" data-value="5" data-label="Amazing" onclick="selectEmoji(this)">😍</button>
+    <div class="grid-container">
+        <div class="left-column">
+            <div class="left-bg"></div>
+            <div class="left-content">
+                <h1>Help Us Improve</h1>
+                <p>Your candid feedback helps us make future seminars even better. It only takes 2 minutes.</p>
+                <div class="progress-steps" id="progressSteps">
+                    <div class="progress-step active" data-step="1">
+                        <div class="step-circle">1</div>
+                        <span class="step-label">Expectations</span>
                     </div>
-                    <div class="emoji-label placeholder" id="emojiLabel">Select your rating</div>
+                    <div class="progress-step" data-step="2">
+                        <div class="step-circle">2</div>
+                        <span class="step-label">Clarity</span>
+                    </div>
+                    <div class="progress-step" data-step="3">
+                        <div class="step-circle">3</div>
+                        <span class="step-label">Pace</span>
+                    </div>
+                    <div class="progress-step" data-step="4">
+                        <div class="step-circle">4</div>
+                        <span class="step-label">Speakers</span>
+                    </div>
+                    <div class="progress-step" data-step="5">
+                        <div class="step-circle">5</div>
+                        <span class="step-label">Future Topics</span>
+                    </div>
+                    <div class="progress-step" data-step="6">
+                        <div class="step-circle">6</div>
+                        <span class="step-label">Attend Again</span>
+                    </div>
                 </div>
-                
-                <div class="email-section">
-                    <label class="email-label">Email (optional - to receive your digital souvenir)</label>
-                    <input type="email" class="email-input" id="emailInput" placeholder="your@email.com" />
-                    <p class="email-note">We'll send you a thank you note with your digital souvenir</p>
-                </div>
-
-                <div class="nav-buttons">
-                    <button type="button" class="nav-btn back" onclick="prevQuestion(5)">Back</button>
-                    <button type="button" class="nav-btn next submit" id="submitBtn" disabled onclick="submitFeedback()">Submit Feedback</button>
-                </div>
-            </div>
-
-            <div class="loading-overlay" id="loadingOverlay">
-                <div class="spinner"></div>
             </div>
         </div>
 
-        <!-- Success Screen -->
-        <div class="success-screen" id="successScreen">
-            <div class="success-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-            </div>
-            <h2 class="success-title">Thank You!</h2>
-            <p class="success-message">Your feedback has been submitted successfully. We truly appreciate your time and insights.</p>
-        </div>
+        <div class="right-column" id="rightColumn">
+            <div class="survey-card" id="surveyCard">
+                <!-- Q1: Expectations (Emoji) -->
+                <div class="question-slide active" data-q="1">
+                    <div class="q-number">Question 1 of 6</div>
+                    <div class="q-text">Did the seminar meet your expectations?</div>
+                    <div class="emoji-row">
+                        <button class="emoji-btn" data-value="Terrible" data-label="Terrible" onclick="selectEmoji(this)">😔</button>
+                        <button class="emoji-btn" data-value="Poor" data-label="Poor" onclick="selectEmoji(this)">😕</button>
+                        <button class="emoji-btn" data-value="Okay" data-label="Okay" onclick="selectEmoji(this)">😐</button>
+                        <button class="emoji-btn" data-value="Good" data-label="Good" onclick="selectEmoji(this)">🙂</button>
+                        <button class="emoji-btn" data-value="Amazing" data-label="Amazing" onclick="selectEmoji(this)">😍</button>
+                    </div>
+                    <div class="emoji-label-text" id="emojiLabel">Tap to rate</div>
+                    <div class="nav-row">
+                        <button class="btn btn-next" id="next1" disabled onclick="goTo(2)">Next</button>
+                    </div>
+                </div>
 
-        <!-- Already Submitted Screen -->
-        <div class="already-submitted" id="alreadySubmitted">
-            <div class="already-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <!-- Q2: Unclear Section -->
+                <div class="question-slide" data-q="2">
+                    <div class="q-number">Question 2 of 6</div>
+                    <div class="q-text">Was there any section of the lecture you found unclear?</div>
+                    <div class="option-grid">
+                        <button class="option-btn" data-value="Yes" onclick="selectQ2(this,'Yes')"><span class="option-icon">✋</span> Yes</button>
+                        <button class="option-btn" data-value="No" onclick="selectQ2(this,'No')"><span class="option-icon">👍</span> No, all clear</button>
+                    </div>
+                    <div class="conditional-field" id="q2TextField">
+                        <textarea class="text-input" id="q2Text" placeholder="Which section was unclear?"></textarea>
+                    </div>
+                    <div class="nav-row">
+                        <button class="btn btn-back" onclick="goTo(1)">Back</button>
+                        <button class="btn btn-next" id="next2" disabled onclick="goTo(3)">Next</button>
+                    </div>
+                </div>
+
+                <!-- Q3: Pace -->
+                <div class="question-slide" data-q="3">
+                    <div class="q-number">Question 3 of 6</div>
+                    <div class="q-text">Was the presentation too slow or too quick?</div>
+                    <div class="option-grid">
+                        <button class="option-btn" data-value="Too Slow" onclick="selectOpt(this,'q3')"><span class="option-icon">🐢</span> Too Slow</button>
+                        <button class="option-btn" data-value="Just Right" onclick="selectOpt(this,'q3')"><span class="option-icon">👌</span> Just Right</button>
+                        <button class="option-btn" data-value="Too Fast" onclick="selectOpt(this,'q3')"><span class="option-icon">🚀</span> Too Fast</button>
+                    </div>
+                    <div class="nav-row">
+                        <button class="btn btn-back" onclick="goTo(2)">Back</button>
+                        <button class="btn btn-next" id="next3" disabled onclick="goTo(4)">Next</button>
+                    </div>
+                </div>
+
+                <!-- Q4: Speaker Improvements -->
+                <div class="question-slide" data-q="4">
+                    <div class="q-number">Question 4 of 6</div>
+                    <div class="q-text">What do you think the speakers could have done better?</div>
+                    <textarea class="text-input" id="q4Text" placeholder="Share your thoughts... (optional)"></textarea>
+                    <div class="nav-row">
+                        <button class="btn btn-back" onclick="goTo(3)">Back</button>
+                        <button class="btn btn-next" onclick="goTo(5)">Next</button>
+                    </div>
+                </div>
+
+                <!-- Q5: Future Topics -->
+                <div class="question-slide" data-q="5">
+                    <div class="q-number">Question 5 of 6</div>
+                    <div class="q-text">Any aspect of competition law you'd like discussed at a future lecture?</div>
+                    <textarea class="text-input" id="q5Text" placeholder="Suggest topics... (optional)"></textarea>
+                    <div class="nav-row">
+                        <button class="btn btn-back" onclick="goTo(4)">Back</button>
+                        <button class="btn btn-next" onclick="goTo(6)">Next</button>
+                    </div>
+                </div>
+
+                <!-- Q6: Attend Again (Likert) -->
+                <div class="question-slide" data-q="6">
+                    <div class="q-number">Question 6 of 6</div>
+                    <div class="q-text">How likely are you to attend another lecture by the Professors later this year?</div>
+                    <div class="likert-scale">
+                        <button class="likert-btn" data-value="Very Unlikely" onclick="selectLikert(this)">Very Unlikely</button>
+                        <button class="likert-btn" data-value="Unlikely" onclick="selectLikert(this)">Unlikely</button>
+                        <button class="likert-btn" data-value="Maybe" onclick="selectLikert(this)">Maybe</button>
+                        <button class="likert-btn" data-value="Likely" onclick="selectLikert(this)">Likely</button>
+                        <button class="likert-btn" data-value="Very Likely" onclick="selectLikert(this)">Very Likely</button>
+                    </div>
+                    <div class="nav-row">
+                        <button class="btn btn-back" onclick="goTo(5)">Back</button>
+                        <button class="btn btn-submit" id="submitBtn" disabled onclick="submitFeedback()">Submit</button>
+                    </div>
+                </div>
+
+                <div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div></div>
             </div>
-            <h2 class="success-title">Already Submitted</h2>
-            <p class="success-message">You have already submitted feedback from this device. Thank you for your participation!</p>
+
+            <!-- Success -->
+            <div class="success-screen" id="successScreen">
+                <div class="success-icon green">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <div class="success-title">Thank You!</div>
+                <div class="success-msg">Your feedback has been submitted. We truly appreciate your time and insights. Check your email for your digital souvenir!</div>
+            </div>
+
+            <!-- Already submitted -->
+            <div class="submitted-screen" id="submittedScreen">
+                <div class="success-icon yellow">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div class="success-title">Already Submitted</div>
+                <div class="success-msg">You have already submitted feedback. Thank you for your participation!</div>
+            </div>
+
+            <!-- Invalid token -->
+            <div class="invalid-screen" id="invalidScreen">
+                <div class="success-icon red">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z" /></svg>
+                </div>
+                <div class="success-title">Invalid Link</div>
+                <div class="success-msg">This survey link is not valid. Please use the link sent to your email or phone.</div>
+            </div>
         </div>
     </div>
 
     <canvas class="confetti" id="confetti"></canvas>
 
     <script>
-        // State
-        let deviceFingerprint = null;
-        const answers = {
-            q1: null,
-            q2_had_unclear: null,
-            q2_text: null,
-            q3: null,
-            q4: null,
-            q5: null,
-            q6: null
-        };
+        const params = new URLSearchParams(window.location.search);
+        const surveyToken = params.get('token');
+        const answers = { q1: null, q2_had_unclear: null, q3: null, q6: null };
 
-        // Initialize FingerprintJS
-        async function initFingerprint() {
+        async function init() {
+            if (!surveyToken) {
+                document.getElementById('surveyCard').style.display = 'none';
+                document.getElementById('invalidScreen').classList.add('show');
+                return;
+            }
             try {
-                const fp = await FingerprintJS.load();
-                const result = await fp.get();
-                deviceFingerprint = result.visitorId;
-                
-                // Check if already submitted
-                const response = await fetch(`/api/feedback/check/${deviceFingerprint}`);
-                const data = await response.json();
-                
-                if (data.exists) {
-                    document.getElementById('questionContainer').style.display = 'none';
-                    document.querySelector('.progress-bar').style.display = 'none';
-                    document.querySelector('.progress-text').style.display = 'none';
-                    document.getElementById('alreadySubmitted').classList.add('show');
+                const res = await fetch('/api/feedback/check/' + surveyToken);
+                const data = await res.json();
+                if (!data.valid) {
+                    document.getElementById('surveyCard').style.display = 'none';
+                    document.getElementById('invalidScreen').classList.add('show');
+                } else if (data.submitted) {
+                    document.getElementById('surveyCard').style.display = 'none';
+                    document.getElementById('submittedScreen').classList.add('show');
                 }
-            } catch (error) {
-                console.error('Fingerprint error:', error);
-                // Generate fallback fingerprint
-                deviceFingerprint = 'fb_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            } catch (e) {
+                console.error('Check error:', e);
             }
         }
+        init();
 
-        initFingerprint();
-
-        // Question navigation
-        function showQuestion(num) {
-            document.querySelectorAll('.question-slide').forEach(slide => {
-                slide.classList.remove('active');
+        function goTo(num) {
+            document.querySelectorAll('.question-slide').forEach(s => s.classList.remove('active'));
+            document.querySelector('[data-q="' + num + '"]').classList.add('active');
+            document.querySelectorAll('.progress-step').forEach(s => {
+                const sn = parseInt(s.dataset.step);
+                s.classList.remove('active', 'done');
+                if (sn < num) s.classList.add('done');
+                else if (sn === num) s.classList.add('active');
             });
-            document.querySelector(`[data-question="${num}"]`).classList.add('active');
-            
-            // Update progress
-            const progress = (num / 6) * 100;
-            document.getElementById('progressFill').style.width = progress + '%';
-            document.getElementById('progressText').textContent = `Question ${num} of 6`;
         }
 
-        function nextQuestion(num) {
-            showQuestion(num);
+        function selectEmoji(btn) {
+            document.querySelectorAll('.emoji-btn').forEach((b, i) => {
+                const bv = parseInt(b.dataset.value === 'Terrible' ? 1 : b.dataset.value === 'Poor' ? 2 : b.dataset.value === 'Okay' ? 3 : b.dataset.value === 'Good' ? 4 : 5);
+                const sv = parseInt(btn.dataset.value === 'Terrible' ? 1 : btn.dataset.value === 'Poor' ? 2 : btn.dataset.value === 'Okay' ? 3 : btn.dataset.value === 'Good' ? 4 : 5);
+                b.classList.toggle('active', bv <= sv);
+            });
+            answers.q1 = btn.dataset.value;
+            document.getElementById('emojiLabel').textContent = btn.dataset.label;
+            document.getElementById('emojiLabel').classList.add('selected');
+            document.getElementById('next1').disabled = false;
         }
 
-        function prevQuestion(num) {
-            showQuestion(num);
-        }
-
-        // Option selection
-        function selectOption(btn, questionId) {
-            const container = btn.closest('.options-grid, .pace-options');
-            container.querySelectorAll('.option-btn, .pace-option').forEach(b => b.classList.remove('selected'));
+        function selectQ2(btn, val) {
+            btn.closest('.option-grid').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
-            answers[questionId] = btn.dataset.value;
-            
-            // Enable next button
-            const questionNum = btn.closest('.question-slide').dataset.question;
-            const nextBtn = document.getElementById('next' + questionNum);
-            if (nextBtn) nextBtn.disabled = false;
-            if (questionId === 'q3') document.getElementById('next3').disabled = false;
-        }
-
-        // Q2 special handling
-        function selectQ2Option(btn, value) {
-            const container = btn.closest('.options-grid');
-            container.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
-            answers.q2_had_unclear = value;
-            
-            const textField = document.getElementById('q2TextField');
-            if (value === 'Yes') {
-                textField.classList.add('show');
-            } else {
-                textField.classList.remove('show');
-                document.getElementById('q2Text').value = '';
-            }
-            
+            answers.q2_had_unclear = val;
+            const tf = document.getElementById('q2TextField');
+            if (val === 'Yes') tf.classList.add('show'); else { tf.classList.remove('show'); document.getElementById('q2Text').value = ''; }
             document.getElementById('next2').disabled = false;
         }
 
-        // Emoji selection
-        function selectEmoji(btn) {
-            document.querySelectorAll('.emoji-btn').forEach((b, index) => {
-                const btnValue = parseInt(b.dataset.value);
-                const selectedValue = parseInt(btn.dataset.value);
-                
-                if (btnValue <= selectedValue) {
-                    b.classList.add('active');
-                } else {
-                    b.classList.remove('active');
-                }
-            });
-            
-            answers.q6 = btn.dataset.label;
-            document.getElementById('emojiLabel').textContent = btn.dataset.label;
-            document.getElementById('emojiLabel').classList.remove('placeholder');
+        function selectOpt(btn, qKey) {
+            btn.closest('.option-grid').querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            answers[qKey] = btn.dataset.value;
+            const nextBtn = document.getElementById('next' + btn.closest('.question-slide').dataset.q);
+            if (nextBtn) nextBtn.disabled = false;
+        }
+
+        function selectLikert(btn) {
+            btn.closest('.likert-scale').querySelectorAll('.likert-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            answers.q6 = btn.dataset.value;
             document.getElementById('submitBtn').disabled = false;
         }
 
-        // Submit feedback
         async function submitFeedback() {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            loadingOverlay.classList.add('show');
-
-            // Gather all answers
+            document.getElementById('loadingOverlay').classList.add('show');
             const payload = {
-                device_fingerprint: deviceFingerprint,
-                email: document.getElementById('emailInput').value || null,
+                survey_token: surveyToken,
                 q1_expectations: answers.q1,
                 q2_had_unclear: answers.q2_had_unclear,
                 q2_unclear_section: answers.q2_had_unclear === 'Yes' ? document.getElementById('q2Text').value : null,
@@ -761,90 +529,53 @@
                 q5_future_topics: document.getElementById('q5Text').value || null,
                 q6_attend_again: answers.q6
             };
-
             try {
-                const response = await fetch('/api/feedback', {
+                const res = await fetch('/api/feedback', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    loadingOverlay.classList.remove('show');
-                    document.getElementById('questionContainer').style.display = 'none';
-                    document.querySelector('.progress-bar').style.display = 'none';
-                    document.querySelector('.progress-text').style.display = 'none';
+                const data = await res.json();
+                document.getElementById('loadingOverlay').classList.remove('show');
+                if (res.ok) {
+                    document.getElementById('surveyCard').style.display = 'none';
                     document.getElementById('successScreen').classList.add('show');
                     launchConfetti();
                 } else {
-                    loadingOverlay.classList.remove('show');
-                    alert(data.detail || 'An error occurred. Please try again.');
+                    alert(data.detail || 'An error occurred.');
                 }
-            } catch (error) {
-                loadingOverlay.classList.remove('show');
-                console.error('Submit error:', error);
+            } catch (e) {
+                document.getElementById('loadingOverlay').classList.remove('show');
                 alert('An error occurred. Please try again.');
             }
         }
 
-        // Confetti animation
         function launchConfetti() {
-            const canvas = document.getElementById('confetti');
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            const pieces = [];
-            const colors = ['#1a365d', '#fbbf24', '#10b981', '#ef4444', '#8b5cf6', '#ec4899'];
-
-            for (let i = 0; i < 150; i++) {
-                pieces.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height - canvas.height,
-                    w: Math.random() * 10 + 5,
-                    h: Math.random() * 6 + 3,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    rotation: Math.random() * 360,
-                    rotationSpeed: Math.random() * 10 - 5,
-                    speedY: Math.random() * 3 + 2,
-                    speedX: Math.random() * 2 - 1,
-                    opacity: 1
-                });
-            }
-
-            function animate() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                let allDone = true;
+            const c = document.getElementById('confetti'), ctx = c.getContext('2d');
+            c.width = window.innerWidth; c.height = window.innerHeight;
+            const pieces = [], colors = ['#1a365d','#fbbf24','#10b981','#ef4444','#8b5cf6','#ec4899'];
+            for (let i = 0; i < 120; i++) pieces.push({
+                x: Math.random()*c.width, y: Math.random()*c.height - c.height,
+                w: Math.random()*10+5, h: Math.random()*6+3,
+                color: colors[Math.floor(Math.random()*colors.length)],
+                rot: Math.random()*360, rs: Math.random()*10-5,
+                sy: Math.random()*3+2, sx: Math.random()*2-1, op: 1
+            });
+            function draw() {
+                ctx.clearRect(0,0,c.width,c.height);
+                let alive = false;
                 pieces.forEach(p => {
-                    if (p.opacity <= 0) return;
-                    allDone = false;
-
-                    ctx.save();
-                    ctx.translate(p.x + p.w / 2, p.y + p.h / 2);
-                    ctx.rotate(p.rotation * Math.PI / 180);
-                    ctx.globalAlpha = p.opacity;
-                    ctx.fillStyle = p.color;
-                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    if (p.op <= 0) return; alive = true;
+                    ctx.save(); ctx.translate(p.x+p.w/2, p.y+p.h/2);
+                    ctx.rotate(p.rot*Math.PI/180); ctx.globalAlpha = p.op;
+                    ctx.fillStyle = p.color; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);
                     ctx.restore();
-
-                    p.y += p.speedY;
-                    p.x += p.speedX;
-                    p.rotation += p.rotationSpeed;
-
-                    if (p.y > canvas.height) {
-                        p.opacity -= 0.02;
-                    }
+                    p.y += p.sy; p.x += p.sx; p.rot += p.rs;
+                    if (p.y > c.height) p.op -= 0.02;
                 });
-
-                if (!allDone) {
-                    requestAnimationFrame(animate);
-                }
+                if (alive) requestAnimationFrame(draw);
             }
-
-            animate();
+            draw();
         }
     </script>
 </body>
