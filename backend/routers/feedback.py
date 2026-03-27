@@ -324,7 +324,7 @@ Please provide a comprehensive analysis with actionable insights."""
                     "Content-Type": "application/json"
                 },
                 json={
-                    "model": "llama-3.1-70b-versatile",
+                    "model": "llama-3.3-70b-versatile",
                     "messages": [
                         {"role": "system", "content": "You are an expert event feedback analyst. Provide clear, actionable insights."},
                         {"role": "user", "content": prompt}
