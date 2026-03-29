@@ -243,8 +243,18 @@ async def get_feedback_stats(db: Session = Depends(get_db)):
         ).scalar() or 0
         q6_dist[val] = count
     
+    # Source breakdown
+    invited_count = db.query(func.count(FeedbackResponse.id)).filter(
+        (FeedbackResponse.source == "invited") | (FeedbackResponse.source == None)
+    ).scalar() or 0
+    anonymous_count = db.query(func.count(FeedbackResponse.id)).filter(
+        FeedbackResponse.source == "anonymous"
+    ).scalar() or 0
+    
     return {
         "total_responses": total,
+        "invited_count": invited_count,
+        "anonymous_count": anonymous_count,
         "q1_distribution": q1_dist,
         "q2_had_unclear_count": q2_unclear,
         "q3_pace_distribution": pace_dist,
@@ -263,18 +273,20 @@ async def export_feedback_csv(db: Session = Depends(get_db)):
     writer = csv.writer(output)
     
     writer.writerow([
-        "ID", "Submitted At",
-        "Q1: Met Expectations (Emoji)", 
+        "ID", "Source", "Submitted At",
+        "Q1: Met Expectations", 
         "Q2: Had Unclear Section", "Q2: Unclear Section Details",
         "Q3: Presentation Pace",
         "Q4: Speaker Improvements",
         "Q5: Future Topics",
-        "Q6: Likely to Attend Again"
+        "Q6: Likely to Attend Again",
+        "Q7: Other Concerns"
     ])
     
     for r in responses:
         writer.writerow([
             r.id,
+            r.source or "invited",
             r.created_at.strftime("%Y-%m-%d %H:%M:%S") if r.created_at else "",
             r.q1_expectations,
             r.q2_had_unclear,
@@ -282,7 +294,8 @@ async def export_feedback_csv(db: Session = Depends(get_db)):
             r.q3_pace,
             r.q4_speaker_improvements or "",
             r.q5_future_topics or "",
-            r.q6_attend_again
+            r.q6_attend_again,
+            r.q7_other_concerns or ""
         ])
     
     output.seek(0)
@@ -436,23 +449,44 @@ async def analyze_feedback(db: Session = Depends(get_db)):
     if not responses:
         raise HTTPException(status_code=400, detail="No feedback responses to analyze")
     
+    invited = [r for r in responses if (r.source or "invited") == "invited"]
+    anonymous = [r for r in responses if r.source == "anonymous"]
+    
     unclear_sections = [r.q2_unclear_section for r in responses if r.q2_unclear_section]
     speaker_improvements = [r.q4_speaker_improvements for r in responses if r.q4_speaker_improvements]
     future_topics = [r.q5_future_topics for r in responses if r.q5_future_topics]
+    other_concerns = [r.q7_other_concerns for r in responses if r.q7_other_concerns]
     
-    q1_summary = ", ".join(f"{v}: {sum(1 for r in responses if r.q1_expectations == v)}" for v in Q1_VALUES)
-    q3_summary = ", ".join(f"{v}: {sum(1 for r in responses if r.q3_pace == v)}" for v in Q3_VALUES)
-    q6_summary = ", ".join(f"{v}: {sum(1 for r in responses if r.q6_attend_again == v)}" for v in Q6_VALUES)
+    def make_summary(resp_list, values, attr):
+        return ", ".join(f"{v}: {sum(1 for r in resp_list if getattr(r, attr) == v)}" for v in values)
+    
+    q1_invited = make_summary(invited, Q1_VALUES, "q1_expectations")
+    q1_anonymous = make_summary(anonymous, Q1_VALUES, "q1_expectations")
+    q3_invited = make_summary(invited, Q3_VALUES, "q3_pace")
+    q3_anonymous = make_summary(anonymous, Q3_VALUES, "q3_pace")
+    q6_invited = make_summary(invited, Q6_VALUES, "q6_attend_again")
+    q6_anonymous = make_summary(anonymous, Q6_VALUES, "q6_attend_again")
     
     prompt = f"""Analyze the following feedback from a Ghana Competition Law & Policy Seminar. Provide:
 1. Overall sentiment summary
 2. Key themes from the feedback
 3. Specific improvement suggestions for future events
+4. Comparison between invited attendees vs anonymous respondents
+5. Credibility-weighted conclusions (invited attendees are verified seminar attendees; anonymous respondents accessed the survey via the public website and may not have attended)
 
-FEEDBACK DATA ({len(responses)} responses):
-- Q1 "Did the seminar meet expectations?" (emoji scale): {q1_summary}
-- Q3 "Presentation pace": {q3_summary}
-- Q6 "Likelihood to attend again" (Likert): {q6_summary}
+FEEDBACK DATA ({len(responses)} total: {len(invited)} invited attendees, {len(anonymous)} anonymous):
+
+INVITED ATTENDEES ({len(invited)} responses — verified attendees):
+- Q1 "Did the seminar meet expectations?" (1-5 scale): {q1_invited}
+- Q3 "Presentation pace": {q3_invited}
+- Q6 "Likelihood to attend again" (Likert): {q6_invited}
+
+ANONYMOUS RESPONDENTS ({len(anonymous)} responses — public website visitors):
+- Q1 "Did the seminar meet expectations?" (1-5 scale): {q1_anonymous}
+- Q3 "Presentation pace": {q3_anonymous}
+- Q6 "Likelihood to attend again" (Likert): {q6_anonymous}
+
+COMBINED:
 - {len(unclear_sections)} respondents found unclear sections
 
 UNCLEAR SECTIONS:
@@ -464,7 +498,10 @@ SPEAKER IMPROVEMENT SUGGESTIONS:
 FUTURE TOPICS REQUESTED:
 {chr(10).join(f'- {s}' for s in future_topics) if future_topics else 'None provided'}
 
-Please provide a comprehensive analysis with actionable insights."""
+OTHER QUESTIONS/CONCERNS:
+{chr(10).join(f'- {s}' for s in other_concerns) if other_concerns else 'None provided'}
+
+Please provide a comprehensive analysis with actionable insights. Give more weight to invited attendee responses as they are verified participants."""
 
     try:
         async with httpx.AsyncClient() as client:

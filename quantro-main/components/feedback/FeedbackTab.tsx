@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { RefreshCw, Download, Sparkles, BarChart3, MessageSquare, Users, ThumbsUp, Clock, Loader2, TrendingUp, AlertTriangle, Lightbulb, ChevronDown, ChevronUp, Hash, Star, CheckCircle, XCircle, Send, UserCheck, Trash2 } from 'lucide-react';
+import { RefreshCw, Download, Sparkles, BarChart3, MessageSquare, Users, ThumbsUp, Clock, Loader2, TrendingUp, AlertTriangle, Lightbulb, ChevronDown, ChevronUp, Hash, Star, CheckCircle, XCircle, Send, UserCheck, Trash2, Globe, Mail } from 'lucide-react';
 
 interface FeedbackResponse {
   id: number;
@@ -10,11 +10,15 @@ interface FeedbackResponse {
   q4_speaker_improvements: string | null;
   q5_future_topics: string | null;
   q6_attend_again: string;
+  q7_other_concerns: string | null;
+  source: 'invited' | 'anonymous';
   created_at: string | null;
 }
 
 interface FeedbackStats {
   total_responses: number;
+  invited_count: number;
+  anonymous_count: number;
   q1_distribution: Record<string, number>;
   q2_had_unclear_count: number;
   q3_pace_distribution: Record<string, number>;
@@ -244,6 +248,9 @@ export const FeedbackTab: React.FC = () => {
               <p className="text-sm text-slate-500 mt-0.5">
                 {responses.length} response{responses.length !== 1 ? 's' : ''} collected
                 {responses.length > 0 && stats && ` · ${metrics?.satisfactionScore}% satisfaction`}
+                {stats && (stats.invited_count > 0 || stats.anonymous_count > 0) && (
+                  <span className="ml-1">({stats.invited_count} invited, {stats.anonymous_count} anonymous)</span>
+                )}
               </p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -323,6 +330,10 @@ export const FeedbackTab: React.FC = () => {
                     <span className="text-xs font-medium text-indigo-500 uppercase tracking-wide">Responses</span>
                   </div>
                   <div className="text-3xl font-bold text-indigo-700">{stats.total_responses}</div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-indigo-500 flex items-center gap-0.5"><Mail className="w-3 h-3" /> {stats.invited_count}</span>
+                    <span className="text-xs text-indigo-400 flex items-center gap-0.5"><Globe className="w-3 h-3" /> {stats.anonymous_count}</span>
+                  </div>
                 </div>
                 <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-2xl p-4 border border-emerald-100">
                   <div className="flex items-center gap-2 mb-2">
@@ -544,6 +555,11 @@ export const FeedbackTab: React.FC = () => {
                       <span className="text-xl">{getRatingEmoji(response.q1_expectations)}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold flex items-center gap-1 ${
+                            response.source === 'anonymous' ? 'bg-slate-100 text-slate-500' : 'bg-indigo-100 text-indigo-600'
+                          }`}>
+                            {response.source === 'anonymous' ? <><Globe className="w-3 h-3" /> Anonymous</> : <><Mail className="w-3 h-3" /> Invited</>}
+                          </span>
                           <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getRatingColor(response.q1_expectations)}`}>
                             {response.q1_expectations}
                           </span>
