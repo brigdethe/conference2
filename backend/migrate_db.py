@@ -32,6 +32,15 @@ def migrate():
         cursor.execute("ALTER TABLE law_firms ADD COLUMN logo_url TEXT")
         migrations_run += 1
     
+    # Check feedback_responses columns
+    cursor.execute("PRAGMA table_info(feedback_responses)")
+    fb_columns = [col[1] for col in cursor.fetchall()]
+    
+    if "q7_other_concerns" not in fb_columns:
+        print("Adding 'q7_other_concerns' column to feedback_responses...")
+        cursor.execute("ALTER TABLE feedback_responses ADD COLUMN q7_other_concerns TEXT")
+        migrations_run += 1
+    
     # Create admin_notification_recipients table if not exists
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS admin_notification_recipients (

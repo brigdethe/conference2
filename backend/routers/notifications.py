@@ -1705,7 +1705,7 @@ async def send_bulk_survey_invites_task(registrations_data: List[dict], send_sms
 <div style="text-align:center;margin:30px 0;">
 <a href="{survey_url}" style="display:inline-block;background:linear-gradient(135deg,#1a365d 0%,#2d4a7c 100%);color:#fff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">Share Your Feedback</a></div>
 <p style="font-size:14px;line-height:1.6;color:#999;">This survey is <strong>completely anonymous</strong> — we do not collect your name or any identifying information. Your honest feedback helps us improve future events.</p>
-<p style="font-size:16px;line-height:1.6;color:#444;">Warm regards,<br><strong>The Competition & Markets Center Team</strong></p></div></div>
+<p style="font-size:16px;line-height:1.6;color:#444;">Warm regards,<br><strong>Kofi Datsa</strong><br><strong>The Competition & Markets Center Team</strong></p></div></div>
 </body></html>"""
                     
                     msg = MIMEMultipart('alternative')

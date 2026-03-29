@@ -39,6 +39,7 @@ class FeedbackSubmission(BaseModel):
     q4_speaker_improvements: Optional[str] = None
     q5_future_topics: Optional[str] = None
     q6_attend_again: str  # "Very Unlikely"..."Very Likely"
+    q7_other_concerns: Optional[str] = None
 
 
 async def send_thank_you_email(email: str, first_name: str):
@@ -132,7 +133,8 @@ async def submit_feedback(
         q3_pace=data.q3_pace,
         q4_speaker_improvements=data.q4_speaker_improvements,
         q5_future_topics=data.q5_future_topics,
-        q6_attend_again=data.q6_attend_again
+        q6_attend_again=data.q6_attend_again,
+        q7_other_concerns=data.q7_other_concerns
     )
     
     db.add(feedback)
@@ -168,6 +170,7 @@ async def get_all_feedback(db: Session = Depends(get_db)):
             "q4_speaker_improvements": r.q4_speaker_improvements,
             "q5_future_topics": r.q5_future_topics,
             "q6_attend_again": r.q6_attend_again,
+            "q7_other_concerns": r.q7_other_concerns,
             "created_at": r.created_at.isoformat() if r.created_at else None
         }
         for r in responses

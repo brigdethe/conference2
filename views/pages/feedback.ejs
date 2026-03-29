@@ -168,21 +168,22 @@
             line-height: 1.25;
         }
 
-        /* Emoji Rating (Q1) */
-        .emoji-row { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 0.5rem; }
-        .emoji-btn {
-            width: 56px; height: 56px; border: none; background: transparent;
-            font-size: 2rem; cursor: pointer; border-radius: 16px;
-            filter: grayscale(1); opacity: 0.4;
-            transition: all 0.25s ease;
+        /* Number Rating (Q1) */
+        .number-scale { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 0.25rem; }
+        .number-btn {
+            width: 52px; height: 52px; border: 2px solid #e5e7eb; background: #fff;
+            font-size: 1.25rem; font-weight: 700; cursor: pointer; border-radius: 12px;
+            color: #6b7280; transition: all 0.25s ease; display: flex;
+            align-items: center; justify-content: center;
         }
-        .emoji-btn:hover { filter: grayscale(0.3); opacity: 0.7; transform: scale(1.08); }
-        .emoji-btn.active { filter: grayscale(0); opacity: 1; transform: scale(1.2); }
-        .emoji-label-text {
+        .number-btn:hover { border-color: #6b7280; background: #f9fafb; color: #374151; }
+        .number-btn.active { border-color: #1a365d; background: #1a365d; color: #fff; }
+        .scale-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: #9ca3af; margin-bottom: 0.5rem; }
+        .scale-selected-label {
             text-align: center; font-size: 0.9rem; font-weight: 600;
             color: #6b7280; min-height: 24px; transition: all 0.3s;
         }
-        .emoji-label-text.selected { color: #111827; }
+        .scale-selected-label.selected { color: #111827; }
 
         /* Option buttons (Q2, Q3) */
         .option-grid { display: flex; flex-direction: column; gap: 0.6rem; }
@@ -315,24 +316,29 @@
                         <div class="step-circle">6</div>
                         <span class="step-label">Attend Again</span>
                     </div>
+                    <div class="progress-step" data-step="7">
+                        <div class="step-circle">7</div>
+                        <span class="step-label">Other Concerns</span>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="right-column" id="rightColumn">
             <div class="survey-card" id="surveyCard">
-                <!-- Q1: Expectations (Emoji) -->
+                <!-- Q1: Expectations (Number Scale) -->
                 <div class="question-slide active" data-q="1">
-                    <div class="q-number">Question 1 of 6</div>
+                    <div class="q-number">Question 1 of 7</div>
                     <div class="q-text">Did the seminar meet your expectations?</div>
-                    <div class="emoji-row">
-                        <button class="emoji-btn" data-value="Terrible" data-label="Terrible" onclick="selectEmoji(this)">😔</button>
-                        <button class="emoji-btn" data-value="Poor" data-label="Poor" onclick="selectEmoji(this)">😕</button>
-                        <button class="emoji-btn" data-value="Okay" data-label="Okay" onclick="selectEmoji(this)">😐</button>
-                        <button class="emoji-btn" data-value="Good" data-label="Good" onclick="selectEmoji(this)">🙂</button>
-                        <button class="emoji-btn" data-value="Amazing" data-label="Amazing" onclick="selectEmoji(this)">😍</button>
+                    <div class="number-scale">
+                        <button class="number-btn" data-value="Terrible" data-num="1" data-label="Not at all" onclick="selectNumber(this)">1</button>
+                        <button class="number-btn" data-value="Poor" data-num="2" data-label="Slightly" onclick="selectNumber(this)">2</button>
+                        <button class="number-btn" data-value="Okay" data-num="3" data-label="Moderately" onclick="selectNumber(this)">3</button>
+                        <button class="number-btn" data-value="Good" data-num="4" data-label="Very much" onclick="selectNumber(this)">4</button>
+                        <button class="number-btn" data-value="Amazing" data-num="5" data-label="Exceeded expectations" onclick="selectNumber(this)">5</button>
                     </div>
-                    <div class="emoji-label-text" id="emojiLabel">Tap to rate</div>
+                    <div class="scale-labels"><span>Not at all</span><span>Exceeded expectations</span></div>
+                    <div class="scale-selected-label" id="scaleLabel">Tap a number to rate</div>
                     <div class="nav-row">
                         <button class="btn btn-next" id="next1" disabled onclick="goTo(2)">Next</button>
                     </div>
@@ -340,7 +346,7 @@
 
                 <!-- Q2: Unclear Section -->
                 <div class="question-slide" data-q="2">
-                    <div class="q-number">Question 2 of 6</div>
+                    <div class="q-number">Question 2 of 7</div>
                     <div class="q-text">Was there any section of the lecture you found unclear?</div>
                     <div class="option-grid">
                         <button class="option-btn" data-value="Yes" onclick="selectQ2(this,'Yes')"><span class="option-icon">✋</span> Yes</button>
@@ -357,7 +363,7 @@
 
                 <!-- Q3: Pace -->
                 <div class="question-slide" data-q="3">
-                    <div class="q-number">Question 3 of 6</div>
+                    <div class="q-number">Question 3 of 7</div>
                     <div class="q-text">Was the presentation too slow or too quick?</div>
                     <div class="option-grid">
                         <button class="option-btn" data-value="Too Slow" onclick="selectOpt(this,'q3')"><span class="option-icon">🐢</span> Too Slow</button>
@@ -372,7 +378,7 @@
 
                 <!-- Q4: Speaker Improvements -->
                 <div class="question-slide" data-q="4">
-                    <div class="q-number">Question 4 of 6</div>
+                    <div class="q-number">Question 4 of 7</div>
                     <div class="q-text">What do you think the speakers could have done better?</div>
                     <textarea class="text-input" id="q4Text" placeholder="Share your thoughts... (optional)"></textarea>
                     <div class="nav-row">
@@ -383,7 +389,7 @@
 
                 <!-- Q5: Future Topics -->
                 <div class="question-slide" data-q="5">
-                    <div class="q-number">Question 5 of 6</div>
+                    <div class="q-number">Question 5 of 7</div>
                     <div class="q-text">Any aspect of competition law you'd like discussed at a future lecture?</div>
                     <textarea class="text-input" id="q5Text" placeholder="Suggest topics... (optional)"></textarea>
                     <div class="nav-row">
@@ -394,7 +400,7 @@
 
                 <!-- Q6: Attend Again (Likert) -->
                 <div class="question-slide" data-q="6">
-                    <div class="q-number">Question 6 of 6</div>
+                    <div class="q-number">Question 6 of 7</div>
                     <div class="q-text">How likely are you to attend another lecture by the Professors later this year?</div>
                     <div class="likert-scale">
                         <button class="likert-btn" data-value="Very Unlikely" onclick="selectLikert(this)">Very Unlikely</button>
@@ -405,7 +411,18 @@
                     </div>
                     <div class="nav-row">
                         <button class="btn btn-back" onclick="goTo(5)">Back</button>
-                        <button class="btn btn-submit" id="submitBtn" disabled onclick="submitFeedback()">Submit</button>
+                        <button class="btn btn-next" id="next6" disabled onclick="goTo(7)">Next</button>
+                    </div>
+                </div>
+
+                <!-- Q7: Other Concerns -->
+                <div class="question-slide" data-q="7">
+                    <div class="q-number">Question 7 of 7</div>
+                    <div class="q-text">Do you have any other questions or concerns?</div>
+                    <textarea class="text-input" id="q7Text" placeholder="Share any other questions or concerns... (optional)"></textarea>
+                    <div class="nav-row">
+                        <button class="btn btn-back" onclick="goTo(6)">Back</button>
+                        <button class="btn btn-submit" id="submitBtn" onclick="submitFeedback()">Submit</button>
                     </div>
                 </div>
 
@@ -418,7 +435,25 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                 </div>
                 <div class="success-title">Thank You!</div>
-                <div class="success-msg">Your feedback has been submitted. We truly appreciate your time and insights. Check your email for your digital souvenir!</div>
+                <div class="success-msg">Your feedback has been submitted. We truly appreciate your time and insights.</div>
+                <div class="documents-section" style="margin-top:2rem;width:100%;max-width:400px;">
+                    <p style="font-size:0.95rem;font-weight:600;color:#374151;margin-bottom:0.75rem;">Seminar Documents</p>
+                    <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem;">Access the seminar materials below:</p>
+                    <div style="display:flex;flex-direction:column;gap:0.5rem;">
+                        <a href="/api/documents/competition-policy-and-law-concept" target="_blank" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:10px;text-decoration:none;color:#1a365d;font-size:0.9rem;font-weight:500;transition:all 0.2s;">
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#1a365d" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            Competition Policy and Law Concept
+                        </a>
+                        <a href="/api/documents/chairmans-remarks" target="_blank" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:10px;text-decoration:none;color:#1a365d;font-size:0.9rem;font-weight:500;transition:all 0.2s;">
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#1a365d" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            Chairman's Remarks
+                        </a>
+                        <a href="/api/documents/guest-speaker-speech" target="_blank" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:10px;text-decoration:none;color:#1a365d;font-size:0.9rem;font-weight:500;transition:all 0.2s;">
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#1a365d" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            Guest Speaker Speech
+                        </a>
+                    </div>
+                </div>
             </div>
 
             <!-- Already submitted -->
@@ -484,15 +519,13 @@
             });
         }
 
-        function selectEmoji(btn) {
-            document.querySelectorAll('.emoji-btn').forEach((b, i) => {
-                const bv = parseInt(b.dataset.value === 'Terrible' ? 1 : b.dataset.value === 'Poor' ? 2 : b.dataset.value === 'Okay' ? 3 : b.dataset.value === 'Good' ? 4 : 5);
-                const sv = parseInt(btn.dataset.value === 'Terrible' ? 1 : btn.dataset.value === 'Poor' ? 2 : btn.dataset.value === 'Okay' ? 3 : btn.dataset.value === 'Good' ? 4 : 5);
-                b.classList.toggle('active', bv <= sv);
+        function selectNumber(btn) {
+            document.querySelectorAll('.number-btn').forEach(b => {
+                b.classList.toggle('active', parseInt(b.dataset.num) <= parseInt(btn.dataset.num));
             });
             answers.q1 = btn.dataset.value;
-            document.getElementById('emojiLabel').textContent = btn.dataset.label;
-            document.getElementById('emojiLabel').classList.add('selected');
+            document.getElementById('scaleLabel').textContent = btn.dataset.label;
+            document.getElementById('scaleLabel').classList.add('selected');
             document.getElementById('next1').disabled = false;
         }
 
@@ -517,7 +550,7 @@
             btn.closest('.likert-scale').querySelectorAll('.likert-btn').forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
             answers.q6 = btn.dataset.value;
-            document.getElementById('submitBtn').disabled = false;
+            document.getElementById('next6').disabled = false;
         }
 
         async function submitFeedback() {
@@ -530,7 +563,8 @@
                 q3_pace: answers.q3,
                 q4_speaker_improvements: document.getElementById('q4Text').value || null,
                 q5_future_topics: document.getElementById('q5Text').value || null,
-                q6_attend_again: answers.q6
+                q6_attend_again: answers.q6,
+                q7_other_concerns: document.getElementById('q7Text').value || null
             };
             try {
                 const res = await fetch('/api/feedback', {

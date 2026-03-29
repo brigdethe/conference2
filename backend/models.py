@@ -126,4 +126,5 @@ class FeedbackResponse(Base):
     q4_speaker_improvements = Column(Text, nullable=True)
     q5_future_topics = Column(Text, nullable=True)
     q6_attend_again = Column(String(50), nullable=False)  # "Very Unlikely", "Unlikely", "Maybe", "Likely", "Very Likely"
+    q7_other_concerns = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

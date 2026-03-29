@@ -1053,13 +1053,16 @@ app.post('/api/notifications/send-custom-survey-invite', requireAdmin, async (re
   }
 });
 
-app.get('/', (_req, res) => res.render('pages/home'));
-app.get('/contact', (_req, res) => res.render('pages/contact'));
+// Maintenance mode - main pages temporarily down
+app.get('/', (_req, res) => res.render('pages/maintenance'));
+app.get('/contact', (_req, res) => res.render('pages/maintenance'));
+app.get('/terminal', (_req, res) => res.render('pages/maintenance'));
+app.get('/checkin', (_req, res) => res.render('pages/maintenance'));
+app.get('/verify/:ticketCode', (_req, res) => res.render('pages/maintenance'));
+app.get('/pending-approval', (_req, res) => res.render('pages/maintenance'));
+
+// Active routes (survey + onboarding remain available)
 app.get('/feedback', (_req, res) => res.render('pages/feedback'));
-app.get('/terminal', (_req, res) => res.render('pages/terminal'));
-app.get('/checkin', (_req, res) => res.render('pages/checkin'));
-app.get('/verify/:ticketCode', (req, res) => res.render('pages/verify', { ticketCode: req.params.ticketCode }));
-app.get('/pending-approval', (_req, res) => res.render('pages/pending-approval'));
 
 // Catch-all for Onboarding App React Router
 app.get(['/onboarding', '/onboarding/*'], (req, res) => {
