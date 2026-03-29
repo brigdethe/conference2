@@ -478,17 +478,29 @@
 
     <canvas class="confetti" id="confetti"></canvas>
 
+    <script src="https://openfpcdn.io/fingerprintjs/v4"></script>
     <script>
         const params = new URLSearchParams(window.location.search);
-        const surveyToken = params.get('token');
+        let surveyToken = params.get('token');
+        let isAnonymous = false;
         const answers = { q1: null, q2_had_unclear: null, q3: null, q6: null };
 
         async function init() {
             if (!surveyToken) {
-                document.getElementById('surveyCard').style.display = 'none';
-                document.getElementById('invalidScreen').classList.add('show');
-                return;
+                // No token — use FingerprintJS for anonymous submission
+                try {
+                    const fp = await FingerprintJS.load();
+                    const result = await fp.get();
+                    surveyToken = 'fp_' + result.visitorId;
+                    isAnonymous = true;
+                } catch (e) {
+                    console.error('Fingerprint error:', e);
+                    // Fallback: generate a random token
+                    surveyToken = 'fp_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+                    isAnonymous = true;
+                }
             }
+
             try {
                 const res = await fetch('/api/feedback/check/' + surveyToken);
                 const data = await res.json();
@@ -498,8 +510,8 @@
                 } else if (data.submitted) {
                     document.getElementById('surveyCard').style.display = 'none';
                     document.getElementById('submittedScreen').classList.add('show');
-                } else {
-                    // Record that the link was opened
+                } else if (!isAnonymous) {
+                    // Record that the invited link was opened
                     fetch('/api/feedback/opened/' + surveyToken, { method: 'POST' }).catch(() => {});
                 }
             } catch (e) {
@@ -564,7 +576,8 @@
                 q4_speaker_improvements: document.getElementById('q4Text').value || null,
                 q5_future_topics: document.getElementById('q5Text').value || null,
                 q6_attend_again: answers.q6,
-                q7_other_concerns: document.getElementById('q7Text').value || null
+                q7_other_concerns: document.getElementById('q7Text').value || null,
+                source: isAnonymous ? 'anonymous' : 'invited'
             };
             try {
                 const res = await fetch('/api/feedback', {

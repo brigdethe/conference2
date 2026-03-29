@@ -32,7 +32,7 @@ def generate_survey_token() -> str:
 
 class FeedbackSubmission(BaseModel):
     survey_token: str
-    q1_expectations: str  # emoji: "Terrible"..."Amazing"
+    q1_expectations: str  # "Terrible"..."Amazing"
     q2_had_unclear: str  # "Yes" or "No"
     q2_unclear_section: Optional[str] = None
     q3_pace: str  # "Too Slow", "Just Right", "Too Fast"
@@ -40,10 +40,11 @@ class FeedbackSubmission(BaseModel):
     q5_future_topics: Optional[str] = None
     q6_attend_again: str  # "Very Unlikely"..."Very Likely"
     q7_other_concerns: Optional[str] = None
+    source: Optional[str] = None  # "invited" or "anonymous"
 
 
 async def send_thank_you_email(email: str, first_name: str):
-    """Send thank you email with digital souvenir attachment placeholder"""
+    """Send thank you email with seminar document attachments"""
     db = SessionLocal()
     try:
         smtp_email = get_setting(db, "smtp_email")
@@ -55,6 +56,7 @@ async def send_thank_you_email(email: str, first_name: str):
             return
         
         import html as html_mod
+        import os
         safe_name = html_mod.escape(first_name)
         
         html_content = f"""<!DOCTYPE html>
@@ -66,24 +68,47 @@ async def send_thank_you_email(email: str, first_name: str):
 <div style="padding:40px 30px;">
 <p style="font-size:16px;line-height:1.6;color:#444;">Dear {safe_name},</p>
 <p style="font-size:16px;line-height:1.6;color:#444;">Thank you for taking the time to share your feedback on the Ghana Competition Law & Policy Seminar. Your insights are invaluable in helping us improve future events.</p>
-<p style="font-size:16px;line-height:1.6;color:#444;">As a token of our appreciation, please find attached your <strong>Digital Souvenir</strong> from the seminar.</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">As a token of our appreciation, please find attached the seminar documents for your reference:</p>
 <div style="background-color:#f8f9fa;border-radius:8px;padding:20px;margin:25px 0;border-left:4px solid #1a365d;">
-<p style="margin:0;font-size:14px;color:#666;"><strong>📎 Attachment:</strong> Digital Souvenir - Ghana Competition Law Seminar 2026</p></div>
+<p style="margin:0 0 8px 0;font-size:14px;color:#666;"><strong>📎 Attachments:</strong></p>
+<ul style="margin:0;padding-left:20px;font-size:14px;color:#666;line-height:1.8;">
+<li>Competition Policy and Law Concept</li>
+<li>Chairman's Remarks</li>
+<li>Guest Speaker Speech</li>
+</ul></div>
 <p style="font-size:16px;line-height:1.6;color:#444;">We hope to see you at our future events!</p>
-<p style="font-size:16px;line-height:1.6;color:#444;">Warm regards,<br><strong>The Competition & Markets Center Team</strong></p></div>
+<p style="font-size:16px;line-height:1.6;color:#444;">Warm regards,<br><strong>Kofi Datsa</strong><br><strong>The Competition & Markets Center Team</strong></p></div>
 <div style="background-color:#f8f9fa;padding:20px;text-align:center;border-top:1px solid #eee;">
-<p style="margin:0;font-size:12px;color:#888;">© 2026 Competition & Marketing Center Ltd.</p></div></div>
+<p style="margin:0;font-size:12px;color:#888;">&copy; 2026 Competition & Markets Center Ltd.</p></div></div>
 </body></html>"""
         
         import smtplib
         from email.mime.multipart import MIMEMultipart
         from email.mime.text import MIMEText
+        from email.mime.application import MIMEApplication
         
-        msg = MIMEMultipart('alternative')
-        msg['Subject'] = "Thank You for Your Feedback - Digital Souvenir Attached"
+        msg = MIMEMultipart('mixed')
+        msg['Subject'] = "Thank You for Your Feedback - Seminar Documents Attached"
         msg['From'] = f"{sender_name} <{smtp_email}>"
         msg['To'] = email
         msg.attach(MIMEText(html_content, 'html'))
+        
+        # Attach PDF documents
+        docs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "documents")
+        pdf_files = [
+            "Competition-policy-and-law-concept.pdf",
+            "Chairmans-Remarks-250326.pdf",
+            "Guest-Speaker-Speech-250326.pdf"
+        ]
+        for pdf_name in pdf_files:
+            pdf_path = os.path.join(docs_dir, pdf_name)
+            if os.path.exists(pdf_path):
+                with open(pdf_path, 'rb') as f:
+                    attachment = MIMEApplication(f.read(), _subtype='pdf')
+                    attachment.add_header('Content-Disposition', 'attachment', filename=pdf_name)
+                    msg.attach(attachment)
+            else:
+                logger.warning(f"PDF not found for attachment: {pdf_path}")
         
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(smtp_email, smtp_password)
@@ -102,8 +127,10 @@ async def submit_feedback(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
-    """Submit feedback response - one per survey token"""
-    # Check token already used
+    """Submit feedback response - one per survey token or fingerprint"""
+    is_anonymous = data.survey_token.startswith("fp_")
+    
+    # Check token/fingerprint already used
     existing = db.query(FeedbackResponse).filter(
         FeedbackResponse.survey_token == data.survey_token
     ).first()
@@ -120,9 +147,13 @@ async def submit_feedback(
     if data.q6_attend_again not in Q6_VALUES:
         raise HTTPException(status_code=400, detail="Invalid value for q6_attend_again")
     
-    # Find the registration linked to this token (stored in settings as token->reg_id mapping)
-    token_setting = db.query(Settings).filter(Settings.key == f"survey_token_{data.survey_token}").first()
-    reg_id = int(token_setting.value) if token_setting and token_setting.value else None
+    # Determine source and registration
+    reg_id = None
+    source = "anonymous" if is_anonymous else "invited"
+    
+    if not is_anonymous:
+        token_setting = db.query(Settings).filter(Settings.key == f"survey_token_{data.survey_token}").first()
+        reg_id = int(token_setting.value) if token_setting and token_setting.value else None
     
     feedback = FeedbackResponse(
         survey_token=data.survey_token,
@@ -134,24 +165,25 @@ async def submit_feedback(
         q4_speaker_improvements=data.q4_speaker_improvements,
         q5_future_topics=data.q5_future_topics,
         q6_attend_again=data.q6_attend_again,
-        q7_other_concerns=data.q7_other_concerns
+        q7_other_concerns=data.q7_other_concerns,
+        source=source
     )
     
     db.add(feedback)
     db.commit()
     db.refresh(feedback)
     
-    # Send thank you email to the attendee linked to this token
-    if reg_id and reg_id != 0:
-        reg = db.query(Registration).filter(Registration.id == reg_id).first()
-        if reg and reg.email:
-            first_name = reg.full_name.split()[0] if reg.full_name else "Attendee"
-            background_tasks.add_task(send_thank_you_email, reg.email, first_name)
-    elif reg_id == 0:
-        # Test submission - send to admin/smtp email
-        smtp_email = get_setting(db, "smtp_email")
-        if smtp_email:
-            background_tasks.add_task(send_thank_you_email, smtp_email, "Test Admin")
+    # Send thank you email only for invited attendees (anonymous have no email)
+    if not is_anonymous:
+        if reg_id and reg_id != 0:
+            reg = db.query(Registration).filter(Registration.id == reg_id).first()
+            if reg and reg.email:
+                first_name = reg.full_name.split()[0] if reg.full_name else "Attendee"
+                background_tasks.add_task(send_thank_you_email, reg.email, first_name)
+        elif reg_id == 0:
+            smtp_email = get_setting(db, "smtp_email")
+            if smtp_email:
+                background_tasks.add_task(send_thank_you_email, smtp_email, "Test Admin")
     
     return {"success": True, "message": "Thank you for your feedback!"}
 
@@ -171,6 +203,7 @@ async def get_all_feedback(db: Session = Depends(get_db)):
             "q5_future_topics": r.q5_future_topics,
             "q6_attend_again": r.q6_attend_again,
             "q7_other_concerns": r.q7_other_concerns,
+            "source": r.source or "invited",
             "created_at": r.created_at.isoformat() if r.created_at else None
         }
         for r in responses
@@ -285,7 +318,14 @@ async def record_survey_opened(token: str, db: Session = Depends(get_db)):
 @router.get("/check/{token}")
 async def check_feedback_exists(token: str, db: Session = Depends(get_db)):
     """Check if survey token is valid and whether feedback was already submitted"""
-    # Check token exists
+    # Anonymous fingerprint tokens are always valid
+    if token.startswith("fp_"):
+        existing = db.query(FeedbackResponse).filter(
+            FeedbackResponse.survey_token == token
+        ).first()
+        return {"valid": True, "submitted": existing is not None}
+    
+    # Invited tokens must exist in settings
     token_setting = db.query(Settings).filter(Settings.key == f"survey_token_{token}").first()
     if not token_setting:
         return {"valid": False, "submitted": False}

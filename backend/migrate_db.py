@@ -41,6 +41,11 @@ def migrate():
         cursor.execute("ALTER TABLE feedback_responses ADD COLUMN q7_other_concerns TEXT")
         migrations_run += 1
     
+    if "source" not in fb_columns:
+        print("Adding 'source' column to feedback_responses...")
+        cursor.execute("ALTER TABLE feedback_responses ADD COLUMN source TEXT DEFAULT 'invited'")
+        migrations_run += 1
+    
     # Create admin_notification_recipients table if not exists
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS admin_notification_recipients (
