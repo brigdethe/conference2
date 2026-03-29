@@ -1668,6 +1668,77 @@ class CustomSurveyInviteRequest(BaseModel):
     name: str = "Attendee"
 
 
+class SurveyReminderRequest(BaseModel):
+    test_only: bool = False
+
+
+async def send_bulk_survey_reminders_task(reminders_data: List[dict], send_sms: bool = True):
+    """Background task to send survey reminder emails and SMS"""
+    db = SessionLocal()
+    try:
+        email_sent = 0
+        sms_sent = 0
+        
+        smtp_email = get_setting(db, "smtp_email")
+        smtp_password = get_setting(db, "smtp_password")
+        sender_name = get_setting(db, "smtp_sender_name", "Ghana Competition Law Seminar")
+        
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+        
+        for item in reminders_data:
+            email = item.get("email")
+            phone = item.get("phone")
+            token = item.get("token")
+            first_name = item["full_name"].split()[0] if item.get("full_name") else "Attendee"
+            survey_url = f"https://seminar.cmc-ghana.com/feedback?token={token}"
+            
+            if email and smtp_email and smtp_password:
+                try:
+                    html_content = f"""<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background-color:#f4f4f4;">
+<div style="max-width:600px;margin:20px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<div style="background-color:#1a365d;padding:30px 20px;text-align:center;">
+<h1 style="color:#fff;margin:0;font-size:24px;">Friendly Reminder</h1></div>
+<div style="padding:40px 30px;">
+<p style="font-size:16px;line-height:1.6;color:#444;">Dear {html.escape(first_name)},</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">We noticed you haven't had the chance to share your feedback on the Ghana Competition Law & Policy Seminar yet. Your opinion matters greatly to us!</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">It only takes <strong>2 minutes</strong> and helps us plan better future events.</p>
+<div style="text-align:center;margin:30px 0;">
+<a href="{survey_url}" style="display:inline-block;background:linear-gradient(135deg,#1a365d 0%,#2d4a7c 100%);color:#fff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">Share Your Feedback Now</a></div>
+<p style="font-size:14px;line-height:1.6;color:#999;">This survey is <strong>completely anonymous</strong> — we do not collect your name or any identifying information. Your honest feedback helps us improve future events.</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">Warm regards,<br><strong>Kofi Datsa</strong><br><strong>The Competition & Markets Center Team</strong></p></div></div>
+</body></html>"""
+                    
+                    msg = MIMEMultipart('alternative')
+                    msg['Subject'] = "Reminder: We'd Love Your Feedback - Ghana Competition Law Seminar"
+                    msg['From'] = f"{sender_name} <{smtp_email}>"
+                    msg['To'] = email
+                    msg.attach(MIMEText(html_content, 'html'))
+                    
+                    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+                        server.login(smtp_email, smtp_password)
+                        server.sendmail(smtp_email, email, msg.as_string())
+                    
+                    email_sent += 1
+                except Exception as e:
+                    logger.error(f"Failed to send reminder email to {email}: {e}")
+            
+            if send_sms and phone:
+                message = f"Hi {first_name}! Quick reminder \u2014 we\u2019d love your feedback on GCLS 2026. Takes just 2 mins: {survey_url}"
+                success = await send_sms_internal(db, phone, message)
+                if success:
+                    sms_sent += 1
+        
+        logger.info(f"Survey reminders completed: {email_sent} emails, {sms_sent} SMS sent")
+    except Exception as e:
+        logger.error(f"Error in survey reminder task: {e}")
+    finally:
+        db.close()
+
+
 async def send_bulk_survey_invites_task(registrations_data: List[dict], send_sms: bool = True):
     """Background task to send bulk survey invitations with unique links"""
     db = SessionLocal()
@@ -1876,4 +1947,83 @@ async def send_custom_survey_invitation(
         "success": True,
         "message": f"Survey invite sent to {', '.join(channels)}",
         "token": token
+    }
+
+
+@router.post("/send-survey-reminder")
+async def send_survey_reminders(
+    data: SurveyReminderRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Send reminder to all invitees who haven't completed the survey yet"""
+    from models import FeedbackResponse
+    import json as json_mod
+    from datetime import datetime
+    
+    # Get all invite metadata
+    invite_settings = db.query(Settings).filter(Settings.key.like("survey_invite_%")).all()
+    
+    if not invite_settings:
+        return {"success": True, "message": "No survey invites found", "reminder_count": 0}
+    
+    reminders_data = []
+    for inv in invite_settings:
+        token = inv.key.replace("survey_invite_", "")
+        try:
+            meta = json_mod.loads(inv.value)
+        except Exception:
+            continue
+        
+        # Check if this person already completed the survey
+        feedback = db.query(FeedbackResponse).filter(
+            FeedbackResponse.survey_token == token
+        ).first()
+        
+        if feedback:
+            continue  # Already completed, skip
+        
+        # Reset opened_at tracker so it appears fresh
+        meta["opened_at"] = None
+        meta["reminder_sent_at"] = datetime.utcnow().isoformat()
+        inv.value = json_mod.dumps(meta)
+        
+        if data.test_only:
+            # For test, only send to admin email
+            test_email = get_setting(db, "smtp_email")
+            reminders_data.append({
+                "email": test_email,
+                "phone": None,
+                "full_name": meta.get("name", "Test User"),
+                "token": token
+            })
+            break  # Only send one test reminder
+        else:
+            reminders_data.append({
+                "email": meta.get("email"),
+                "phone": meta.get("phone"),
+                "full_name": meta.get("name", "Attendee"),
+                "token": token
+            })
+    
+    db.commit()
+    
+    if not reminders_data:
+        return {"success": True, "message": "All invitees have already completed the survey!", "reminder_count": 0}
+    
+    background_tasks.add_task(send_bulk_survey_reminders_task, reminders_data, not data.test_only)
+    
+    if data.test_only:
+        return {
+            "success": True,
+            "message": f"Test reminder sent to admin email",
+            "reminder_count": 1,
+            "test": True
+        }
+    
+    return {
+        "success": True,
+        "message": f"Sending reminders to {len(reminders_data)} people who haven't completed the survey.",
+        "reminder_count": len(reminders_data),
+        "background": True
     }

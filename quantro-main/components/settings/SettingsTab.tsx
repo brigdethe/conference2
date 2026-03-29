@@ -46,6 +46,7 @@ export const SettingsTab: React.FC = () => {
   const [customInvitePhone, setCustomInvitePhone] = useState('');
   const [customInviteName, setCustomInviteName] = useState('');
   const [sendingCustomInvite, setSendingCustomInvite] = useState(false);
+  const [sendingSurveyReminder, setSendingSurveyReminder] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
@@ -288,6 +289,27 @@ export const SettingsTab: React.FC = () => {
       setMessage({ type: 'error', text: 'Failed to send custom survey invite' });
     } finally {
       setSendingCustomInvite(false);
+    }
+  };
+
+  const sendSurveyReminder = async (test: boolean) => {
+    setSendingSurveyReminder(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/notifications/send-survey-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_only: test }),
+      });
+      const data = await res.json();
+      setMessage({
+        type: data.success ? 'success' : 'error',
+        text: data.message || (data.success ? 'Reminders sent!' : 'Failed to send reminders'),
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to send survey reminders' });
+    } finally {
+      setSendingSurveyReminder(false);
     }
   };
 
@@ -868,6 +890,31 @@ export const SettingsTab: React.FC = () => {
                     {sendingCustomInvite ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     Send Personal Invite
                   </button>
+                </div>
+
+                {/* Survey Reminder */}
+                <div className="mt-4 rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
+                  <h4 className="text-sm font-semibold text-amber-900 mb-1 flex items-center gap-2">
+                    🔔 Survey Reminder
+                  </h4>
+                  <p className="text-xs text-amber-700 mb-3">Resend the survey link to everyone who hasn't filled it yet. Resets their open tracker.</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => sendSurveyReminder(true)}
+                      disabled={sendingSurveyReminder}
+                      className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs font-medium text-amber-700 hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      Test
+                    </button>
+                    <button
+                      onClick={() => sendSurveyReminder(false)}
+                      disabled={sendingSurveyReminder}
+                      className="flex items-center gap-1 rounded-lg bg-amber-600 px-4 py-2 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
+                    >
+                      {sendingSurveyReminder && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Send Reminders
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

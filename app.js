@@ -1053,6 +1053,21 @@ app.post('/api/notifications/send-custom-survey-invite', requireAdmin, async (re
   }
 });
 
+app.post('/api/notifications/send-survey-reminder', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/notifications/send-survey-reminder', {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error sending survey reminder:', error);
+    res.status(500).json({ error: 'Failed to send survey reminder' });
+  }
+});
+
 // Maintenance mode - main pages temporarily down
 app.get('/', (_req, res) => res.render('pages/maintenance'));
 app.get('/contact', (_req, res) => res.render('pages/maintenance'));
