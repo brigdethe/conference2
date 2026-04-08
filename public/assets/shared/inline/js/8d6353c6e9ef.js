@@ -56,7 +56,7 @@
                                 renderer: "svg",
                                 loop: false,
                                 autoplay: false,
-                                path: "https://cdn.prod.website-files.com/68eee3b7aa1d9628fd1f8ee0/68fb3798ee1efa10727d6465_quinn-line-test.json"
+                                path: "/assets/webflow/quinn-line-test.json"
                             });
                         }
 

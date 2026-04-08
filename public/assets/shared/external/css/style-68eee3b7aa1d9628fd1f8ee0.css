@@ -2162,7 +2162,7 @@ textarea.w-select {
 
 @font-face {
     font-family: Neuemontreal;
-    src: url(https://cdn.prod.website-files.com/68eee3b7aa1d9628fd1f8ee0/68f15cac5a8972841fd35472_PPNeueMontreal-Regular.woff)format("woff");
+    src: url(/assets/fonts/PPNeueMontreal-Regular.woff)format("woff");
     font-weight: 400;
     font-style: normal;
     font-display: swap
@@ -2170,7 +2170,7 @@ textarea.w-select {
 
 @font-face {
     font-family: Seasonmix;
-    src: url(https://cdn.prod.website-files.com/68eee3b7aa1d9628fd1f8ee0/68f15cc2a525239513fc686d_SeasonMix-Regular.woff)format("woff");
+    src: url(/assets/fonts/SeasonMix-Regular.woff)format("woff");
     font-weight: 400;
     font-style: normal;
     font-display: swap
@@ -3237,14 +3237,14 @@ figcaption {
 }
 
 .form_input.is-select-input {
-    background-image: url(https://cdn.prod.website-files.com/68eee3b7aa1d9628fd1f8ee0/68eee3b7aa1d9628fd1f8f0d_chevron-down.svg);
+    background-image: url(/assets/webflow/chevron-down.svg);
     background-position: 99%;
     background-repeat: no-repeat;
     background-size: auto
 }
 
 .form_input.is-select-input.is-alternate {
-    background-image: url(https://cdn.prod.website-files.com/68eee3b7aa1d9628fd1f8ee0/68eee3b7aa1d9628fd1f8f0c_chevron-down-white.svg)
+    background-image: url(/assets/webflow/chevron-down-white.svg)
 }
 
 .form_input.is-alternate {
