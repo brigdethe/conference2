@@ -1672,6 +1672,160 @@ class SurveyReminderRequest(BaseModel):
     test_only: bool = False
 
 
+class ApologyReminderRequest(BaseModel):
+    test_only: bool = False
+
+
+class SlidesThankYouRequest(BaseModel):
+    test_only: bool = False
+
+
+async def send_apology_reminder_task(reminders_data: List[dict], send_sms: bool = True):
+    """Background task to send apology reminder emails and SMS for technical issue"""
+    db = SessionLocal()
+    try:
+        email_sent = 0
+        sms_sent = 0
+        
+        smtp_email = get_setting(db, "smtp_email")
+        smtp_password = get_setting(db, "smtp_password")
+        sender_name = get_setting(db, "smtp_sender_name", "Ghana Competition Law Seminar")
+        
+        import smtplib
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+        
+        for item in reminders_data:
+            email = item.get("email")
+            phone = item.get("phone")
+            token = item.get("token")
+            first_name = item["full_name"].split()[0] if item.get("full_name") else "Attendee"
+            survey_url = f"https://seminar.cmc-ghana.com/feedback?token={token}"
+            
+            if email and smtp_email and smtp_password:
+                try:
+                    html_content = f"""<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background-color:#f4f4f4;">
+<div style="max-width:600px;margin:20px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<div style="background-color:#1a365d;padding:30px 20px;text-align:center;">
+<h1 style="color:#fff;margin:0;font-size:24px;">We Apologize for the Inconvenience</h1></div>
+<div style="padding:40px 30px;">
+<p style="font-size:16px;line-height:1.6;color:#444;">Dear {html.escape(first_name)},</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">We sincerely apologize — our website experienced a temporary technical issue that may have prevented you from completing the feedback survey.</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">The issue has now been resolved, and we would be incredibly grateful if you could take <strong>2 minutes</strong> to share your thoughts on the Ghana Competition Law & Policy Seminar.</p>
+<div style="text-align:center;margin:30px 0;">
+<a href="{survey_url}" style="display:inline-block;background:linear-gradient(135deg,#1a365d 0%,#2d4a7c 100%);color:#fff;padding:14px 32px;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">Complete Survey Now</a></div>
+<p style="font-size:16px;line-height:1.6;color:#444;">Your response is <strong>invaluable</strong> to us and will help shape our future events. Thank you for your patience and understanding.</p>
+<p style="font-size:14px;line-height:1.6;color:#999;">This survey is <strong>completely anonymous</strong> — we do not collect your name or any identifying information.</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">Warm regards,<br><strong>Kofi Datsa</strong><br><strong>The Competition & Markets Center Team</strong></p></div></div>
+</body></html>"""
+                    
+                    msg = MIMEMultipart('alternative')
+                    msg['Subject'] = "Our Apologies - Please Complete Your Feedback Survey"
+                    msg['From'] = f"{sender_name} <{smtp_email}>"
+                    msg['To'] = email
+                    msg.attach(MIMEText(html_content, 'html'))
+                    
+                    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+                        server.login(smtp_email, smtp_password)
+                        server.sendmail(smtp_email, email, msg.as_string())
+                    
+                    email_sent += 1
+                except Exception as e:
+                    logger.error(f"Failed to send apology email to {email}: {e}")
+            
+            if send_sms and phone:
+                message = f"Hi {first_name}! We apologize for the technical issue. Please complete your GCLS 2026 feedback (2 mins): {survey_url} - Your response is invaluable!"
+                success = await send_sms_internal(db, phone, message)
+                if success:
+                    sms_sent += 1
+        
+        logger.info(f"Apology reminders completed: {email_sent} emails, {sms_sent} SMS sent")
+    except Exception as e:
+        logger.error(f"Error in apology reminder task: {e}")
+    finally:
+        db.close()
+
+
+async def send_slides_thank_you_task(recipients_data: List[dict]):
+    """Background task to send thank you emails with PPT slides to survey completers"""
+    db = SessionLocal()
+    try:
+        email_sent = 0
+        
+        smtp_email = get_setting(db, "smtp_email")
+        smtp_password = get_setting(db, "smtp_password")
+        sender_name = get_setting(db, "smtp_sender_name", "Ghana Competition Law Seminar")
+        
+        import smtplib
+        import os
+        from email.mime.multipart import MIMEMultipart
+        from email.mime.text import MIMEText
+        from email.mime.application import MIMEApplication
+        
+        docs_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "documents")
+        ppt_files = ["Presentation-Slides-1.pptx", "Presentation-Slides-2.pptx"]
+        
+        for item in recipients_data:
+            email = item.get("email")
+            first_name = item["full_name"].split()[0] if item.get("full_name") else "Attendee"
+            
+            if email and smtp_email and smtp_password:
+                try:
+                    html_content = f"""<!DOCTYPE html>
+<html><head><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background-color:#f4f4f4;">
+<div style="max-width:600px;margin:20px auto;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+<div style="background-color:#1a365d;padding:30px 20px;text-align:center;">
+<h1 style="color:#fff;margin:0;font-size:24px;">Thank You - Presentation Slides Attached!</h1></div>
+<div style="padding:40px 30px;">
+<p style="font-size:16px;line-height:1.6;color:#444;">Dear {html.escape(first_name)},</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">Thank you once again for taking the time to share your valuable feedback on the Ghana Competition Law & Policy Seminar.</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">As promised, please find attached the <strong>presentation slides</strong> from the seminar for your reference and future use.</p>
+<div style="background-color:#f8f9fa;border-radius:8px;padding:20px;margin:25px 0;border-left:4px solid #1a365d;">
+<p style="margin:0 0 8px 0;font-size:14px;color:#666;"><strong>📎 Attachments:</strong></p>
+<ul style="margin:0;padding-left:20px;font-size:14px;color:#666;line-height:1.8;">
+<li>Seminar Presentation Slides (Part 1)</li>
+<li>Seminar Presentation Slides (Part 2)</li>
+</ul></div>
+<p style="font-size:16px;line-height:1.6;color:#444;">We hope these materials prove useful. We look forward to seeing you at our future events!</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">Warm regards,<br><strong>Kofi Datsa</strong><br><strong>The Competition & Markets Center Team</strong></p></div>
+<div style="background-color:#f8f9fa;padding:20px;text-align:center;border-top:1px solid #eee;">
+<p style="margin:0;font-size:12px;color:#888;">&copy; 2026 Competition & Markets Center Ltd.</p></div></div>
+</body></html>"""
+                    
+                    msg = MIMEMultipart('mixed')
+                    msg['Subject'] = "Thank You - Seminar Presentation Slides Attached"
+                    msg['From'] = f"{sender_name} <{smtp_email}>"
+                    msg['To'] = email
+                    msg.attach(MIMEText(html_content, 'html'))
+                    
+                    for ppt_name in ppt_files:
+                        ppt_path = os.path.join(docs_dir, ppt_name)
+                        if os.path.exists(ppt_path):
+                            with open(ppt_path, 'rb') as f:
+                                attachment = MIMEApplication(f.read(), _subtype='vnd.openxmlformats-officedocument.presentationml.presentation')
+                                attachment.add_header('Content-Disposition', 'attachment', filename=ppt_name)
+                                msg.attach(attachment)
+                        else:
+                            logger.warning(f"PPT not found for attachment: {ppt_path}")
+                    
+                    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+                        server.login(smtp_email, smtp_password)
+                        server.sendmail(smtp_email, email, msg.as_string())
+                    
+                    email_sent += 1
+                except Exception as e:
+                    logger.error(f"Failed to send slides email to {email}: {e}")
+        
+        logger.info(f"Slides thank you emails completed: {email_sent} emails sent")
+    except Exception as e:
+        logger.error(f"Error in slides thank you task: {e}")
+    finally:
+        db.close()
+
+
 async def send_bulk_survey_reminders_task(reminders_data: List[dict], send_sms: bool = True):
     """Background task to send survey reminder emails and SMS"""
     db = SessionLocal()
@@ -2025,5 +2179,139 @@ async def send_survey_reminders(
         "success": True,
         "message": f"Sending reminders to {len(reminders_data)} people who haven't completed the survey.",
         "reminder_count": len(reminders_data),
+        "background": True
+    }
+
+
+@router.post("/send-apology-reminder")
+async def send_apology_reminders(
+    data: ApologyReminderRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Send apology reminder to all invitees who haven't completed the survey (technical issue message)"""
+    from models import FeedbackResponse
+    import json as json_mod
+    from datetime import datetime
+    
+    invite_settings = db.query(Settings).filter(Settings.key.like("survey_invite_%")).all()
+    
+    if not invite_settings:
+        return {"success": True, "message": "No survey invites found", "reminder_count": 0}
+    
+    reminders_data = []
+    for inv in invite_settings:
+        token = inv.key.replace("survey_invite_", "")
+        try:
+            meta = json_mod.loads(inv.value)
+        except Exception:
+            continue
+        
+        feedback = db.query(FeedbackResponse).filter(
+            FeedbackResponse.survey_token == token
+        ).first()
+        
+        if feedback:
+            continue
+        
+        meta["opened_at"] = None
+        meta["apology_sent_at"] = datetime.utcnow().isoformat()
+        inv.value = json_mod.dumps(meta)
+        
+        if data.test_only:
+            test_email = get_setting(db, "smtp_email")
+            reminders_data.append({
+                "email": test_email,
+                "phone": None,
+                "full_name": meta.get("name", "Test User"),
+                "token": token
+            })
+            break
+        else:
+            reminders_data.append({
+                "email": meta.get("email"),
+                "phone": meta.get("phone"),
+                "full_name": meta.get("name", "Attendee"),
+                "token": token
+            })
+    
+    db.commit()
+    
+    if not reminders_data:
+        return {"success": True, "message": "All invitees have already completed the survey!", "reminder_count": 0}
+    
+    background_tasks.add_task(send_apology_reminder_task, reminders_data, not data.test_only)
+    
+    if data.test_only:
+        return {
+            "success": True,
+            "message": "Test apology reminder sent to admin email",
+            "reminder_count": 1,
+            "test": True
+        }
+    
+    return {
+        "success": True,
+        "message": f"Sending apology reminders to {len(reminders_data)} people who haven't completed the survey.",
+        "reminder_count": len(reminders_data),
+        "background": True
+    }
+
+
+@router.post("/send-slides-thank-you")
+async def send_slides_thank_you(
+    data: SlidesThankYouRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """Send thank you email with PPT slides to all who have completed the survey"""
+    from models import FeedbackResponse, Registration
+    import json as json_mod
+    
+    # Get all completed feedback responses that have a registration (invited users with email)
+    feedbacks = db.query(FeedbackResponse).filter(
+        FeedbackResponse.registration_id.isnot(None),
+        FeedbackResponse.source == "invited"
+    ).all()
+    
+    if not feedbacks:
+        return {"success": True, "message": "No invited survey completers found", "sent_count": 0}
+    
+    recipients_data = []
+    for fb in feedbacks:
+        reg = db.query(Registration).filter(Registration.id == fb.registration_id).first()
+        if not reg or not reg.email:
+            continue
+        
+        if data.test_only:
+            test_email = get_setting(db, "smtp_email")
+            recipients_data.append({
+                "email": test_email,
+                "full_name": reg.full_name or "Test User"
+            })
+            break
+        else:
+            recipients_data.append({
+                "email": reg.email,
+                "full_name": reg.full_name or "Attendee"
+            })
+    
+    if not recipients_data:
+        return {"success": True, "message": "No recipients with email found", "sent_count": 0}
+    
+    background_tasks.add_task(send_slides_thank_you_task, recipients_data)
+    
+    if data.test_only:
+        return {
+            "success": True,
+            "message": "Test slides email sent to admin",
+            "sent_count": 1,
+            "test": True
+        }
+    
+    return {
+        "success": True,
+        "message": f"Sending slides to {len(recipients_data)} survey completers.",
+        "sent_count": len(recipients_data),
         "background": True
     }

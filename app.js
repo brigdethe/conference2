@@ -1068,6 +1068,36 @@ app.post('/api/notifications/send-survey-reminder', requireAdmin, async (req, re
   }
 });
 
+app.post('/api/notifications/send-apology-reminder', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/notifications/send-apology-reminder', {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error sending apology reminder:', error);
+    res.status(500).json({ error: 'Failed to send apology reminder' });
+  }
+});
+
+app.post('/api/notifications/send-slides-thank-you', requireAdmin, async (req, res) => {
+  try {
+    const response = await fetchBackend('/notifications/send-slides-thank-you', {
+      method: 'POST',
+      body: JSON.stringify(req.body),
+    });
+    const data = await response.json();
+    if (!response.ok) return res.status(response.status).json(data);
+    res.json(data);
+  } catch (error) {
+    console.error('Error sending slides thank you:', error);
+    res.status(500).json({ error: 'Failed to send slides thank you' });
+  }
+});
+
 app.get('/', (_req, res) => res.render('pages/home'));
 app.get('/contact', (_req, res) => res.render('pages/contact'));
 app.get('/feedback', (_req, res) => res.render('pages/feedback'));

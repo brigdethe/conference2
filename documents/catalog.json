@@ -16,5 +16,17 @@
     "title": "Guest Speaker Speech",
     "filename": "Guest-Speaker-Speech-250326.pdf",
     "description": "Speech delivered by the Guest Speaker at the Ghana Competition Law & Policy Seminar on 25 March 2026."
+  },
+  {
+    "slug": "presentation-slides-1",
+    "title": "Seminar Presentation Slides (Part 1)",
+    "filename": "Presentation-Slides-1.pptx",
+    "description": "Presentation slides from the Ghana Competition Law & Policy Seminar - Part 1."
+  },
+  {
+    "slug": "presentation-slides-2",
+    "title": "Seminar Presentation Slides (Part 2)",
+    "filename": "Presentation-Slides-2.pptx",
+    "description": "Presentation slides from the Ghana Competition Law & Policy Seminar - Part 2."
   }
 ]

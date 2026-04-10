@@ -47,6 +47,8 @@ export const SettingsTab: React.FC = () => {
   const [customInviteName, setCustomInviteName] = useState('');
   const [sendingCustomInvite, setSendingCustomInvite] = useState(false);
   const [sendingSurveyReminder, setSendingSurveyReminder] = useState(false);
+  const [sendingApologyReminder, setSendingApologyReminder] = useState(false);
+  const [sendingSlidesThankYou, setSendingSlidesThankYou] = useState(false);
 
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
@@ -310,6 +312,48 @@ export const SettingsTab: React.FC = () => {
       setMessage({ type: 'error', text: 'Failed to send survey reminders' });
     } finally {
       setSendingSurveyReminder(false);
+    }
+  };
+
+  const sendApologyReminder = async (test: boolean) => {
+    setSendingApologyReminder(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/notifications/send-apology-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_only: test }),
+      });
+      const data = await res.json();
+      setMessage({
+        type: data.success ? 'success' : 'error',
+        text: data.message || (data.success ? 'Apology reminders sent!' : 'Failed to send apology reminders'),
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to send apology reminders' });
+    } finally {
+      setSendingApologyReminder(false);
+    }
+  };
+
+  const sendSlidesThankYou = async (test: boolean) => {
+    setSendingSlidesThankYou(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/notifications/send-slides-thank-you', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test_only: test }),
+      });
+      const data = await res.json();
+      setMessage({
+        type: data.success ? 'success' : 'error',
+        text: data.message || (data.success ? 'Slides emails sent!' : 'Failed to send slides emails'),
+      });
+    } catch (err) {
+      setMessage({ type: 'error', text: 'Failed to send slides thank you emails' });
+    } finally {
+      setSendingSlidesThankYou(false);
     }
   };
 
@@ -913,6 +957,56 @@ export const SettingsTab: React.FC = () => {
                     >
                       {sendingSurveyReminder && <Loader2 className="h-3 w-3 animate-spin" />}
                       Send Reminders
+                    </button>
+                  </div>
+                </div>
+
+                {/* Apology Reminder (Technical Issue) */}
+                <div className="mt-4 rounded-xl border-2 border-red-200 bg-red-50 p-4">
+                  <h4 className="text-sm font-semibold text-red-900 mb-1 flex items-center gap-2">
+                    ⚠️ Apology Reminder (Technical Issue)
+                  </h4>
+                  <p className="text-xs text-red-700 mb-3">Send apology for technical issue to non-completers with their survey link. Use after site downtime.</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => sendApologyReminder(true)}
+                      disabled={sendingApologyReminder}
+                      className="rounded-lg border border-red-300 bg-white px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-100 disabled:opacity-50"
+                    >
+                      Test
+                    </button>
+                    <button
+                      onClick={() => sendApologyReminder(false)}
+                      disabled={sendingApologyReminder}
+                      className="flex items-center gap-1 rounded-lg bg-red-600 px-4 py-2 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                    >
+                      {sendingApologyReminder && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Send Apology
+                    </button>
+                  </div>
+                </div>
+
+                {/* Send Slides to Completers */}
+                <div className="mt-4 rounded-xl border-2 border-green-200 bg-green-50 p-4">
+                  <h4 className="text-sm font-semibold text-green-900 mb-1 flex items-center gap-2">
+                    📊 Send Presentation Slides
+                  </h4>
+                  <p className="text-xs text-green-700 mb-3">Send thank you email with PPT slides to everyone who has completed the survey.</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => sendSlidesThankYou(true)}
+                      disabled={sendingSlidesThankYou}
+                      className="rounded-lg border border-green-300 bg-white px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-100 disabled:opacity-50"
+                    >
+                      Test
+                    </button>
+                    <button
+                      onClick={() => sendSlidesThankYou(false)}
+                      disabled={sendingSlidesThankYou}
+                      className="flex items-center gap-1 rounded-lg bg-green-600 px-4 py-2 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {sendingSlidesThankYou && <Loader2 className="h-3 w-3 animate-spin" />}
+                      Send Slides
                     </button>
                   </div>
                 </div>

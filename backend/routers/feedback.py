@@ -68,13 +68,15 @@ async def send_thank_you_email(email: str, first_name: str):
 <div style="padding:40px 30px;">
 <p style="font-size:16px;line-height:1.6;color:#444;">Dear {safe_name},</p>
 <p style="font-size:16px;line-height:1.6;color:#444;">Thank you for taking the time to share your feedback on the Ghana Competition Law & Policy Seminar. Your insights are invaluable in helping us improve future events.</p>
-<p style="font-size:16px;line-height:1.6;color:#444;">As a token of our appreciation, please find attached the seminar documents for your reference:</p>
+<p style="font-size:16px;line-height:1.6;color:#444;">As a token of our appreciation, please find attached the seminar documents and presentation slides for your reference:</p>
 <div style="background-color:#f8f9fa;border-radius:8px;padding:20px;margin:25px 0;border-left:4px solid #1a365d;">
 <p style="margin:0 0 8px 0;font-size:14px;color:#666;"><strong>📎 Attachments:</strong></p>
 <ul style="margin:0;padding-left:20px;font-size:14px;color:#666;line-height:1.8;">
-<li>Competition Policy and Law Concept</li>
-<li>Chairman's Remarks</li>
-<li>Guest Speaker Speech</li>
+<li>Competition Policy and Law Concept (PDF)</li>
+<li>Chairman's Remarks (PDF)</li>
+<li>Guest Speaker Speech (PDF)</li>
+<li>Seminar Presentation Slides - Part 1 (PPTX)</li>
+<li>Seminar Presentation Slides - Part 2 (PPTX)</li>
 </ul></div>
 <p style="font-size:16px;line-height:1.6;color:#444;">We hope to see you at our future events!</p>
 <p style="font-size:16px;line-height:1.6;color:#444;">Warm regards,<br><strong>Kofi Datsa</strong><br><strong>The Competition & Markets Center Team</strong></p></div>
@@ -109,6 +111,21 @@ async def send_thank_you_email(email: str, first_name: str):
                     msg.attach(attachment)
             else:
                 logger.warning(f"PDF not found for attachment: {pdf_path}")
+        
+        # Attach PPT slides
+        ppt_files = [
+            "Presentation-Slides-1.pptx",
+            "Presentation-Slides-2.pptx"
+        ]
+        for ppt_name in ppt_files:
+            ppt_path = os.path.join(docs_dir, ppt_name)
+            if os.path.exists(ppt_path):
+                with open(ppt_path, 'rb') as f:
+                    attachment = MIMEApplication(f.read(), _subtype='vnd.openxmlformats-officedocument.presentationml.presentation')
+                    attachment.add_header('Content-Disposition', 'attachment', filename=ppt_name)
+                    msg.attach(attachment)
+            else:
+                logger.warning(f"PPT not found for attachment: {ppt_path}")
         
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
             server.login(smtp_email, smtp_password)
