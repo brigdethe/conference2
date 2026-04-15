@@ -25,3 +25,10 @@ update_firm_codes.py
 
 # Root-level PDFs (served from documents/ folder)
 /Competition-policy-and-law-concept.pdf
+
+# Cloned repos (content copied to views/ and public/)
+amazon-interview/
+
+# Old frontend (shelved)
+views-old/
+public-old/

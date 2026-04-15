@@ -1098,7 +1098,7 @@ app.post('/api/notifications/send-slides-thank-you', requireAdmin, async (req, r
   }
 });
 
-app.get('/', (_req, res) => res.render('pages/home'));
+app.get('/', (_req, res) => res.render('index'));
 app.get('/contact', (_req, res) => res.render('pages/contact'));
 app.get('/feedback', (_req, res) => res.render('pages/feedback'));
 app.get('/terminal', (_req, res) => res.render('pages/terminal'));

@@ -1,0 +1,1459 @@
+<footer id="footer" class="section footer">
+    <div class="padding-global footer">
+        <div class="footer_container-wrapper">
+            <div class="container-four-col footer-left">
+                <div data-heading-animation="" class="footer-text">
+                    Ask a Question
+                    <span class="footer-text-note">
+                        Submit questions you'd like our speakers to address during the seminar.
+                    </span>
+                </div>
+                <a href="#" class="footer_logo-link w-nav-brand">
+                    <div class="footer-logo">
+                        <img src="https://ik.imagekit.io/dr5fryhth/conference/logo2.svg?updatedAt=1769833653837"
+                            alt="Conference Logo" style="width: 100%; height: 100%;">
+                    </div>
+                </a>
+            </div>
+            <div class="container-four-col is-footer">
+                <div data-no-fade-tablet="" data-fade-in="" class="footer_menu-card">
+                    <div class="footer_inquiry-wrapper">
+                        <div class="footer_inquiry-header">
+                            <div class="detail">Have a Question?</div>
+                            <h3 class="footer_inquiry-title">Submit Your Question</h3>
+                        </div>
+                        <div class="footer_inquiry-tabs" id="inquiryTabs">
+                            <button type="button" class="footer_inquiry-tab active" data-tab="question">Seminar Question</button>
+                            <button type="button" class="footer_inquiry-tab" data-tab="inquiry">General Inquiry</button>
+                        </div>
+                        <form class="footer_inquiry-form" id="footerInquiryForm">
+                            <input type="hidden" name="inquiryType" id="inquiryTypeHidden" value="Seminar Question" />
+                            <input class="footer_inquiry-input" type="text" name="name" placeholder="Full Name"
+                                required />
+                            <input class="footer_inquiry-input" type="email" name="email" placeholder="Email Address (Optional)" />
+                            <div class="footer_inquiry-field-group">
+                                <input class="footer_inquiry-input" type="text" name="ticketCode" id="ticketCodeInput" placeholder="Ticket Code" maxlength="4" />
+                                <small class="footer_inquiry-help-text" id="ticketCodeHelp">Required for registered attendees - questions will be prioritized</small>
+                            </div>
+                            <textarea class="footer_inquiry-input footer_inquiry-textarea" name="message" rows="4"
+                                placeholder="What question would you like addressed at the seminar?" required id="messageTextarea"></textarea>
+                            <button class="footer_inquiry-submit" type="submit" id="footerSubmitBtn">Submit Question</button>
+                        </form>
+                    </div>
+                    <div class="footer_legal-wrapper">
+                        <div class="detail">© 2026 Competition & Marketing Center Ltd. Site Created & Managed By <a href="https://fredrickagyare.is-a.dev/" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">Agyare Fredrick</a></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="background-content-wrapper"><img
+            src="https://ik.imagekit.io/dr5fryhth/conferencenew/giammarco-boscaro-zeH-ljawHtg-unsplash.jpg?updatedAt=1770793618312"
+            loading="lazy" data-w-id="27105b20-5dd0-443d-5a8a-46ae9c6eabf4" sizes="(max-width: 3840px) 100vw, 3840px"
+            alt="" class="background-image is-footer" />
+        <div class="background-overlay"></div>
+    </div>
+    <div id="footerTrigger" class="footer_trigger"></div>
+</footer>
+<style>
+    .footer-text-note {
+        display: block;
+        margin-top: 0.45rem;
+        max-width: 34ch;
+        color: inherit;
+        font-family: var(--_typography---font-styles--body, inherit);
+        font-size: clamp(0.95rem, 1.05vw, 1.1rem);
+        line-height: 1.38;
+        letter-spacing: 0;
+        font-weight: 500;
+        text-wrap: pretty;
+        opacity: 0.94;
+    }
+
+    .footer-text-note strong {
+        color: white;
+        font-weight: 700;
+    }
+
+    .footer_menu-card {
+        height: fit-content;
+        align-self: start;
+    }
+
+    .footer_inquiry-wrapper {
+        display: grid;
+        gap: 0.95rem;
+        padding: 1.5rem;
+        border: 1px solid rgba(248, 242, 232, 0.1);
+        border-radius: 0;
+        background: rgba(32, 20, 16, 0.6);
+        backdrop-filter: blur(10px);
+        height: fit-content;
+    }
+
+    .footer_inquiry-header {
+        display: grid;
+        gap: 0.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .footer_inquiry-header .detail {
+        color: rgba(248, 242, 232, 0.7);
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .footer_inquiry-title {
+        margin: 0;
+        font-size: 1.75rem;
+        line-height: 1.1;
+        color: #f8f2e8;
+        font-weight: 500;
+    }
+
+    .footer_inquiry-tabs {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .footer_inquiry-tab {
+        flex: 1;
+        padding: 0.6rem 1rem;
+        border: 1px solid rgba(248, 242, 232, 0.3);
+        background: transparent;
+        color: rgba(248, 242, 232, 0.6);
+        font-size: 0.85rem;
+        font-weight: 500;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .footer_inquiry-tab:hover {
+        border-color: rgba(248, 242, 232, 0.5);
+        color: rgba(248, 242, 232, 0.8);
+    }
+
+    .footer_inquiry-tab.active {
+        background: #e78745;
+        border-color: #e78745;
+        color: #fff;
+    }
+
+    .footer_inquiry-form {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .footer_inquiry-input {
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid rgba(248, 242, 232, 0.3);
+        background: transparent;
+        color: #f8f2e8;
+        border-radius: 0;
+        padding: 0.6rem 0;
+        font-size: 0.95rem;
+        transition: border-color 0.2s ease;
+    }
+
+    .footer_inquiry-input option {
+        background-color: #201410;
+        color: #f8f2e8;
+    }
+
+    .footer_inquiry-form .footer_inquiry-input:nth-child(5) {
+        grid-column: 1 / -1;
+    }
+
+    .footer_inquiry-input::placeholder {
+        color: rgba(248, 242, 232, 0.4);
+    }
+
+    .footer_inquiry-input:focus {
+        outline: none;
+        border-color: #e78745;
+    }
+
+    .footer_inquiry-input[required] {
+        border-bottom-color: rgba(231, 135, 69, 0.5);
+    }
+
+    .footer_inquiry-input[required]:placeholder-shown {
+        border-bottom-color: rgba(231, 135, 69, 0.7);
+    }
+
+    .footer_inquiry-field-group {
+        grid-column: 1 / -1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .footer_inquiry-help-text {
+        color: rgba(248, 242, 232, 0.6);
+        font-size: 0.85rem;
+        line-height: 1.3;
+        margin: 0;
+    }
+
+    .footer_inquiry-textarea {
+        min-height: 80px;
+        resize: none;
+        padding-top: 0.6rem;
+        overflow: hidden;
+    }
+
+    .footer_inquiry-submit {
+        grid-column: 1 / -1;
+        border: 0;
+        border-radius: 6px;
+        padding: 0.75rem 1rem;
+        background: #e78745;
+        color: #fff;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.2s ease;
+        margin-top: 0.5rem;
+    }
+
+    .footer_inquiry-submit:hover {
+        background: #d67635;
+        transform: translateY(-1px);
+    }
+
+    @media screen and (max-width: 767px) {
+        .footer_inquiry-wrapper {
+            padding: 1.25rem;
+        }
+
+        .footer_inquiry-form {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Toast notification styles */
+    .inquiry-toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px 24px;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 0.95rem;
+        font-weight: 500;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        z-index: 10000;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .inquiry-toast--visible {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    .inquiry-toast--success {
+        background: linear-gradient(135deg, #2e7d32, #388e3c);
+    }
+
+    .inquiry-toast--error {
+        background: linear-gradient(135deg, #c62828, #d32f2f);
+    }
+
+    .inquiry-toast__icon {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .inquiry-toast__message {
+        max-width: 300px;
+    }
+
+    @media screen and (max-width: 480px) {
+        .inquiry-toast {
+            left: 20px;
+            right: 20px;
+            top: auto;
+            bottom: 20px;
+            transform: translateY(100%);
+        }
+
+        .inquiry-toast--visible {
+            transform: translateY(0);
+        }
+    }
+
+    .get-tickets-fab {
+        position: fixed;
+        right: 1.25rem;
+        bottom: 1.25rem;
+        z-index: 9999;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        border-radius: 9999px;
+        background: #1f2d4f;
+        color: #fff;
+        text-decoration: none;
+        font-weight: 600;
+        line-height: 1;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .get-tickets-fab:hover {
+        opacity: 0.92;
+    }
+
+    .fab-nudge-tooltip {
+        position: absolute;
+        bottom: calc(100% + 10px);
+        right: 0;
+        background: #fff;
+        color: #1f2d4f;
+        padding: 0.6rem 1rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.15);
+        opacity: 0;
+        transform: translateY(6px);
+        pointer-events: none;
+        transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .fab-nudge-tooltip::after {
+        content: '';
+        position: absolute;
+        bottom: -6px;
+        right: 20px;
+        width: 12px;
+        height: 12px;
+        background: #fff;
+        transform: rotate(45deg);
+        box-shadow: 3px 3px 6px rgba(0,0,0,0.06);
+    }
+
+    .fab-nudge-tooltip.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    @keyframes fab-pulse {
+        0%, 100% { box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+        50% { box-shadow: 0 8px 28px rgba(31,45,79,0.45), 0 0 0 6px rgba(31,45,79,0.12); }
+    }
+
+    .get-tickets-fab.is-pulsing {
+        animation: fab-pulse 1.2s ease-in-out 2;
+    }
+
+    .get-tickets-fab__icon {
+        display: inline-flex;
+        width: 1rem;
+        height: 1rem;
+    }
+
+    .tickets-modal[hidden] {
+        display: none;
+    }
+
+    .tickets-modal {
+        position: fixed;
+        right: 1.25rem;
+        bottom: 4.75rem;
+        z-index: 10000;
+        width: min(100vw - 2.5rem, 360px);
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+        transform-origin: bottom right;
+        pointer-events: none;
+        transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .tickets-modal.is-open {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+    }
+
+    .tickets-modal__dialog {
+        width: 100%;
+        background: #fff;
+        border-radius: 12px;
+        padding: 1rem;
+        max-height: min(80vh, 680px);
+        overflow-y: auto;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .tickets-modal__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+    }
+
+    .tickets-modal__title {
+        margin: 0;
+        font-size: 1.125rem;
+        color: #5b3426;
+    }
+
+    .tickets-modal__close {
+        border: 0;
+        background: transparent;
+        font-size: 1.25rem;
+        line-height: 1;
+        cursor: pointer;
+        color: #5b3426;
+    }
+
+    .tickets-modal__form {
+        display: grid;
+        gap: 0.625rem;
+    }
+
+    .tickets-modal__input {
+        width: 100%;
+        border: 1px solid #d9d9d9;
+        border-radius: 8px;
+        padding: 0.625rem 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .tickets-modal__submit {
+        border: 0;
+        border-radius: 8px;
+        padding: 0.625rem 0.875rem;
+        background: #e78745;
+        color: #fff;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .tickets-modal__feedback {
+        display: none;
+        margin: 0;
+        padding: 0.625rem 0.75rem;
+        border-radius: 8px;
+        border: 1px solid transparent;
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+
+    .tickets-modal__feedback.is-visible {
+        display: block;
+    }
+
+    .tickets-modal__feedback.is-success {
+        background: #ecf9f0;
+        border-color: #b8e6c6;
+        color: #1f6b45;
+    }
+
+    .tickets-modal__feedback.is-error {
+        background: #fff1f1;
+        border-color: #f3c2c2;
+        color: #8f2d2d;
+    }
+
+    .tickets-modal__disclaimer {
+        margin: 0.125rem 0 0;
+        font-size: 0.75rem;
+        line-height: 1.4;
+        color: #5b3426;
+    }
+
+    .tickets-modal__disclaimer a {
+        color: inherit;
+        text-decoration: underline;
+    }
+
+    .tickets-celebration-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 11000;
+        backdrop-filter: blur(4px);
+    }
+
+    .tickets-celebration-content {
+        background: #fffdf9;
+        padding: 2rem;
+        border-radius: 14px;
+        text-align: center;
+        max-width: 420px;
+        width: 92%;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.14);
+        border: 1px solid #eadfce;
+    }
+
+    .tickets-celebration-title {
+        margin: 0 0 0.5rem;
+        color: #5b3426;
+        font-size: 1.4rem;
+        font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .tickets-celebration-text {
+        margin: 0 0 1.25rem;
+        color: #7b6a5e;
+        font-family: system-ui, -apple-system, sans-serif;
+        line-height: 1.5;
+    }
+
+    .tickets-celebration-btn {
+        background: #e78745;
+        color: #fff;
+        border: 0;
+        padding: 0.7rem 1.4rem;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    .tickets-celebration-btn.secondary {
+        background: #7b6a5e;
+    }
+
+    @media screen and (min-width: 992px) {
+        .tickets-modal__dialog {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(91, 52, 38, 0.38) transparent;
+        }
+
+        .tickets-modal__dialog::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .tickets-modal__dialog::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .tickets-modal__dialog::-webkit-scrollbar-thumb {
+            background: rgba(91, 52, 38, 0.38);
+            border-radius: 999px;
+        }
+    }
+
+    @media screen and (max-width: 479px) {
+        .get-tickets-fab {
+            right: 0.875rem;
+            bottom: 0.875rem;
+            padding: 0.625rem 0.875rem;
+        }
+
+        .tickets-modal {
+            right: 0.875rem;
+            bottom: 4.25rem;
+            width: min(100vw - 1.75rem, 360px);
+        }
+    }
+</style>
+<button type="button" class="get-tickets-fab" id="openTicketsModal" aria-label="Get Tickets">
+    <span class="fab-nudge-tooltip" id="fabNudgeTooltip"></span>
+    <span class="get-tickets-fab__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M8.5 3.5H15.5C17.38 3.5 18.32 3.5 18.91 4.09C19.5 4.68 19.5 5.62 19.5 7.5V9.5C18.4 9.5 17.5 10.4 17.5 11.5C17.5 12.6 18.4 13.5 19.5 13.5V16.5C19.5 18.38 19.5 19.32 18.91 19.91C18.32 20.5 17.38 20.5 15.5 20.5H8.5C6.62 20.5 5.68 20.5 5.09 19.91C4.5 19.32 4.5 18.38 4.5 16.5V13.5C5.6 13.5 6.5 12.6 6.5 11.5C6.5 10.4 5.6 9.5 4.5 9.5V7.5C4.5 5.62 4.5 4.68 5.09 4.09C5.68 3.5 6.62 3.5 8.5 3.5Z"
+                stroke="currentColor" stroke-width="1.5" />
+            <path d="M9.5 8.5H14.5M9.5 15.5H14.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        </svg>
+    </span>
+    <span>Register</span>
+</button>
+<div class="tickets-modal" id="ticketsModal" aria-hidden="true">
+    <div class="tickets-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="ticketsModalTitle">
+        <div class="tickets-modal__header">
+            <h3 class="tickets-modal__title" id="ticketsModalTitle">Register</h3>
+            <button type="button" class="tickets-modal__close" data-close-tickets-modal
+                aria-label="Close registration modal">&times;</button>
+        </div>
+        <form class="tickets-modal__form">
+            <div style="position: relative;">
+                <input class="tickets-modal__input" type="text" name="accessCode" id="ticketsAccessCodeInput"
+                    placeholder="Access Code (Optional)" autocomplete="off" />
+                <div id="ticketsCodeValidation" style="margin-top: 4px; font-size: 0.8rem;"></div>
+            </div>
+            <input class="tickets-modal__input" type="text" name="firstName" placeholder="First Name" required />
+            <input class="tickets-modal__input" type="text" name="lastName" placeholder="Last Name" required />
+            <input class="tickets-modal__input" type="text" name="jobTitle" placeholder="Job Title" required />
+            <div id="ticketsCompanyWrapper">
+                <input class="tickets-modal__input" type="text" name="companyName" id="ticketsCompanyInput" placeholder="Name of the Establishment" />
+            </div>
+            <div id="ticketsLawFirmWrapper" style="display: none;">
+                <select class="tickets-modal__input" name="lawFirm" id="ticketsLawFirmSelect">
+                    <option value="" selected disabled>Law Firm (Select or enter code above)</option>
+                </select>
+            </div>
+            <input class="tickets-modal__input" type="tel" name="phoneNumber" placeholder="Phone Number" required />
+            <input class="tickets-modal__input" type="email" name="email" placeholder="Email" required />
+            <div id="ticketsReasonWrapper" style="display: block;">
+                <textarea class="tickets-modal__input" name="reasonForAttending" id="ticketsReasonInput" 
+                    placeholder="Why do you want to attend this seminar? (Required for approval)" 
+                    rows="3" style="resize: vertical; min-height: 70px;"></textarea>
+            </div>
+            <input type="text" name="website" style="position: absolute; left: -9999px;" tabindex="-1" autocomplete="off" />
+            <button type="submit" class="tickets-modal__submit">Register</button>
+            <p class="tickets-modal__feedback" role="status" aria-live="polite"></p>
+            <p class="tickets-modal__disclaimer">
+                                <strong style="color: #e65100;"> Subject to Host Approval:</strong> 
+                                All registrations are reviewed by our team. You will receive an email notification once your registration is approved or declined.
+                                By registering, you acknowledge and agree to our Conference Attendance Terms, including event
+                                communication, badge usage, and on-site conduct guidelines. Review full details on our <a
+                                    href="/contact/">Contact &amp; Attendance Policy page</a>.
+            </p>
+        </form>
+    </div>
+</div>
+<div id="ticketsPendingApprovalModal" class="tickets-celebration-overlay" style="display: none;" aria-hidden="true">
+    <div class="tickets-celebration-content" role="dialog" aria-modal="true" aria-labelledby="ticketsPendingTitle" style="max-width: 480px;">
+        <div style="background: #fff8e1; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #ffcc80;">
+            <h3 style="color: #e65100; margin: 0 0 0.5rem; font-size: 1.25rem;" id="ticketsPendingTitle">Registration Pending Approval</h3>
+            <p style="color: #5d4037; margin: 0; font-size: 0.95rem;">Your registration request has been submitted and is awaiting approval from our team.</p>
+        </div>
+        <div style="background: #f5f5f5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem;">
+            <h4 style="color: #5b3426; margin: 0 0 0.75rem; font-size: 1rem;">What happens next?</h4>
+            <ol style="margin: 0; padding-left: 1.25rem; color: #666; font-size: 0.9rem; line-height: 1.6;">
+                <li>Our team will review your registration</li>
+                <li>You'll receive an email with the decision</li>
+                <li>If approved, you'll get a payment link (valid for 3 days)</li>
+                <li>Complete payment to confirm your spot</li>
+            </ol>
+        </div>
+        <div id="ticketsPendingCodeSection" style="background: #f5f5f5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; text-align: center; display: none;">
+            <p style="color: #5b3426; margin: 0 0 0.5rem; font-size: 0.85rem; font-weight: 500;">Your Ticket Code</p>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <p id="ticketsPendingCodeValue" style="color: #1a365d; font-size: 2rem; font-weight: 700; letter-spacing: 4px; margin: 0; font-family: monospace;"></p>
+                <button id="ticketsPendingCopyBtn" type="button" onclick="navigator.clipboard.writeText(document.getElementById('ticketsPendingCodeValue').textContent).then(function(){var b=document.getElementById('ticketsPendingCopyBtn');b.textContent='Copied!';setTimeout(function(){b.innerHTML='<svg width=&quot;16&quot; height=&quot;16&quot; viewBox=&quot;0 0 24 24&quot; fill=&quot;none&quot; stroke=&quot;currentColor&quot; stroke-width=&quot;2&quot; stroke-linecap=&quot;round&quot; stroke-linejoin=&quot;round&quot;><rect x=&quot;9&quot; y=&quot;9&quot; width=&quot;13&quot; height=&quot;13&quot; rx=&quot;2&quot; ry=&quot;2&quot;></rect><path d=&quot;M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1&quot;></path></svg>';},1500)})" style="background: none; border: 1px solid #ccc; border-radius: 6px; padding: 0.35rem 0.5rem; cursor: pointer; color: #5b3426; font-size: 0.75rem; display: flex; align-items: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+            </div>
+            <p style="color: #888; margin: 0; font-size: 0.8rem;">Use this code to track your registration on the onboarding page.</p>
+        </div>
+        <a id="ticketsPendingTrackBtn" href="/onboarding" class="tickets-celebration-btn" style="display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; text-decoration: none;">
+            Track Registration
+        </a>
+        <button type="button" id="ticketsPendingCloseBtn" class="tickets-celebration-btn secondary">Close</button>
+        <p style="color: #999; font-size: 0.8rem; margin-top: 1rem;">You will receive an email once your registration is reviewed.</p>
+    </div>
+</div>
+<div id="ticketsConfirmationModal" class="tickets-celebration-overlay" style="display: none;" aria-hidden="true">
+    <div class="tickets-celebration-content" role="dialog" aria-modal="true" aria-labelledby="ticketsConfirmTitle">
+        <h3 class="tickets-celebration-title" id="ticketsConfirmTitle">Registration Confirmed</h3>
+        <p class="tickets-celebration-text">Your registration has been confirmed. We look forward to seeing you.</p>
+        <button type="button" id="ticketsConfirmModalBtn" class="tickets-celebration-btn">Continue</button>
+    </div>
+</div>
+<div id="ticketsCelebrationModal" class="tickets-celebration-overlay" style="display: none;" aria-hidden="true">
+    <div class="tickets-celebration-content" role="dialog" aria-modal="true" aria-labelledby="ticketsCelebrationTitle" style="max-width: 400px;">
+        <h3 class="tickets-celebration-title" id="ticketsCelebrationTitle">Your Conference Ticket</h3>
+        <p class="tickets-celebration-text" style="margin-bottom: 1rem;">Present this ticket at check-in</p>
+        <div id="ticketOrgLogoArea" style="display: none; margin-bottom: 1rem; text-align: center;">
+            <img id="ticketOrgLogo" src="" alt="Organization Logo" style="max-height: 60px; max-width: 150px; object-fit: contain;" />
+        </div>
+        <div id="ticketDisplayArea" style="background: #f8f2e8; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #eadfce;">
+            <p style="font-size: 0.8rem; color: #7b6a5e; margin: 0 0 0.5rem;">Ticket Code</p>
+            <p id="ticketCodeText" style="font-size: 2.5rem; font-family: monospace; font-weight: bold; color: #5b3426; letter-spacing: 0.15em; margin: 0;">----</p>
+        </div>
+        <div id="ticketQrArea" style="display: none; margin-bottom: 1.5rem; text-align: center;">
+            <img id="ticketQrImage" src="" alt="QR Code" style="width: 150px; height: 150px; border-radius: 8px; border: 1px solid #eadfce; display: block; margin: 0 auto;" />
+        </div>
+        <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+            <button type="button" id="ticketPrintBtn" class="tickets-celebration-btn" style="background: #5b3426;">Download PDF</button>
+            <button type="button" id="ticketsCelebrationCloseBtn" class="tickets-celebration-btn secondary">Close</button>
+        </div>
+    </div>
+</div>
+<script>
+    // Footer inquiry tabs functionality
+    (function() {
+        var tabs = document.querySelectorAll('.footer_inquiry-tab');
+        var hiddenInput = document.getElementById('inquiryTypeHidden');
+        var messageTextarea = document.getElementById('messageTextarea');
+        var submitBtn = document.getElementById('footerSubmitBtn');
+        var titleEl = document.querySelector('.footer_inquiry-title');
+        
+        if (!tabs.length) return;
+        
+        // Initialize ticket code field as required since default tab is seminar question
+        var ticketCodeInput = document.getElementById('ticketCodeInput');
+        if (ticketCodeInput) {
+            ticketCodeInput.setAttribute('required', '');
+        }
+        // Initialize help text
+        var ticketCodeHelp = document.getElementById('ticketCodeHelp');
+        if (ticketCodeHelp) {
+            ticketCodeHelp.textContent = 'Required for registered attendees - questions will be prioritized';
+        }
+        
+        tabs.forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                tabs.forEach(function(t) { t.classList.remove('active'); });
+                tab.classList.add('active');
+                
+                var tabType = tab.getAttribute('data-tab');
+                var ticketCodeInput = document.getElementById('ticketCodeInput');
+                
+                if (tabType === 'question') {
+                    hiddenInput.value = 'Seminar Question';
+                    messageTextarea.placeholder = 'What question would you like addressed at the seminar?';
+                    submitBtn.textContent = 'Submit Question';
+                    if (titleEl) titleEl.textContent = 'Submit Your Question';
+                    ticketCodeInput.placeholder = 'Ticket Code';
+                    ticketCodeInput.setAttribute('required', '');
+                    document.getElementById('ticketCodeHelp').textContent = 'Required for registered attendees - questions will be prioritized';
+                } else {
+                    hiddenInput.value = 'General Inquiry';
+                    messageTextarea.placeholder = 'How can we help you?';
+                    submitBtn.textContent = 'Submit Inquiry';
+                    if (titleEl) titleEl.textContent = 'Send an Inquiry';
+                    ticketCodeInput.placeholder = 'Ticket Code';
+                    ticketCodeInput.removeAttribute('required');
+                    document.getElementById('ticketCodeHelp').textContent = 'Optional - helps us identify your registration';
+                }
+            });
+        });
+        
+        // Toast notification helper
+        function showInquiryToast(message, type) {
+            var existingToast = document.querySelector('.inquiry-toast');
+            if (existingToast) existingToast.remove();
+            
+            var toast = document.createElement('div');
+            toast.className = 'inquiry-toast inquiry-toast--' + type;
+            toast.innerHTML = '<span class="inquiry-toast__icon">' + (type === 'success' ? '✓' : '✕') + '</span><span class="inquiry-toast__message">' + message + '</span>';
+            document.body.appendChild(toast);
+            
+            setTimeout(function() { toast.classList.add('inquiry-toast--visible'); }, 10);
+            setTimeout(function() {
+                toast.classList.remove('inquiry-toast--visible');
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 4000);
+        }
+        
+        // Form submission
+        var form = document.getElementById('footerInquiryForm');
+        if (form) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                var btn = document.getElementById('footerSubmitBtn');
+                var originalText = btn.textContent;
+                btn.textContent = 'Sending...';
+                btn.disabled = true;
+                
+                var formData = new FormData(form);
+                var entries = Object.fromEntries(formData.entries());
+                var inquiryType = entries.inquiryType;
+                
+                var data, endpoint, successMessage;
+                
+                if (inquiryType === 'Seminar Question') {
+                    // Validate ticket code for seminar questions
+                    if (!entries.ticketCode || entries.ticketCode.trim() === '') {
+                        showInquiryToast('Please provide your ticket code. Registered attendees\' questions will be prioritized.', 'error');
+                        btn.textContent = originalText;
+                        btn.disabled = false;
+                        return;
+                    }
+                    
+                    // Submit as seminar question
+                    data = {
+                        name: entries.name,
+                        email: entries.email || null,
+                        ticket_code: entries.ticketCode.trim(),
+                        question_text: entries.message,
+                        session_number: 0 // General session
+                    };
+                    endpoint = '/api/questions/';
+                    successMessage = 'Thank you! Your question has been submitted. Registered attendees\' questions will be prioritized.';
+                } else {
+                    // Submit as general inquiry
+                    data = {
+                        name: entries.name,
+                        email: entries.email || '',
+                        organization: '',
+                        inquiry_type: entries.inquiryType,
+                        message: entries.message
+                    };
+                    endpoint = '/api/inquiries';
+                    successMessage = 'Thank you! Your inquiry has been submitted. We will get back to you soon.';
+                }
+                
+                try {
+                    var response = await fetch(endpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    if (response.ok) {
+                        showInquiryToast(successMessage, 'success');
+                        btn.textContent = 'Submitted!';
+                        btn.style.background = '#2e7d32';
+                        form.reset();
+                        setTimeout(function() {
+                            btn.textContent = originalText;
+                            btn.style.background = '';
+                            btn.disabled = false;
+                        }, 3000);
+                    } else {
+                        throw new Error('Failed to submit');
+                    }
+                } catch (err) {
+                    showInquiryToast('Failed to submit. Please try again.', 'error');
+                    btn.textContent = 'Error - Try Again';
+                    btn.style.background = '#c62828';
+                    setTimeout(function() {
+                        btn.textContent = originalText;
+                        btn.style.background = '';
+                        btn.disabled = false;
+                    }, 3000);
+                }
+            });
+        }
+    })();
+</script>
+<script>
+    (function () {
+        var openBtn = document.getElementById('openTicketsModal');
+        var modal = document.getElementById('ticketsModal');
+        if (!openBtn || !modal) return;
+
+        var closeTargets = modal.querySelectorAll('[data-close-tickets-modal]');
+
+        function openModal() {
+            clearTicketsFeedback();
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeModal() {
+            clearTicketsFeedback();
+            modal.classList.remove('is-open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        openBtn.addEventListener('click', function (event) {
+            event.stopPropagation();
+            if (!modal.classList.contains('is-open')) {
+                openModal();
+            } else {
+                closeModal();
+            }
+        });
+
+        closeTargets.forEach(function (el) {
+            el.addEventListener('click', closeModal);
+        });
+
+        modal.addEventListener('click', function (event) {
+            event.stopPropagation();
+        });
+
+        document.addEventListener('click', function () {
+            if (modal.classList.contains('is-open')) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+                closeModal();
+            }
+        });
+
+        // Periodic tooltip nudge on FAB
+        (function () {
+            var tooltip = document.getElementById('fabNudgeTooltip');
+            if (!tooltip) return;
+            var messages = [
+                'Secure your spot today!',
+                'Limited seats available',
+                'Register now \u2192',
+                'Don\u2019t miss out!'
+            ];
+            var msgIdx = 0;
+            var nudgeInterval = null;
+
+            function showNudge() {
+                if (modal.classList.contains('is-open')) return;
+                tooltip.textContent = messages[msgIdx];
+                msgIdx = (msgIdx + 1) % messages.length;
+                tooltip.classList.add('is-visible');
+                openBtn.classList.add('is-pulsing');
+                setTimeout(function () {
+                    tooltip.classList.remove('is-visible');
+                    openBtn.classList.remove('is-pulsing');
+                }, 4000);
+            }
+
+            // First nudge after 8s, then every 30s
+            setTimeout(function () {
+                showNudge();
+                nudgeInterval = setInterval(showNudge, 30000);
+            }, 8000);
+
+            // Stop nudging once user opens the modal
+            openBtn.addEventListener('click', function () {
+                tooltip.classList.remove('is-visible');
+                openBtn.classList.remove('is-pulsing');
+                if (nudgeInterval) { clearInterval(nudgeInterval); nudgeInterval = null; }
+            });
+        })();
+
+        var ticketsForm = modal.querySelector('.tickets-modal__form');
+        var ticketsAccessCode = document.getElementById('ticketsAccessCodeInput');
+        var ticketsLawFirm = document.getElementById('ticketsLawFirmSelect');
+        var ticketsCodeValidation = document.getElementById('ticketsCodeValidation');
+        var ticketsCompanyWrapper = document.getElementById('ticketsCompanyWrapper');
+        var ticketsLawFirmWrapper = document.getElementById('ticketsLawFirmWrapper');
+        var ticketsCompanyInput = document.getElementById('ticketsCompanyInput');
+        var ticketsFeedback = ticketsForm && ticketsForm.querySelector('.tickets-modal__feedback');
+        var ticketsConfirmationModal = document.getElementById('ticketsConfirmationModal');
+        var ticketsCelebrationModal = document.getElementById('ticketsCelebrationModal');
+        var ticketsConfirmModalBtn = document.getElementById('ticketsConfirmModalBtn');
+        var ticketsCelebrationCloseBtn = document.getElementById('ticketsCelebrationCloseBtn');
+        var ticketPrintBtn = document.getElementById('ticketPrintBtn');
+        var ticketCodeText = document.getElementById('ticketCodeText');
+        var ticketQrArea = document.getElementById('ticketQrArea');
+        var ticketQrImage = document.getElementById('ticketQrImage');
+        var ticketOrgLogoArea = document.getElementById('ticketOrgLogoArea');
+        var ticketOrgLogo = document.getElementById('ticketOrgLogo');
+        
+        var currentTicketCode = '';
+        var currentQrImage = '';
+        var currentOrgLogo = '';
+
+        // Check for payment success redirect
+        (async function checkPaymentSuccess() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var paymentStatus = urlParams.get('payment');
+            var ticketCode = urlParams.get('ticket');
+            var regId = urlParams.get('regId');
+            
+            if (paymentStatus === 'success') {
+                // Clear URL params
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // Set ticket code
+                if (ticketCode) {
+                    currentTicketCode = ticketCode;
+                    if (ticketCodeText) ticketCodeText.textContent = ticketCode;
+                }
+                
+                // Fetch QR code if we have registration ID
+                if (regId) {
+                    try {
+                        var ticketRes = await fetch('/api/registration/' + regId + '/ticket');
+                        if (ticketRes.ok) {
+                            var ticketData = await ticketRes.json();
+                            currentTicketCode = ticketData.ticket_code || currentTicketCode;
+                            currentQrImage = ticketData.qr_image || '';
+                            currentOrgLogo = ticketData.firm_logo || '';
+                            if (ticketCodeText) ticketCodeText.textContent = currentTicketCode;
+                            if (ticketQrImage && currentQrImage) {
+                                ticketQrImage.src = 'data:image/png;base64,' + currentQrImage;
+                                ticketQrImage.style.display = 'block';
+                            }
+                            if (ticketOrgLogo && ticketOrgLogoArea && currentOrgLogo) {
+                                ticketOrgLogo.src = currentOrgLogo;
+                                ticketOrgLogoArea.style.display = 'block';
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Error fetching ticket:', e);
+                    }
+                }
+                
+                if (ticketsConfirmationModal) {
+                    ticketsConfirmationModal.style.display = 'flex';
+                    ticketsConfirmationModal.setAttribute('aria-hidden', 'false');
+                }
+            }
+        })();
+
+        function clearTicketsFeedback() {
+            if (!ticketsFeedback) return;
+            ticketsFeedback.textContent = '';
+            ticketsFeedback.className = 'tickets-modal__feedback';
+        }
+
+        function showTicketsFeedback(message, type) {
+            if (!ticketsFeedback) return;
+            ticketsFeedback.textContent = message;
+            ticketsFeedback.className = 'tickets-modal__feedback is-visible ' + (type === 'success' ? 'is-success' : 'is-error');
+        }
+
+        function hideTicketsCelebrationOverlays() {
+            if (ticketsConfirmationModal) {
+                ticketsConfirmationModal.style.display = 'none';
+                ticketsConfirmationModal.setAttribute('aria-hidden', 'true');
+            }
+            if (ticketsCelebrationModal) {
+                ticketsCelebrationModal.style.display = 'none';
+                ticketsCelebrationModal.setAttribute('aria-hidden', 'true');
+            }
+        }
+
+        function runConfetti() {
+            if (typeof confetti !== 'function') return;
+
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 12000 };
+
+            function random(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function () {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+
+                var particleCount = 50 * (timeLeft / duration);
+                confetti({ ...defaults, particleCount: particleCount, origin: { x: random(0.1, 0.3), y: Math.random() - 0.2 } });
+                confetti({ ...defaults, particleCount: particleCount, origin: { x: random(0.7, 0.9), y: Math.random() - 0.2 } });
+            }, 250);
+        }
+
+        if (ticketsConfirmModalBtn) {
+            ticketsConfirmModalBtn.addEventListener('click', function () {
+                if (ticketsConfirmationModal) {
+                    ticketsConfirmationModal.style.display = 'none';
+                    ticketsConfirmationModal.setAttribute('aria-hidden', 'true');
+                }
+                
+                // Update ticket display
+                if (ticketCodeText) ticketCodeText.textContent = currentTicketCode || '----';
+                if (currentQrImage && ticketQrImage && ticketQrArea) {
+                    ticketQrImage.src = 'data:image/png;base64,' + currentQrImage;
+                    ticketQrArea.style.display = 'block';
+                }
+                if (currentOrgLogo && ticketOrgLogo && ticketOrgLogoArea) {
+                    ticketOrgLogo.src = currentOrgLogo;
+                    ticketOrgLogoArea.style.display = 'block';
+                }
+                
+                if (ticketsCelebrationModal) {
+                    ticketsCelebrationModal.style.display = 'flex';
+                    ticketsCelebrationModal.setAttribute('aria-hidden', 'false');
+                }
+                runConfetti();
+            });
+        }
+
+        if (ticketsCelebrationCloseBtn) {
+            ticketsCelebrationCloseBtn.addEventListener('click', function() {
+                // Refresh page to reset everything
+                window.location.reload();
+            });
+        }
+        
+        if (ticketPrintBtn) {
+            ticketPrintBtn.addEventListener('click', async function() {
+                // Generate and download PDF directly
+                if (!currentTicketCode) return;
+                
+                // Change button state
+                ticketPrintBtn.disabled = true;
+                ticketPrintBtn.textContent = 'Generating...';
+                
+                try {
+                    // Load jsPDF dynamically if not loaded
+                    if (typeof jspdf === 'undefined') {
+                        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+                    }
+                    
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: [100, 150] // Ticket size
+                    });
+                    
+                    // Background
+                    doc.setFillColor(255, 255, 255);
+                    doc.rect(0, 0, 100, 150, 'F');
+                    
+                    // Border
+                    doc.setDrawColor(91, 52, 38);
+                    doc.setLineWidth(1);
+                    doc.roundedRect(5, 5, 90, 140, 3, 3, 'S');
+                    
+                    // Title
+                    doc.setFont('helvetica', 'bold');
+                    doc.setFontSize(11);
+                    doc.setTextColor(91, 52, 38);
+                    doc.text('Ghana Competition Law Seminar', 50, 18, { align: 'center' });
+                    
+                    // Subtitle
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.setTextColor(123, 106, 94);
+                    doc.text('Conference Ticket', 50, 24, { align: 'center' });
+                    
+                    // Code box background
+                    doc.setFillColor(248, 242, 232);
+                    doc.roundedRect(10, 32, 80, 28, 2, 2, 'F');
+                    
+                    // Code label
+                    doc.setFontSize(7);
+                    doc.setTextColor(123, 106, 94);
+                    doc.text('TICKET CODE', 50, 40, { align: 'center' });
+                    
+                    // Ticket code
+                    doc.setFont('courier', 'bold');
+                    doc.setFontSize(22);
+                    doc.setTextColor(91, 52, 38);
+                    doc.text(currentTicketCode, 50, 52, { align: 'center' });
+                    
+                    // QR Code
+                    if (currentQrImage) {
+                        doc.addImage('data:image/png;base64,' + currentQrImage, 'PNG', 30, 65, 40, 40);
+                    }
+                    
+                    // Footer text
+                    doc.setFont('helvetica', 'normal');
+                    doc.setFontSize(8);
+                    doc.setTextColor(123, 106, 94);
+                    doc.text('Present this ticket at check-in', 50, 115, { align: 'center' });
+                    
+                    // Venue
+                    doc.setFontSize(7);
+                    doc.setTextColor(150, 150, 150);
+                    doc.text('Mövenpick Ambassador Hotel, Accra', 50, 122, { align: 'center' });
+                    
+                    // Date
+                    doc.setFontSize(6);
+                    doc.text('March 2026', 50, 128, { align: 'center' });
+                    
+                    // Download
+                    doc.save('ticket-' + currentTicketCode + '.pdf');
+                    
+                } catch (err) {
+                    console.error('PDF generation error:', err);
+                    alert('Could not generate PDF. Please try again.');
+                } finally {
+                    ticketPrintBtn.disabled = false;
+                    ticketPrintBtn.textContent = 'Download PDF';
+                }
+            });
+        }
+        
+        // Helper to load scripts dynamically
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        function selectTicketLawFirm(name) {
+            if (!ticketsLawFirm) return;
+            var option = Array.from(ticketsLawFirm.options).find(function (opt) {
+                return opt.value === name;
+            });
+
+            if (!option) {
+                option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                option.setAttribute('data-generated', 'true');
+                ticketsLawFirm.appendChild(option);
+            }
+
+            ticketsLawFirm.value = name;
+        }
+
+        function showTicketsCodeValidation(message, isValid, firmName, hasFreeSlots) {
+            var ticketsReasonWrapper = document.getElementById('ticketsReasonWrapper');
+            var ticketsReasonInput = document.getElementById('ticketsReasonInput');
+            
+            if (!ticketsCodeValidation) return;
+            if (!message) {
+                ticketsCodeValidation.innerHTML = '';
+                // No code - show company field, hide law firm, show reason field
+                if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'block';
+                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'none';
+                if (ticketsCompanyInput) ticketsCompanyInput.required = true;
+                if (ticketsLawFirm) ticketsLawFirm.required = false;
+                // Show reason field when no code (needs approval)
+                if (ticketsReasonWrapper) ticketsReasonWrapper.style.display = 'block';
+                if (ticketsReasonInput) ticketsReasonInput.required = true;
+                return;
+            }
+            var color = isValid ? '#16a34a' : '#dc2626';
+            var icon = isValid ? '&#10003;' : '&#10007;';
+            var firmText = firmName ? '<strong>' + firmName + '</strong>' : '';
+            ticketsCodeValidation.innerHTML = '<span style="color: ' + color + ';">' + icon + ' ' + message + '</span> ' + firmText;
+            
+            // Toggle fields based on validity
+            if (isValid && hasFreeSlots) {
+                // Valid code with free slots - hide company, hide law firm dropdown (locked), hide reason
+                if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'none';
+                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'none';
+                if (ticketsCompanyInput) ticketsCompanyInput.required = false;
+                if (ticketsLawFirm) ticketsLawFirm.required = false;
+                // Hide reason field - will be auto-confirmed
+                if (ticketsReasonWrapper) ticketsReasonWrapper.style.display = 'none';
+                if (ticketsReasonInput) ticketsReasonInput.required = false;
+            } else if (isValid && !hasFreeSlots) {
+                // Valid code but no free slots - hide company, hide law firm dropdown (locked), show reason
+                if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'none';
+                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'none';
+                if (ticketsCompanyInput) ticketsCompanyInput.required = false;
+                if (ticketsLawFirm) ticketsLawFirm.required = false;
+                // Show reason field - needs approval
+                if (ticketsReasonWrapper) ticketsReasonWrapper.style.display = 'block';
+                if (ticketsReasonInput) ticketsReasonInput.required = true;
+            } else {
+                // Invalid code - show company field, hide law firm, show reason
+                if (ticketsCompanyWrapper) ticketsCompanyWrapper.style.display = 'block';
+                if (ticketsLawFirmWrapper) ticketsLawFirmWrapper.style.display = 'none';
+                if (ticketsCompanyInput) ticketsCompanyInput.required = true;
+                if (ticketsLawFirm) ticketsLawFirm.required = false;
+                // Show reason field - needs approval
+                if (ticketsReasonWrapper) ticketsReasonWrapper.style.display = 'block';
+                if (ticketsReasonInput) ticketsReasonInput.required = true;
+            }
+        }
+
+        async function setupTicketsAccessCodeAutofill() {
+            if (!ticketsAccessCode || !ticketsLawFirm) return;
+
+            var firms = [];
+            try {
+                var response = await fetch('/api/firms');
+                if (response.ok) {
+                    firms = await response.json();
+                }
+            } catch (error) {
+                console.error('Error fetching firms for tickets modal:', error);
+                return;
+            }
+
+            // Populate law firm dropdown from database
+            if (firms && firms.length > 0) {
+                firms.forEach(function(firm) {
+                    var option = document.createElement('option');
+                    option.value = firm.name;
+                    option.textContent = firm.name;
+                    option.setAttribute('data-code', firm.code);
+                    ticketsLawFirm.appendChild(option);
+                });
+            }
+
+            function syncLawFirmFromCode(rawCode) {
+                var code = String(rawCode || '').trim().toUpperCase();
+                
+                if (!code) {
+                    showTicketsCodeValidation('', false, null, false);
+                    return;
+                }
+
+                if (code.length < 6) {
+                    showTicketsCodeValidation('Enter 6-character code', false, null, false);
+                    return;
+                }
+
+                var firm = firms.find(function (item) {
+                    return String(item.code || '').trim().toUpperCase() === code;
+                });
+
+                if (firm && firm.name) {
+                    selectTicketLawFirm(firm.name);
+                    var hasFreeSlots = firm.free_slots_remaining > 0;
+                    var slotsText = hasFreeSlots 
+                        ? '(' + firm.free_slots_remaining + ' free slots remaining)' 
+                        : '(Approval required)';
+                    showTicketsCodeValidation('Valid code - ' + slotsText, true, firm.name, hasFreeSlots);
+                } else {
+                    // Check if swapping O↔0 would find a match
+                    var altCode = code.replace(/O/g, '0');
+                    if (altCode === code) altCode = code.replace(/0/g, 'O');
+                    var altFirm = firms.find(function (item) {
+                        return String(item.code || '').trim().toUpperCase() === altCode;
+                    });
+                    if (altFirm) {
+                        showTicketsCodeValidation('Invalid code — did you confuse the letter O with the number 0? Please check and re-enter.', false, null, false);
+                    } else {
+                        showTicketsCodeValidation('Invalid access code. Please double-check your code.', false, null, false);
+                    }
+                }
+            }
+
+            ticketsAccessCode.addEventListener('input', function (event) {
+                var normalizedCode = String(event.target.value || '').toUpperCase();
+                if (event.target.value !== normalizedCode) {
+                    event.target.value = normalizedCode;
+                }
+                syncLawFirmFromCode(normalizedCode);
+            });
+
+            syncLawFirmFromCode(ticketsAccessCode.value);
+        }
+
+        setupTicketsAccessCodeAutofill();
+
+        function validatePhoneNumber(phone) {
+            var cleaned = phone.replace(/\D/g, '');
+            if (cleaned.length !== 10) {
+                return { valid: false, message: 'Phone number must be exactly 10 digits' };
+            }
+            if (cleaned[0] !== '0') {
+                return { valid: false, message: 'Phone number must start with 0' };
+            }
+            if (/^0+$/.test(cleaned) || /^(.)\1+$/.test(cleaned)) {
+                return { valid: false, message: 'Please enter a valid phone number' };
+            }
+            return { valid: true, message: '' };
+        }
+
+        function validateEmail(email) {
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+                return { valid: false, message: 'Please enter a valid email address' };
+            }
+            return { valid: true, message: '' };
+        }
+
+        async function handleTicketsRegistrationSubmit(event) {
+            event.preventDefault();
+            if (!ticketsForm) return;
+            clearTicketsFeedback();
+
+            var phoneInput = ticketsForm.querySelector('input[name="phoneNumber"]');
+            if (phoneInput) {
+                var phoneValidation = validatePhoneNumber(phoneInput.value);
+                if (!phoneValidation.valid) {
+                    showTicketsFeedback(phoneValidation.message, 'error');
+                    phoneInput.focus();
+                    return;
+                }
+            }
+
+            var emailInput = ticketsForm.querySelector('input[name="email"]');
+            if (emailInput) {
+                var emailValidation = validateEmail(emailInput.value);
+                if (!emailValidation.valid) {
+                    showTicketsFeedback(emailValidation.message, 'error');
+                    emailInput.focus();
+                    return;
+                }
+            }
+
+            var submitBtn = ticketsForm.querySelector('.tickets-modal__submit');
+            var originalText = submitBtn ? submitBtn.innerText : '';
+            if (submitBtn) {
+                submitBtn.innerText = 'Processing...';
+                submitBtn.disabled = true;
+            }
+
+            var payload = Object.fromEntries(new FormData(ticketsForm).entries());
+            payload.fullName = (payload.firstName || '').trim() + ' ' + (payload.lastName || '').trim();
+            delete payload.firstName;
+            delete payload.lastName;
+
+            try {
+                var response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                var result = await response.json();
+
+                if (!result.success) {
+                    showTicketsFeedback('Registration failed: ' + (result.error || 'Unknown error'), 'error');
+                    return;
+                }
+
+                closeModal();
+                var regId = result.registration && result.registration.id ? result.registration.id : (result.id || null);
+                var ticketCode = result.registration && result.registration.ticket_code ? result.registration.ticket_code : null;
+                var regStatus = result.status || '';
+                ticketsForm.reset();
+
+                if (regStatus === 'confirmed') {
+                    // Confirmed (firm with free slots) — go straight to onboarding ticket page
+                    window.location.href = regId ? '/onboarding?id=' + regId : '/onboarding';
+                    return;
+                }
+
+                // Pending approval — show the pending modal
+                var pendingModal = document.getElementById('ticketsPendingApprovalModal');
+                var trackBtn = document.getElementById('ticketsPendingTrackBtn');
+                if (trackBtn) {
+                    trackBtn.href = regId ? '/onboarding?id=' + regId : '/onboarding';
+                }
+                var codeSection = document.getElementById('ticketsPendingCodeSection');
+                var codeValue = document.getElementById('ticketsPendingCodeValue');
+                if (codeSection && codeValue && ticketCode) {
+                    codeValue.textContent = ticketCode;
+                    codeSection.style.display = 'block';
+                }
+                if (pendingModal) {
+                    pendingModal.style.display = 'flex';
+                    pendingModal.setAttribute('aria-hidden', 'false');
+                }
+            } catch (error) {
+                console.error('Tickets registration error:', error);
+                showTicketsFeedback('An error occurred. Please try again.', 'error');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.innerText = originalText;
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+
+        if (ticketsForm) {
+            ticketsForm.addEventListener('submit', handleTicketsRegistrationSubmit);
+        }
+
+        var pendingCloseBtn = document.getElementById('ticketsPendingCloseBtn');
+        if (pendingCloseBtn) {
+            pendingCloseBtn.addEventListener('click', function () {
+                var pendingModal = document.getElementById('ticketsPendingApprovalModal');
+                if (pendingModal) {
+                    pendingModal.style.display = 'none';
+                    pendingModal.setAttribute('aria-hidden', 'true');
+                }
+            });
+        }
+
+        var textareas = document.querySelectorAll('.footer_inquiry-textarea');
+        textareas.forEach(function (textarea) {
+            textarea.addEventListener('input', function () {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        });
+
+    })();
+</script>
