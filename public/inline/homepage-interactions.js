@@ -174,24 +174,30 @@ document.addEventListener('DOMContentLoaded', function() {
         'peter-alexiadis': {
             name: 'Peter Alexiadis',
             role: 'Visiting Professor, King\'s College London | Research Fellow, CERRE | Retired Partner, Gibson, Dunn & Crutcher LLP',
-            image: 'https://ik.imagekit.io/dr5fryhth/conferencenew/f8aaed81-30d8-45c8-ad76-f4ca676449da.JPG?updatedAt=1770796073766',
+            image: 'https://ik.imagekit.io/dr5fryhth/speak?updatedAt=1775965054049&tr=q-70,w-800',
             bio: `Peter is a visiting Professor at King's College London; Research Fellow at Centre for European Regulation (CERRE), Retired Partner at Gibson, Dunn & Crutcher LLP.
 
 Peter has practised Community law in Brussels since 1989, specialising in competition law, communications policy, and intellectual property law. He holds postgraduate legal qualifications from the Universities of London, Sydney and Thessaloniki. He retired from the US law firm Gibson, Dunn & Crutcher LLP on 1 January 2022, having been the Partner-in-Charge of the Brussels office.
 
 He has been an academic at Kings College since 2006, where he is a Visiting Professor, having taught the respective LLM modules on Competition Law & Regulated Network Sectors and the Digital Regulation. He has previously taught Competition Law at the Strathclyde Management School and currently a Research Fellow at the Centre for European Regulation (CERRE) and teaches regularly on OECD programmes and at the College of Europe's Summer School for Competition Authorities.
 
-He is the Chief Editor of the Utilities Law Review (ULR) and the International Bar Association's International Business Law (IBL) Journal.`
+Much of his time is spent advising competition and sector-specific regulators, and government Ministries responsible for implementing policy, legislative and policy change.
+
+He is the Chief Editor of the Utilities Law Review (ULR) and the International Bar Association's International Business Law (IBL) Journal. Peter is also an Advisor to the International Institute of Communications (IIC). He writes for a range of academic and professional publications and speaks regularly on policy issues at various international fora. Every two years, he organises an international competition law conference on the island of Ithaca in Greece.`
         },
         'david-bailey': {
-            name: 'Prof. David Bailey (KC)',
-            role: 'Professor of Practice Law, King\'s College London',
-            image: 'https://ik.imagekit.io/dr5fryhth/conferencenew/d6633b22-b0b5-40c1-8a9b-3fa75074dc9c.JPG?updatedAt=1770796068105',
-            bio: `Professor David Bailey KC is a Professor of Practice Law at King's College London, specializing in competition law and policy.
+            name: 'Prof. David Bailey',
+            role: 'Professor of Practice Law, King\'s College London | Barrister, Brick Court Chambers',
+            image: 'https://ik.imagekit.io/dr5fryhth/sirspeaker?tr=q-70,w-800',
+            bio: `David Bailey is a Professor of Practice Law at King's College London, a barrister and author.
 
-He brings extensive experience in competition law frameworks and regulatory policy, having advised governments and international organizations on competition matters.
+Professor Bailey has taught postgraduate courses on competition law and policy at King's College London since 2003, having taught at King's since 2001.
 
-His expertise spans EU competition law, merger control, and the intersection of competition policy with digital markets regulation.`
+Professor Bailey is a practising barrister, qualified in England and Wales and in Ireland; he is also an attorney in New York. Since 2015, he has been Standing Counsel to the UK Competition and Markets Authority and the Hong Kong Competition Commission.
+
+In 2017 he was a Non-Governmental Adviser to the International Competition Network. In 2019 he was ranked as one of the 'Most Highly Regarded' junior barristers in Who's Who Legal UK Bar: Competition. In 2019 Professor Bailey was awarded the King's Education Award 2019 for Sustained Excellence.
+
+Professor Bailey is also a member of Brick Court Chambers.`
         },
         'juliette-twumasi': {
             name: 'Dr. Juliette Twumasi-Anokye',
@@ -203,11 +209,13 @@ Her expertise and perspectives enriched the discussions on Ghana's competition l
         },
         'paul-datsa': {
             name: 'Paul Kofi Datsa',
-            role: 'Vote of Thanks',
-            image: 'https://ik.imagekit.io/dr5fryhth/datsa?tr=q-70,w-800',
-            bio: `Paul Kofi Datsa delivered the vote of thanks at the CMC Ghana Competition Law & Policy Seminar.
+            role: 'Managing Director, Competition & Markets Center',
+            image: '/images/mrdatsa.png',
+            bio: `Paul Kofi Datsa is the Managing Director of the Competition & Markets Center, host of the CMC Ghana Competition Law & Policy Seminar.
 
-He expressed gratitude to all speakers, organizers, and attendees for making the seminar a success, highlighting the importance of building a strong foundation for Ghana's new competition law era.`
+He leads the Center's work on competition policy, market regulation, and capacity building in Ghana, convening leading academics, practitioners, regulators, and policymakers to shape the country's competition law framework.
+
+At the seminar, Mr. Datsa delivered the vote of thanks, expressing gratitude to all speakers, organizers, and attendees for making the gathering a success.`
         }
     };
 
